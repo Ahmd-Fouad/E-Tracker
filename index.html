@@ -1,0 +1,4067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Growth Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   1. DESIGN TOKENS & BASE
+   ========================================================================== */
+:root {
+  color-scheme: dark;
+  --bg: #0B1020;
+  --surface: #121A2B;
+  --surface-2: #192338;
+  --surface-3: #22304A;
+
+  --border: #2A3954;
+  --border-soft: rgba(148, 163, 184, 0.15);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #A8B3C7;
+  --text-muted: #6F7D95;
+
+  --primary: #7C6CF2;
+  --primary-hover: #9184F5;
+  --primary-light: #A99DF7;
+  --primary-deep: #5D4EE0;
+  --primary-soft: rgba(124, 108, 242, 0.15);
+  --primary-glow: rgba(124, 108, 242, 0.28);
+
+  --accent: #2DD4BF;
+  --accent-soft: rgba(45, 212, 191, 0.14);
+
+  --success: #34D399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --danger: #FB7185;
+  --danger-soft: rgba(251, 113, 133, 0.14);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  /* aliases used throughout the stylesheet */
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --faint: var(--text-muted);
+  --radius: var(--radius-md);
+  --shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 480px at 50% -10%, rgba(124, 108, 242, 0.10), transparent 60%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+body.no-scroll { overflow: hidden; }
+
+h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; margin: 0; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip: rect(0 0 0 0); overflow: hidden; white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute; left: 12px; top: -60px;
+  background: var(--primary); color: #FFFFFF;
+  padding: 8px 14px; border-radius: 8px; font-weight: 600;
+  text-decoration: none; z-index: 200;
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: 12px; }
+
+/* ==========================================================================
+   2. LAYOUT, HEADER, NAVIGATION
+   ========================================================================== */
+.wrap {
+  width: min(1060px, 100% - 32px);
+  margin: 0 auto;
+}
+
+.site-header {
+  text-align: center;
+  padding: 32px 0 24px;
+}
+.tagline { color: var(--muted); margin: 8px 0 0; font-size: 14px; }
+
+.profile-avatar,
+.avatar-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--primary), #5046A9);
+  color: #FFFFFF;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.profile-avatar {
+  width: 108px;
+  height: 108px;
+  margin: 0 auto;
+  padding: 0;
+  border: 2px solid rgba(169, 157, 247, 0.58);
+  box-shadow: 0 10px 30px rgba(93, 78, 224, 0.24), 0 0 0 5px rgba(124, 108, 242, 0.08);
+  font-size: 35px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.profile-avatar:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 12px 34px rgba(93, 78, 224, 0.3), 0 0 0 5px rgba(124, 108, 242, 0.12);
+}
+.profile-avatar:focus-visible {
+  outline: 3px solid var(--primary-light);
+  outline-offset: 5px;
+  border-radius: 50%;
+}
+.profile-avatar img,
+.avatar-preview img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-greeting {
+  margin: 16px 0 0;
+  color: var(--text);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.profile-name { color: var(--primary-light); }
+
+.gate-wrap,
+.system-screen {
+  min-height: 100vh;
+  width: min(520px, 100% - 32px);
+  margin: 0 auto;
+  padding: 48px 0;
+  display: grid;
+  place-items: center;
+}
+.gate-content { width: 100%; }
+.gate-brand { text-align: center; margin-bottom: 22px; }
+.gate-brand h1 { font-size: clamp(26px, 6vw, 36px); }
+.gate-brand .accent { color: var(--primary-light); }
+.gate-card { padding: 24px; }
+.gate-card h2 { font-size: 21px; margin-bottom: 5px; }
+.gate-copy { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; }
+.auth-form { display: grid; gap: 8px; }
+.auth-form label { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.auth-form input:focus { border-color: var(--primary); outline: none; }
+.signup-only[hidden] { display: none !important; }
+.field-hint {
+  margin: -2px 0 3px;
+  color: var(--faint);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.avatar-picker {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin: 3px 0;
+}
+.avatar-preview {
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(124, 108, 242, 0.5);
+  font-size: 20px;
+}
+.avatar-picker input[type="file"] {
+  padding: 8px;
+  font-size: 12px;
+}
+.auth-submit { margin-top: 8px; width: 100%; }
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.auth-link {
+  border: 0;
+  background: transparent;
+  color: var(--primary-light);
+  padding: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.auth-message {
+  min-height: 20px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.auth-message.error { color: var(--danger); }
+.auth-message.success { color: var(--success); }
+
+/* Signup spacing: layout-only overrides for the expanded account form. */
+.gate-content:has(#signupNameField:not([hidden])) .gate-brand { margin-bottom: 14px; }
+#authPanel:has(#signupNameField:not([hidden])) {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 30px;
+}
+#authPanel:has(#signupNameField:not([hidden])) h2 { margin-bottom: 8px; }
+#authPanel:has(#signupNameField:not([hidden])) .gate-copy { margin-bottom: 22px; }
+#authForm { gap: 16px; }
+.auth-field,
+#authForm .signup-only { display: grid; gap: 7px; min-width: 0; }
+#signupAvatarField .avatar-picker {
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+}
+.avatar-control { min-width: 0; display: grid; align-items: stretch; gap: 5px; }
+#authForm .avatar-control .field-hint {
+  align-self: start;
+  margin: 0;
+  padding-left: 1px;
+  text-align: left;
+}
+#signupAvatarField .avatar-picker input[type="file"] {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  line-height: 1.4;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-form input:not([type="file"]) {
+  min-height: 44px;
+  padding: 10px 12px;
+  line-height: 1.4;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-submit {
+  min-height: 44px;
+  margin-top: 4px;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-links {
+  justify-content: center;
+  margin-top: 26px;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 10px;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-message {
+  min-height: 0;
+  margin-top: 8px;
+}
+#authPanel:has(#signupNameField:not([hidden])) .auth-message:empty { display: none; }
+.system-card { width: 100%; text-align: center; }
+.system-card h1 { font-size: 24px; margin-bottom: 8px; }
+.system-card p { margin: 0; color: var(--muted); }
+.system-card .btn { margin-top: 18px; }
+
+/* Top-level view switcher plus the account action */
+.main-nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 5px;
+  width: min(720px, 100%);
+  margin: 18px auto 0;
+}
+.nav-btn {
+  background: transparent;
+  border: none;
+  padding: 9px 10px;
+  border-radius: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 0;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active {
+  background: var(--primary-soft);
+  color: var(--primary-light);
+  box-shadow: inset 0 0 0 1px rgba(124, 108, 242, 0.35);
+}
+.nav-signout {
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.42);
+}
+.nav-signout:hover {
+  color: #FDA4AF;
+  background: var(--danger-soft);
+}
+
+main { padding-bottom: 24px; }
+
+section + section { margin-top: 26px; }
+
+.section-head { margin: 0 0 4px; font-size: 19px; }
+.section-hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+
+/* ==========================================================================
+   3. CARDS, BUTTONS, CHIPS
+   ========================================================================== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.03);
+}
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease,
+              background 0.12s ease, color 0.12s ease;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  /* gradient stops kept dark enough for 4.5:1 contrast with white text */
+  background: linear-gradient(180deg, #6C5DE9, #5A4BD9);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #7466EE, #6152E0);
+  box-shadow: 0 6px 18px var(--primary-glow);
+}
+.btn-primary:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: default;
+  border-color: var(--border);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: var(--primary); color: var(--primary-light); }
+.btn-ghost.danger { color: var(--danger); }
+.btn-ghost.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+.btn-sm { padding: 7px 13px; font-size: 13px; }
+
+.btn-danger {
+  background: var(--danger);
+  color: #3D0A18;
+}
+.btn-danger:hover { background: #FC8598; }
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 14px; line-height: 1;
+  flex: none;
+}
+.icon-btn:hover { color: var(--text); border-color: var(--primary); }
+
+/* Status pills always carry a text label (New / Learning / Mastered) so
+   colour is never the only signal */
+.status-chip {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+}
+.status-chip.s-new      { color: var(--primary-light); background: var(--primary-soft); border-color: rgba(124,108,242,0.35); }
+.status-chip.s-learning { color: var(--warning); background: var(--warning-soft); border-color: rgba(251,191,36,0.3); }
+.status-chip.s-mastered { color: var(--success); background: var(--success-soft); border-color: rgba(52,211,153,0.3); }
+.status-chip.s-none     { color: var(--muted); background: var(--surface-2); border-color: var(--border); }
+.status-chip.s-progress { color: var(--warning); background: var(--warning-soft); border-color: rgba(251,191,36,0.3); }
+.status-chip.s-done     { color: var(--success); background: var(--success-soft); border-color: rgba(52,211,153,0.3); }
+
+/* ==========================================================================
+   4. DASHBOARD (hero, stats, vocabulary overview)
+   ========================================================================== */
+.hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 26px;
+  align-items: center;
+  padding: 22px 24px;
+  border-radius: var(--radius-lg);
+}
+.k { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0; }
+.v { font-size: 20px; font-weight: 700; margin: 3px 0 0; font-family: "Space Grotesk", sans-serif; }
+.s { font-size: 13px; color: var(--muted); margin: 3px 0 0; }
+.unit { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+.hero-progress .k-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.progress-track {
+  height: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.btn-log { padding: 14px 22px; font-size: 15px; white-space: nowrap; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.stat { padding: 14px 16px; }
+
+.vocab-overview {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+}
+.vo-left { display: flex; flex-direction: column; gap: 4px; }
+.vo-stats { display: flex; gap: 26px; flex-wrap: wrap; }
+.vo-stat { display: flex; flex-direction: column; }
+.vo-stat .num { font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700; }
+.vo-stat .lbl { font-size: 12px; color: var(--muted); }
+.vo-stat.n-new .num { color: var(--primary-light); }
+.vo-stat.n-learning .num { color: var(--warning); }
+.vo-stat.n-mastered .num { color: var(--success); }
+.vo-secondary { margin: 2px 0 0; font-size: 12.5px; color: var(--faint); }
+.vo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ==========================================================================
+   5. SET CARDS GRID
+   ========================================================================== */
+.sets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 12px;
+}
+
+.set-card {
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.set-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 108, 242, 0.55);
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.4);
+}
+.set-card.current { border-color: var(--primary); box-shadow: 0 0 0 1px rgba(124, 108, 242, 0.35); }
+.set-card.complete { border-color: rgba(52, 211, 153, 0.35); }
+
+.set-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.set-no { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 14px; color: var(--primary-light); }
+.chip {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 99px;
+}
+.chip-current { color: var(--primary-light); background: var(--primary-soft); }
+.chip-done { color: var(--success); background: var(--success-soft); }
+
+.set-title { margin: 0; font-size: 13.5px; font-weight: 500; min-height: 20px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-title.placeholder { color: var(--faint); font-style: italic; font-weight: 400; }
+
+.day-bar { display: flex; gap: 4px; }
+.day-seg {
+  flex: 1; height: 6px; border-radius: 99px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+}
+.day-seg.on {
+  background: linear-gradient(90deg, var(--primary-deep), var(--primary-hover));
+  border-color: transparent;
+}
+
+.set-meta {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--muted);
+}
+.set-meta .sep { color: var(--faint); }
+.note-flag { color: var(--accent); margin-left: auto; font-size: 13px; }
+
+/* ==========================================================================
+   6. FILTER BARS (shared by Browse Vocabulary + Flashcards)
+   ========================================================================== */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+.filter-bar select, .filter-bar input[type="search"], .set-filter-details > summary {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13.5px;
+}
+.filter-bar select:focus, .filter-bar input[type="search"]:focus { border-color: var(--primary); outline: none; }
+.filter-bar input[type="search"] { flex: 1 1 200px; min-width: 160px; }
+.filter-bar select { max-width: 240px; }
+
+.set-filter-details { position: relative; flex: 0 1 235px; min-width: 190px; }
+.set-filter-details > summary {
+  list-style: none;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 32px;
+  position: relative;
+}
+.set-filter-details > summary::-webkit-details-marker { display: none; }
+.set-filter-details > summary::after {
+  content: '\25BE';
+  position: absolute;
+  right: 11px;
+  color: var(--muted);
+}
+.set-filter-details[open] > summary { border-color: var(--primary); }
+.set-filter-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(340px, calc(100vw - 48px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.set-choice-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.set-picker-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.set-picker-action {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 7px;
+  color: var(--muted);
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.set-picker-action:hover { color: var(--primary-light); border-color: var(--primary); }
+.set-check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  max-height: 190px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.set-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 5px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.set-check:has(input:checked) {
+  color: var(--primary-light);
+  border-color: rgba(124, 108, 242, 0.55);
+  background: var(--primary-soft);
+}
+.set-check input { accent-color: var(--primary); margin: 0; width: 16px; height: 16px; flex: none; }
+.set-check.general-choice { grid-column: 1 / -1; }
+
+/* ==========================================================================
+   7. BROWSE VOCABULARY VIEW
+   ========================================================================== */
+.browse { padding: 20px 22px; }
+.browse-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.browse-head h2 { font-size: 19px; }
+.browse-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.bv-count { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+.vocab-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.vocab-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  display: flex; gap: 12px; justify-content: space-between; align-items: flex-start;
+}
+.vocab-main { min-width: 0; }
+.vocab-term { margin: 0; font-weight: 600; font-size: 14.5px; overflow-wrap: anywhere; }
+.vocab-example { margin: 3px 0 0; color: var(--faint); font-style: italic; font-size: 13px; overflow-wrap: anywhere; }
+.vocab-definition { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+.vocab-arabic { margin: 3px 0 0; color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
+.vocab-location { margin: 4px 0 0; font-size: 12px; color: var(--accent); overflow-wrap: anywhere; }
+.vocab-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; flex: none; }
+.vocab-status {
+  border-radius: 99px;
+  font-size: 12px; font-weight: 600;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.vocab-status.s-new      { color: var(--primary-light); border-color: rgba(124,108,242,0.4); }
+.vocab-status.s-learning { color: var(--warning); border-color: rgba(251,191,36,0.4); }
+.vocab-status.s-mastered { color: var(--success); border-color: rgba(52,211,153,0.4); }
+.vocab-actions { display: flex; gap: 6px; }
+.link-btn {
+  background: none; border: none; padding: 2px 4px;
+  font-size: 12.5px; font-weight: 600; color: var(--muted);
+  border-radius: 4px;
+}
+.link-btn:hover { color: var(--primary-light); }
+.link-btn.danger:hover { color: var(--danger); }
+
+.empty-line { color: var(--faint); font-size: 13.5px; text-align: center; padding: 18px 0; margin: 0; }
+.empty-box {
+  text-align: center; color: var(--muted);
+  padding: 42px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* ==========================================================================
+   8. GRAMMAR VIEW
+   ========================================================================== */
+.grammar { padding: 0; }
+.grammar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.grammar-head h2 { font-size: 19px; }
+.grammar-head h2:focus-visible { outline-offset: 6px; }
+.grammar-toolbar .btn { flex: 0 0 auto; }
+.grammar-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.grammar-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+.grammar-card-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  border-radius: 7px;
+}
+.grammar-card-main:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 4px; }
+.grammar-rule-title { margin: 0; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.grammar-preview {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.grammar-meta { display: block; margin: 7px 0 0; color: var(--faint); font-size: 12px; overflow-wrap: anywhere; }
+.grammar-actions { display: flex; align-items: center; gap: 5px; flex: none; flex-wrap: wrap; }
+.grammar-empty p { margin: 0; }
+.grammar-empty .empty-support { margin-top: 7px; color: var(--faint); font-size: 13px; }
+.grammar-empty .btn { margin-top: 16px; }
+
+/* Grammar add/edit and details dialogs */
+.grammar-form { display: grid; gap: 4px; }
+.grammar-form label { margin-top: 8px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.grammar-form .req { color: var(--primary-light); }
+.grammar-form .opt { color: var(--faint); font-weight: 400; }
+.grammar-form input,
+.grammar-form textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+}
+.grammar-form textarea { min-height: 96px; line-height: 1.5; resize: vertical; }
+.grammar-form #grammarExplanation { min-height: 120px; }
+.grammar-form input:focus,
+.grammar-form textarea:focus { border-color: var(--primary); outline: none; }
+.grammar-form [aria-invalid="true"] { border-color: var(--danger); }
+.field-error { min-height: 17px; margin: 2px 0 0; color: var(--danger); font-size: 12px; }
+.grammar-detail-section { margin-top: 16px; }
+.grammar-detail-section h3 { margin: 0 0 6px; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.grammar-detail-section p { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.grammar-detail-examples { margin: 0; padding-left: 22px; display: grid; gap: 7px; }
+.grammar-detail-examples li { line-height: 1.55; overflow-wrap: anywhere; }
+
+/* ==========================================================================
+   9. FLASHCARDS VIEW
+   ========================================================================== */
+.flashcards { padding: 0; }
+.fc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.fc-head h2 { font-size: 19px; }
+.fc-head h2:focus-visible { outline-offset: 6px; }
+
+.fc-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 34px 26px;
+  text-align: center;
+  min-height: 210px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+}
+.fc-set { color: var(--accent); font-size: 13px; margin: 0; }
+.fc-term { font-family: "Space Grotesk", sans-serif; font-size: clamp(20px, 4vw, 28px); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.fc-answer { margin-top: 10px; padding-top: 14px; border-top: 1px dashed var(--border); width: 100%; max-width: 460px; }
+.fc-definition { font-size: 16px; margin: 0 0 6px; overflow-wrap: anywhere; }
+.fc-arabic { color: var(--text); font-size: 16px; margin: 0 0 7px; overflow-wrap: anywhere; }
+.fc-example { color: var(--muted); font-style: italic; font-size: 14px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.fc-location { color: var(--accent); font-size: 12.5px; margin: 0 0 8px; overflow-wrap: anywhere; }
+
+.fc-controls {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; align-items: center;
+  margin-top: 16px;
+}
+.fc-grade { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.grade-learning:hover { border-color: var(--warning); color: var(--warning); }
+.grade-mastered:hover { border-color: var(--success); color: var(--success); }
+
+.fc-counter { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+
+/* ==========================================================================
+   10. MODALS (set details, add/edit word, confirm)
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(4, 7, 18, 0.68);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+  z-index: 100;
+}
+
+.modal {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  width: min(620px, 100%);
+  max-height: min(86vh, 720px);
+  overflow-y: auto;
+  padding: 18px 20px 20px;
+  animation: modal-in 0.18s ease;
+}
+.modal:focus { outline: none; }
+.modal-small { width: min(420px, 100%); }
+.profile-modal-copy { margin-bottom: 14px; }
+.profile-modal-picker { margin: 10px 0 2px; }
+.profile-message { min-height: 19px; margin: 10px 0 0; }
+.name-form { display: grid; gap: 8px; }
+.name-form label { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.name-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.name-form input:focus { border-color: var(--primary); outline: none; }
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.modal-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.modal-title { font-size: 18px; flex: 1; }
+.set-chip {
+  flex: none;
+  font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 13px;
+  color: var(--primary-light); background: var(--primary-soft);
+  border: 1px solid rgba(124, 108, 242, 0.35);
+  padding: 4px 11px; border-radius: 99px;
+}
+.title-input {
+  flex: 1; min-width: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+  font-weight: 600; font-size: 15px;
+  padding: 6px 9px;
+}
+.title-input:hover { border-color: var(--border); }
+.title-input:focus { border-color: var(--primary); outline: none; background: var(--surface-2); }
+.title-input::placeholder { color: var(--faint); font-weight: 400; font-style: italic; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab {
+  background: transparent; border: none;
+  padding: 9px 14px;
+  color: var(--muted); font-weight: 600; font-size: 14px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary-light); border-bottom-color: var(--primary); }
+
+.panel-line { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+
+.day-toggles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.day-toggle {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 4px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--muted);
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.day-toggle .mark { font-size: 15px; line-height: 1; height: 16px; color: var(--faint); }
+.day-toggle[aria-pressed="true"] {
+  background: var(--primary-soft);
+  border-color: rgba(124, 108, 242, 0.5);
+  color: var(--primary-light);
+}
+.day-toggle[aria-pressed="true"] .mark { color: var(--primary-light); }
+.day-toggle:hover { border-color: var(--primary); }
+.hint { color: var(--faint); font-size: 12.5px; margin: 12px 0 0; }
+
+/* Vocabulary tab inside the set modal */
+.vocab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.vocab-head p { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* Add/Edit word form (in its own modal) */
+.word-form { display: grid; gap: 4px; }
+.word-form label { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-top: 8px; }
+.word-form .req { color: var(--primary-light); }
+.word-form .opt { font-weight: 400; color: var(--faint); }
+.word-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 9px 12px;
+  font-size: 14px;
+  width: 100%;
+}
+.word-form input:focus {
+  border-color: var(--primary); outline: none;
+}
+.word-location {
+  align-self: start;
+  margin: 0 0 4px;
+  padding: 4px 10px;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.form-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* Duplicate-word panel inside the add-word modal */
+.dup-panel {
+  margin-top: 14px;
+  background: var(--warning-soft);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.dup-title { margin: 0 0 4px; font-weight: 700; font-size: 14px; }
+.dup-info { margin: 0 0 4px; color: var(--muted); font-size: 13px; }
+.dup-panel .form-actions { margin-top: 10px; flex-wrap: wrap; }
+
+/* Notes tab */
+#notesArea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 170px;
+}
+#notesArea:focus { border-color: var(--primary); outline: none; }
+
+/* Confirm modal */
+.confirm-msg { margin: 4px 0 18px; font-size: 15px; line-height: 1.55; }
+
+/* ========================================================================== 
+   11. TOASTS
+   ========================================================================== */
+
+.toasts {
+  position: fixed;
+  bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 300;
+  pointer-events: none;
+  width: max-content; max-width: calc(100vw - 32px);
+}
+.toast {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  color: var(--text);
+  font-size: 13.5px; font-weight: 500;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast.show { opacity: 1; transform: none; }
+
+/* ==========================================================================
+   12. RESPONSIVE & REDUCED MOTION
+   ========================================================================== */
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; gap: 18px; text-align: left; }
+  .btn-log { width: 100%; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .vocab-overview { flex-direction: column; align-items: stretch; }
+  .vo-stats { justify-content: space-between; gap: 12px; }
+  .vo-actions { flex-direction: column; }
+  .vo-actions .btn { width: 100%; }
+  .vocab-item { flex-direction: column; }
+  .vocab-side { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
+  .day-toggles { gap: 5px; }
+  .day-toggle { padding: 9px 2px 7px; font-size: 11px; }
+  .browse-actions { width: 100%; }
+  .browse-actions .btn { flex: 1; }
+  .grammar-item { flex-direction: column; }
+  .grammar-actions { justify-content: flex-end; }
+}
+
+@media (max-width: 420px) {
+  .gate-wrap { padding: 24px 0; }
+  .gate-content:has(#signupNameField:not([hidden])) .gate-brand { margin-bottom: 12px; }
+  #authPanel:has(#signupNameField:not([hidden])) {
+    height: auto;
+    min-height: 0;
+    padding: 21px 21px 22px;
+  }
+  #authPanel:has(#signupNameField:not([hidden])) .gate-copy { margin-bottom: 20px; }
+  #authPanel:has(#signupNameField:not([hidden])) .auth-links { margin-top: 24px; }
+  #signupAvatarField .avatar-picker {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+  }
+  #signupAvatarField .avatar-control { width: 100%; }
+  .site-header { padding: 24px 0 18px; }
+  .profile-avatar { width: 88px; height: 88px; font-size: 29px; }
+  .profile-greeting { margin-top: 14px; font-size: 21px; }
+  .main-nav { gap: 3px; padding: 4px; }
+  .nav-btn { padding: 9px 1px; font-size: 10.5px; white-space: nowrap; }
+  .sets-grid { grid-template-columns: 1fr 1fr; }
+  .filter-bar select { max-width: 100%; flex: 1 1 45%; }
+  .set-filter-details { flex: 1 1 100%; }
+  .set-filter-panel { width: 100%; position: static; margin-top: 6px; }
+  .set-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grammar-toolbar input[type="search"] { flex-basis: 100%; }
+  .grammar-toolbar .btn { flex: 1 1 100%; }
+  .grammar-actions .link-btn { min-height: 36px; padding: 6px 8px; }
+  .grammar-form .form-actions { flex-wrap: wrap; }
+  .grammar-form .form-actions .btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Full-page application states. Private tracker content remains hidden until cloud loading finishes. -->
+<section class="system-screen" id="systemScreen" aria-live="polite">
+  <div class="card system-card">
+    <h1 id="systemTitle">Initialising application</h1>
+    <p id="systemMessage">Checking your secure cloud connection&hellip;</p>
+    <button class="btn btn-primary" id="systemRetry" type="button" hidden>Retry</button>
+  </div>
+</section>
+
+<section class="gate-wrap" id="authGate" hidden>
+  <div class="gate-content">
+    <div class="gate-brand">
+      <h1>English Growth <span class="accent">Tracker</span></h1>
+      <p class="tagline">Small steps every day build confident English.</p>
+    </div>
+    <div class="card gate-card" id="authPanel">
+      <h2 id="authTitle">Sign in</h2>
+      <p class="gate-copy" id="authCopy">Continue to your private English tracker.</p>
+      <form class="auth-form" id="authForm" novalidate>
+        <div class="signup-only" id="signupNameField" hidden>
+          <label for="authName">Your name</label>
+          <input id="authName" type="text" autocomplete="name" maxlength="80">
+          <p class="field-hint">At least 2 letters. English and Arabic names are welcome.</p>
+        </div>
+        <div class="auth-field">
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label for="authPassword">Password</label>
+          <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required>
+        </div>
+        <div class="signup-only" id="signupAvatarField" hidden>
+          <label for="authAvatar">Profile picture <span class="opt">(optional)</span></label>
+          <div class="avatar-picker">
+            <div class="avatar-preview" id="signupAvatarPreview" aria-hidden="true">
+              <span id="signupAvatarInitial">Y</span>
+              <img id="signupAvatarImage" alt="" hidden>
+            </div>
+            <div class="avatar-control">
+              <input id="authAvatar" type="file" accept="image/jpeg,image/png,image/webp">
+              <p class="field-hint">JPG, PNG or WebP, up to 2 MB.</p>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary auth-submit" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div class="auth-links">
+        <button class="auth-link" id="authToggle" type="button">Create an account</button>
+        <button class="auth-link" id="forgotPassword" type="button">Forgot password?</button>
+      </div>
+      <p class="auth-message" id="authMessage" aria-live="polite"></p>
+    </div>
+
+    <div class="card gate-card" id="passwordPanel" hidden>
+      <h2>Choose a new password</h2>
+      <p class="gate-copy">Enter a new password for your account.</p>
+      <form class="auth-form" id="passwordForm" novalidate>
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        <button class="btn btn-primary auth-submit" id="passwordSubmit" type="submit">Update password</button>
+      </form>
+      <p class="auth-message" id="passwordMessage" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<div id="appShell" hidden>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header wrap">
+  <button class="profile-avatar" id="profilePictureBtn" type="button" aria-label="Change profile picture">
+    <span id="profileAvatarInitial">E</span>
+    <img id="profileAvatarImage" alt="" hidden>
+  </button>
+  <p class="profile-greeting" id="profileGreeting">Welcome back, <span class="profile-name" id="profileGreetingName">English learner</span></p>
+  <p class="tagline">Small steps every day build confident English.</p>
+  <!-- Top-level navigation between the four main views, followed by account sign out -->
+  <nav class="main-nav" aria-label="Main sections">
+    <button class="nav-btn active" id="nav-tracker" aria-current="page">Tracker</button>
+    <button class="nav-btn" id="nav-vocab">Vocabulary</button>
+    <button class="nav-btn" id="nav-grammar">Grammar</button>
+    <button class="nav-btn" id="nav-flashcards">Flashcards</button>
+    <button class="nav-btn nav-signout" id="signOutBtn" type="button">Sign Out</button>
+  </nav>
+  <!-- Non-visual hooks keep cloud status and retry logic operational. -->
+  <div aria-hidden="true" hidden>
+    <span id="syncStatus">Saved</span>
+    <button id="syncRetry" type="button" hidden>Retry</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <!-- ============ VIEW: TRACKER ============ -->
+  <div id="view-tracker">
+    <section aria-label="Progress overview">
+      <div class="card hero">
+        <div>
+          <p class="k">Current set</p>
+          <p class="v" id="heroSet">Set 1</p>
+          <p class="s" id="heroSetSub">0 of 5 days completed</p>
+        </div>
+        <div class="hero-progress">
+          <div class="k-row"><span class="k">Overall progress</span><span class="k" id="overallPct">0%</span></div>
+          <div class="progress-track" id="overallBar" role="progressbar" aria-label="Overall progress"
+               aria-valuemin="0" aria-valuemax="150" aria-valuenow="0">
+            <div class="progress-fill" id="overallFill"></div>
+          </div>
+          <p class="s" id="overallText">0 of 150 listening days</p>
+        </div>
+        <button class="btn btn-primary btn-log" id="logBtn">Log today&rsquo;s listening</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="card stat">
+          <p class="k">Current streak</p>
+          <p class="v"><span id="statStreak">0</span> <span class="unit">days</span></p>
+        </div>
+        <div class="card stat">
+          <p class="k">Days completed</p>
+          <p class="v"><span id="statDays">0</span> <span class="unit">/ 150</span></p>
+        </div>
+      </div>
+
+      <!-- Vocabulary overview + main vocabulary actions -->
+      <div class="card vocab-overview" aria-label="Vocabulary overview">
+        <div class="vo-left">
+          <div class="vo-stats">
+            <div class="vo-stat"><span class="num" id="vTotal">0</span><span class="lbl">Total words</span></div>
+            <div class="vo-stat n-new"><span class="num" id="vNew">0</span><span class="lbl">New</span></div>
+            <div class="vo-stat n-learning"><span class="num" id="vLearning">0</span><span class="lbl">Learning</span></div>
+            <div class="vo-stat n-mastered"><span class="num" id="vMastered">0</span><span class="lbl">Mastered</span></div>
+          </div>
+          <p class="vo-secondary" id="voBreakdown">General: 0 &middot; Set Vocabulary: 0</p>
+        </div>
+        <div class="vo-actions">
+          <button class="btn btn-primary" id="dashAddWord">Add New Word</button>
+          <button class="btn btn-ghost" id="dashBrowse">Browse Vocabulary</button>
+          <button class="btn btn-ghost" id="dashFlashcards">Review Flashcards</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Lesson sets">
+      <h2 class="section-head">Lesson sets</h2>
+      <p class="section-hint">Open a set to manage its progress, vocabulary and notes.</p>
+      <div class="sets-grid" id="setsGrid"></div>
+    </section>
+  </div>
+
+  <!-- ============ VIEW: VOCABULARY (browse + add) ============ -->
+  <div id="view-vocab" hidden>
+    <section class="card browse" aria-label="Browse vocabulary">
+      <div class="browse-head">
+        <h2>Vocabulary</h2>
+        <div class="browse-actions">
+          <button class="btn btn-ghost btn-sm" id="vocabExportBtn">Export Vocabulary</button>
+          <button class="btn btn-primary" id="bvAddWord">Add New Word</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div id="bvSetFilter"></div>
+        <label class="sr-only" for="bvStatus">Filter by status</label>
+        <select id="bvStatus">
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="learning">Learning</option>
+          <option value="mastered">Mastered</option>
+        </select>
+        <label class="sr-only" for="bvSort">Sort</label>
+        <select id="bvSort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="az">A&ndash;Z</option>
+          <option value="za">Z&ndash;A</option>
+          <option value="status">Status</option>
+        </select>
+        <label class="sr-only" for="bvSearch">Search vocabulary</label>
+        <input type="search" id="bvSearch" placeholder="Search word, example, definition, Arabic meaning&hellip;">
+      </div>
+
+      <p class="bv-count" id="bvCount">0 words shown</p>
+      <ul class="vocab-list" id="bvList"></ul>
+      <div class="empty-box" id="bvEmpty" hidden>No vocabulary has been added for this selection yet.</div>
+    </section>
+  </div>
+
+  <!-- ============ VIEW: GRAMMAR ============ -->
+  <div id="view-grammar" hidden>
+    <section class="grammar" aria-labelledby="grammarHeading">
+      <div class="grammar-head">
+        <h2 id="grammarHeading" tabindex="-1">Grammar Rules</h2>
+      </div>
+
+      <div class="filter-bar grammar-toolbar">
+        <label class="sr-only" for="grammarSearch">Search grammar rules</label>
+        <input type="search" id="grammarSearch" placeholder="Search grammar rules...">
+        <button class="btn btn-primary btn-sm" id="addGrammarRule" type="button">Add Grammar Rule</button>
+      </div>
+
+      <ul class="grammar-list" id="grammarList"></ul>
+      <div class="empty-box grammar-empty" id="grammarEmpty" hidden>
+        <p>No grammar rules added yet.</p>
+        <p class="empty-support">Add the grammar rules you study so you can review them later.</p>
+        <button class="btn btn-primary" id="grammarEmptyAdd" type="button">Add Grammar Rule</button>
+      </div>
+      <div class="empty-box" id="grammarNoMatches" hidden>No grammar rules match your search.</div>
+    </section>
+  </div>
+
+  <!-- ============ VIEW: FLASHCARDS ============ -->
+  <div id="view-flashcards" hidden>
+    <section class="flashcards" aria-label="Flashcard review">
+      <div class="fc-head">
+        <h2 id="fcHeading" tabindex="-1">Review Flashcards</h2>
+      </div>
+
+      <div class="filter-bar">
+        <div id="fcSetFilter"></div>
+        <label class="sr-only" for="fcStatusFilter">Filter by status</label>
+        <select id="fcStatusFilter">
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="learning">Learning</option>
+          <option value="mastered">Mastered</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="fcShuffle">Shuffle</button>
+        <button class="btn btn-ghost btn-sm" id="fcRestart">Restart review</button>
+      </div>
+
+      <div id="fcStage">
+        <div class="fc-card">
+          <p class="fc-set" id="fcSetLine">General Vocabulary</p>
+          <p class="fc-term" id="fcTerm"></p>
+          <div class="fc-answer" id="fcAnswer" hidden>
+            <p class="fc-definition" id="fcDefinition"></p>
+            <p class="fc-arabic" id="fcArabic" dir="auto"></p>
+            <p class="fc-example" id="fcExample"></p>
+            <p class="fc-location" id="fcBackLocation"></p>
+            <span class="status-chip s-new" id="fcStatusChip">New</span>
+          </div>
+        </div>
+        <div class="fc-controls">
+          <button class="btn btn-ghost" id="fcPrev">Previous</button>
+          <button class="btn btn-primary" id="fcReveal">Show answer</button>
+          <div class="fc-grade" id="fcGrade" hidden>
+            <button class="btn btn-ghost grade-learning" data-status="learning">Learning</button>
+            <button class="btn btn-ghost grade-mastered" data-status="mastered">Mastered</button>
+          </div>
+          <button class="btn btn-ghost" id="fcNext">Next</button>
+        </div>
+        <p class="fc-counter" id="fcCounter">Card 1 of 1</p>
+      </div>
+      <div class="empty-box" id="fcEmpty" hidden>No vocabulary has been added for this selection yet.</div>
+    </section>
+  </div>
+</main>
+</div>
+
+<!-- ============ ADD / EDIT GRAMMAR RULE MODAL ============ -->
+<div class="modal-backdrop" id="grammarFormBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="grammarFormTitle" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="grammarFormTitle">Add Grammar Rule</h2>
+      <button class="icon-btn" id="grammarFormClose" type="button" aria-label="Close dialog">&#10005;</button>
+    </div>
+    <form class="grammar-form" id="grammarForm" novalidate>
+      <label for="grammarRuleTitle">Rule title <span class="req">*</span></label>
+      <input id="grammarRuleTitle" type="text" autocomplete="off" aria-describedby="grammarTitleError" required>
+      <p class="field-error" id="grammarTitleError" aria-live="polite" hidden></p>
+
+      <label for="grammarExplanation">Explanation <span class="req">*</span></label>
+      <textarea id="grammarExplanation" aria-describedby="grammarExplanationError" required></textarea>
+      <p class="field-error" id="grammarExplanationError" aria-live="polite" hidden></p>
+
+      <label for="grammarExamples">Example sentences <span class="opt">(optional, one per line)</span></label>
+      <textarea id="grammarExamples"></textarea>
+
+      <label for="grammarNotes">Personal notes <span class="opt">(optional)</span></label>
+      <textarea id="grammarNotes"></textarea>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" id="grammarFormSave" type="submit">Save Rule</button>
+        <button class="btn btn-ghost" id="grammarFormCancel" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ GRAMMAR RULE DETAILS MODAL ============ -->
+<div class="modal-backdrop" id="grammarDetailsBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="grammarDetailsTitle" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="grammarDetailsTitle"></h2>
+      <button class="icon-btn" id="grammarDetailsClose" type="button" aria-label="Close dialog">&#10005;</button>
+    </div>
+    <section class="grammar-detail-section" aria-labelledby="grammarExplanationHeading">
+      <h3 id="grammarExplanationHeading">Explanation</h3>
+      <p id="grammarDetailsExplanation"></p>
+    </section>
+    <section class="grammar-detail-section" id="grammarExamplesSection" aria-labelledby="grammarExamplesHeading" hidden>
+      <h3 id="grammarExamplesHeading">Examples</h3>
+      <ul class="grammar-detail-examples" id="grammarDetailsExamples"></ul>
+    </section>
+    <section class="grammar-detail-section" id="grammarNotesSection" aria-labelledby="grammarNotesHeading" hidden>
+      <h3 id="grammarNotesHeading">Personal notes</h3>
+      <p id="grammarDetailsNotes"></p>
+    </section>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="grammarDetailsEdit" type="button">Edit</button>
+      <button class="btn btn-danger" id="grammarDetailsDelete" type="button">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SET DETAILS MODAL ============ -->
+<div class="modal-backdrop" id="setModalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setModalChip" tabindex="-1">
+    <div class="modal-head">
+      <span class="set-chip" id="setModalChip">Set 1</span>
+      <label class="sr-only" for="setTitleInput">Set title</label>
+      <input type="text" id="setTitleInput" class="title-input" maxlength="80"
+             placeholder="Add a set title, e.g. A Kiss&hellip;">
+      <button class="icon-btn" id="setModalClose" aria-label="Close dialog">&#10005;</button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Set sections">
+      <button class="tab active" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="true">Progress</button>
+      <button class="tab" role="tab" id="tab-vocab" aria-controls="panel-vocab" aria-selected="false" tabindex="-1">Vocabulary</button>
+      <button class="tab" role="tab" id="tab-notes" aria-controls="panel-notes" aria-selected="false" tabindex="-1">Notes</button>
+    </div>
+
+    <!-- Progress tab -->
+    <div class="panel" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
+      <p class="panel-line">
+        <span id="setDayCount">0 of 5 days completed</span>
+        <span class="status-chip s-none" id="setStatusChip">Not started</span>
+      </p>
+      <div class="day-toggles" id="dayToggles"></div>
+      <p class="hint">Tap a day to mark it as studied. Use &ldquo;Log today&rsquo;s listening&rdquo; on the dashboard for your daily study.</p>
+    </div>
+
+    <!-- Vocabulary tab: shows central vocabulary linked to this set -->
+    <div class="panel" id="panel-vocab" role="tabpanel" aria-labelledby="tab-vocab" hidden>
+      <div class="vocab-head">
+        <p id="vocabCountLine">0 words in this set</p>
+        <button class="btn btn-primary btn-sm" id="addWordBtn">Add word</button>
+      </div>
+      <ul class="vocab-list" id="vocabList"></ul>
+      <p class="empty-line" id="vocabEmpty" hidden>No words yet &mdash; add the first one.</p>
+    </div>
+
+    <!-- Notes tab -->
+    <div class="panel" id="panel-notes" role="tabpanel" aria-labelledby="tab-notes" hidden>
+      <label class="sr-only" for="notesArea">Notes for this set</label>
+      <textarea id="notesArea" placeholder="Lesson summary, difficult parts, useful expressions, reminders&hellip;"></textarea>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-sm" id="notesSave">Save notes</button>
+        <button class="btn btn-ghost btn-sm" id="notesCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD / EDIT WORD MODAL (standalone) ============ -->
+<div class="modal-backdrop" id="wordModalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wordModalTitle" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="wordModalTitle">Add New Word</h2>
+      <button class="icon-btn" id="wordModalClose" aria-label="Close dialog">&#10005;</button>
+    </div>
+    <form id="wordForm" novalidate class="word-form">
+      <p class="word-location" id="wmLocation">General Vocabulary</p>
+      <label for="wmTerm">Word or phrase <span class="req">*</span></label>
+      <input type="text" id="wmTerm" maxlength="120" autocomplete="off" required>
+      <label for="wmExample">Example sentence <span class="req">*</span></label>
+      <input type="text" id="wmExample" maxlength="240" autocomplete="off" required>
+      <label for="wmDefinition">Definition <span class="opt">(optional)</span></label>
+      <input type="text" id="wmDefinition" maxlength="240" autocomplete="off">
+      <label for="wmArabic">Arabic meaning <span class="opt">(optional)</span></label>
+      <input type="text" id="wmArabic" maxlength="240" autocomplete="off" dir="auto">
+
+      <!-- Duplicate warning: shown instead of silently blocking -->
+      <div class="dup-panel" id="dupPanel" hidden>
+        <p class="dup-title">&ldquo;<span id="dupTerm"></span>&rdquo; already exists</p>
+        <p class="dup-info" id="dupInfo"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="dupAddAnyway">Add as a separate entry</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="dupEdit">Edit existing word</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="dupCancel">Cancel</button>
+        </div>
+      </div>
+
+      <div class="form-actions" id="wordFormActions">
+        <button type="submit" class="btn btn-primary" id="wmSave">Save Word</button>
+        <button type="button" class="btn btn-ghost" id="wmCancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-backdrop" id="confirmBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="confirmMessage" tabindex="-1">
+    <p class="confirm-msg" id="confirmMessage"></p>
+    <div class="form-actions">
+      <button class="btn btn-danger" id="confirmOk">Confirm</button>
+      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VOCABULARY EXPORT DIALOG ============ -->
+<div class="modal-backdrop" id="exportVocabBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="exportVocabTitle" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="exportVocabTitle">Export Vocabulary</h2>
+      <button class="icon-btn" id="exportVocabClose" aria-label="Close dialog">&#10005;</button>
+    </div>
+    <p class="gate-copy" id="exportVocabMessage">Export every vocabulary entry, regardless of the filters currently selected.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="exportCsv" type="button">Export as CSV</button>
+      <button class="btn btn-ghost" id="exportTxt" type="button">Export as TXT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BROWSER-TO-CLOUD MIGRATION CHOICE ============ -->
+<div class="modal-backdrop" id="migrationBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="migrationTitle" tabindex="-1">
+    <h2 class="modal-title" id="migrationTitle">Existing browser data found</h2>
+    <p class="confirm-msg" id="migrationMessage"></p>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="migrationPrimary" type="button">Move to Cloud</button>
+      <button class="btn btn-ghost" id="migrationSecondary" type="button">Start with Empty Account</button>
+      <button class="btn btn-ghost" id="migrationCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CLOUD CONFLICT CHOICE ============ -->
+<div class="modal-backdrop" id="conflictBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="conflictTitle" tabindex="-1">
+    <h2 class="modal-title" id="conflictTitle">Newer cloud data is available.</h2>
+    <p class="confirm-msg">Choose whether to reload the newer cloud copy or intentionally replace it with this device&rsquo;s changes.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="reloadCloud" type="button">Reload Cloud Data</button>
+      <button class="btn btn-ghost" id="keepDevice" type="button">Keep This Device&rsquo;s Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REQUIRED DISPLAY NAME ============ -->
+<div class="modal-backdrop" id="nameRequiredBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="nameRequiredTitle"
+       aria-describedby="nameRequiredCopy" tabindex="-1">
+    <h2 class="modal-title" id="nameRequiredTitle">What should we call you?</h2>
+    <p class="gate-copy profile-modal-copy" id="nameRequiredCopy">Add your name to continue to your tracker.</p>
+    <form class="name-form" id="nameRequiredForm" novalidate>
+      <label for="requiredDisplayName">Your name</label>
+      <input id="requiredDisplayName" type="text" autocomplete="name" maxlength="80" required>
+      <p class="field-hint">At least 2 letters. English and Arabic names are welcome.</p>
+      <p class="auth-message profile-message" id="nameRequiredMessage" aria-live="polite"></p>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="nameRequiredSave" type="submit">Save</button>
+        <button class="btn btn-ghost danger" id="nameRequiredSignOut" type="button">Sign Out</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ PROFILE PICTURE ============ -->
+<div class="modal-backdrop" id="profilePictureBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="profilePictureTitle" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="profilePictureTitle">Profile picture</h2>
+      <button class="icon-btn" id="profilePictureClose" type="button" aria-label="Close dialog">&#10005;</button>
+    </div>
+    <p class="gate-copy profile-modal-copy">Upload a JPG, PNG or WebP image up to 2 MB.</p>
+    <div class="avatar-picker profile-modal-picker">
+      <div class="avatar-preview" id="profilePicturePreview" aria-hidden="true">
+        <span id="profilePictureInitial">E</span>
+        <img id="profilePictureImage" alt="" hidden>
+      </div>
+      <input id="profilePictureInput" type="file" accept="image/jpeg,image/png,image/webp">
+    </div>
+    <p class="auth-message profile-message" id="profilePictureMessage" aria-live="polite"></p>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="profilePictureUpload" type="button">Upload</button>
+      <button class="btn btn-ghost danger" id="profilePictureRemove" type="button">Remove</button>
+      <button class="btn btn-ghost" id="profilePictureCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="./supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script>
+'use strict';
+/* ==========================================================================
+   1. CONSTANTS & SMALL HELPERS
+   ========================================================================== */
+const TOTAL_SETS = 30;
+const DAYS_PER_SET = 5;
+const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
+const STATE_VERSION = 8;
+const STATUSES = ['new', 'learning', 'mastered'];
+const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
+
+const $ = (id) => document.getElementById(id);
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+// Unique id without external libraries
+function uid() {
+  return 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+}
+
+function grammarUid() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch (e) { /* use the compatible fallback */ }
+  return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+// Local-time date key: "YYYY-MM-DD"
+function dateKey(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+function fisherYates(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+/* ========================================================================== 
+   2. STATE NORMALISATION, CLOUD STORAGE & AUTHENTICATION
+   v8 simplifies Grammar rules in the existing Supabase JSONB state document.
+   Old browser keys are read only for the explicit one-time cloud migration.
+   ========================================================================== */
+const BROWSER_DATA_KEYS = [
+  'effortless_english_tracker_v5',
+  'effortless_english_tracker_v4',
+  'effortless_english_tracker_v3',
+  'effortless_english_tracker_v2',
+  'effortless_english_tracker_v1',
+  'effortless_english_tracker',
+  'effortlessEnglishTracker'
+];
+
+function defaultState() {
+  return {
+    version: STATE_VERSION,
+    titles: {},
+    done: {},
+    log: {},
+    sets: {},
+    vocabulary: [],
+    grammarRules: [],
+    settings: { browserMigrationHandled: false }
+  };
+}
+
+function normalizeSetNumbers(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= TOTAL_SETS))]
+    .sort((a, b) => a - b);
+}
+
+function normalizeSetNumber(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= TOTAL_SETS ? n : null;
+}
+
+function stableMigrationId(v, seed) {
+  if (typeof v.id === 'string' && v.id.trim()) return v.id;
+  const text = seed + '|' + (v.term || '') + '|' + (v.createdAt || '') + '|' + (v.example || '');
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return 'v-migrated-' + (hash >>> 0).toString(36);
+}
+
+function entryLocations(v, legacySetNo, rawVersion) {
+  if (rawVersion === 4 && Array.isArray(v.setNumbers)) {
+    const sets = normalizeSetNumbers(v.setNumbers);
+    return sets.length ? sets : [null];
+  }
+  const direct = normalizeSetNumber(v.setNumber);
+  if (direct !== null) return [direct];
+  const legacy = normalizeSetNumber(legacySetNo);
+  return legacy !== null && rawVersion < 4 ? [legacy] : [null];
+}
+
+function sanitizeEntry(v, setNumber, id) {
+  if (!v || typeof v !== 'object') return null;
+  const term = typeof v.term === 'string' ? v.term.trim() : '';
+  if (!term) return null;
+  const definitionValue = typeof v.definition === 'string' && v.definition.trim() ? v.definition :
+    (typeof v.meaning === 'string' ? v.meaning : '');
+  const arabicValue = [v.arabicMeaning, v.arabic, v.arabicTranslation, v.translation]
+    .find(value => typeof value === 'string' && value.trim()) || '';
+  const createdAt = typeof v.createdAt === 'string' ? v.createdAt : new Date().toISOString();
+  return {
+    id,
+    term: term.slice(0, 120),
+    example: (typeof v.example === 'string' ? v.example.trim() : '').slice(0, 240),
+    definition: definitionValue.trim().slice(0, 240),
+    arabicMeaning: arabicValue.trim().slice(0, 240),
+    status: STATUSES.includes(v.status) ? v.status : 'new',
+    setNumber: normalizeSetNumber(setNumber),
+    createdAt,
+    updatedAt: typeof v.updatedAt === 'string' ? v.updatedAt : createdAt
+  };
+}
+
+function visibleCharacterCount(value) {
+  return Array.from(String(value || '').replace(/\s/gu, '')).length;
+}
+
+function sanitizeGrammarRule(value, id) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const title = typeof value.title === 'string' ? value.title.trim() : '';
+  const explanation = typeof value.explanation === 'string' ? value.explanation.trim() : '';
+  if (visibleCharacterCount(title) < 2 || !explanation) return null;
+
+  const exampleSource = Array.isArray(value.examples)
+    ? value.examples
+    : (typeof value.examples === 'string' ? value.examples.split(/\r?\n/u) : []);
+  const examples = exampleSource
+    .filter(example => typeof example === 'string')
+    .map(example => example.trim())
+    .filter(Boolean);
+  const now = new Date().toISOString();
+  const createdAt = typeof value.createdAt === 'string' && value.createdAt.trim()
+    ? value.createdAt
+    : now;
+
+  return {
+    id,
+    title,
+    explanation,
+    examples,
+    notes: typeof value.notes === 'string' ? value.notes.trim() : '',
+    createdAt,
+    updatedAt: typeof value.updatedAt === 'string' && value.updatedAt.trim()
+      ? value.updatedAt
+      : createdAt
+  };
+}
+
+// Accept v1-v8 shapes and return a complete, trusted v8 state.
+function normalizeState(raw) {
+  const s = defaultState();
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
+  const rawVersion = Number.isInteger(raw.version) ? raw.version : 1;
+
+  if (raw.settings && typeof raw.settings === 'object' && !Array.isArray(raw.settings)) {
+    s.settings.browserMigrationHandled = raw.settings.browserMigrationHandled === true;
+  }
+
+  if (raw.titles && typeof raw.titles === 'object') {
+    for (let n = 1; n <= TOTAL_SETS; n++) {
+      const t = raw.titles[String(n)];
+      if (typeof t === 'string' && t.trim()) s.titles[String(n)] = t.trim().slice(0, 80);
+    }
+  }
+  if (raw.done && typeof raw.done === 'object') {
+    const legacyDaysPerSet = 7;
+    for (let n = 1; n <= TOTAL_SETS; n++) {
+      let completed = 0;
+      let hasLegacyDay = false;
+      for (let d = 1; d <= legacyDaysPerSet; d++) {
+        if (!raw.done[n + '-' + d]) continue;
+        completed++;
+        if (d > DAYS_PER_SET) hasLegacyDay = true;
+      }
+      if (hasLegacyDay) {
+        for (let d = 1; d <= Math.min(completed, DAYS_PER_SET); d++) s.done[n + '-' + d] = true;
+      } else {
+        for (let d = 1; d <= DAYS_PER_SET; d++) {
+          if (raw.done[n + '-' + d]) s.done[n + '-' + d] = true;
+        }
+      }
+    }
+  }
+  if (raw.log && typeof raw.log === 'object') {
+    for (const key of Object.keys(raw.log)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(key) && raw.log[key]) s.log[key] = true;
+    }
+  }
+
+  const seenIds = new Set();
+  const reservedIds = new Set();
+  function reserveIds(list) {
+    if (!Array.isArray(list)) return;
+    for (const item of list) {
+      if (item && typeof item.id === 'string' && item.id.trim()) reservedIds.add(item.id);
+    }
+  }
+  reserveIds(raw.vocabulary);
+  if (raw.sets && typeof raw.sets === 'object') {
+    for (const value of Object.values(raw.sets)) reserveIds(value && value.vocabulary);
+  }
+  function uniqueId(preferred, preserveOriginal) {
+    let candidate = preferred;
+    let suffix = 2;
+    while (seenIds.has(candidate) || (!preserveOriginal && reservedIds.has(candidate))) {
+      candidate = preferred + '-' + suffix++;
+    }
+    seenIds.add(candidate);
+    return candidate;
+  }
+  function appendVocabulary(v, legacySetNo, seed) {
+    if (!v || typeof v !== 'object') return;
+    const declaredId = typeof v.id === 'string' && v.id.trim() ? v.id : null;
+    if (declaredId && seenIds.has(declaredId)) return;
+    const baseId = stableMigrationId(v, seed);
+    const locations = entryLocations(v, legacySetNo, rawVersion);
+    for (let i = 0; i < locations.length; i++) {
+      const preferred = i === 0 ? baseId : baseId + '-set-' + pad2(locations[i]);
+      const entry = sanitizeEntry(v, locations[i], uniqueId(preferred, i === 0 && declaredId === preferred));
+      if (entry) s.vocabulary.push(entry);
+    }
+  }
+
+  // Central collection first; a v4 multi-set item becomes deterministic copies.
+  if (Array.isArray(raw.vocabulary)) {
+    raw.vocabulary.forEach((v, index) => appendVocabulary(v, null, 'central-' + index));
+  }
+  // Set notes plus any older per-set vocabulary.
+  if (raw.sets && typeof raw.sets === 'object') {
+    for (let n = 1; n <= TOTAL_SETS; n++) {
+      const src = raw.sets[String(n)];
+      if (!src || typeof src !== 'object') continue;
+      const notes = typeof src.notes === 'string' ? src.notes : '';
+      if (notes) s.sets[String(n)] = { notes };
+      if (Array.isArray(src.vocabulary)) {
+        src.vocabulary.forEach((v, index) => appendVocabulary(v, n, 'set-' + n + '-' + index));
+      }
+    }
+  }
+
+  // Grammar is independent of lesson sets and remains in this same JSON document.
+  const grammarIds = new Set();
+  if (Array.isArray(raw.grammarRules)) {
+    for (const value of raw.grammarRules) {
+      const preferred = value && typeof value.id === 'string' && value.id.trim() ? value.id.trim() : '';
+      let id = preferred;
+      while (!id || grammarIds.has(id)) id = grammarUid();
+      const rule = sanitizeGrammarRule(value, id);
+      if (!rule) continue;
+      grammarIds.add(id);
+      s.grammarRules.push(rule);
+    }
+  }
+  return s;
+}
+
+let state = defaultState();
+
+function isStateLike(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const validVocabulary = list => Array.isArray(list) && list.every(item =>
+    item && typeof item === 'object' && !Array.isArray(item) &&
+    typeof item.term === 'string' && item.term.trim());
+  if (raw.version !== undefined &&
+      (!Number.isInteger(raw.version) || raw.version < 1 || raw.version > STATE_VERSION)) return false;
+  if (raw.vocabulary !== undefined && !validVocabulary(raw.vocabulary)) return false;
+  if (raw.grammarRules !== undefined && !Array.isArray(raw.grammarRules)) return false;
+  for (const key of ['titles', 'done', 'log']) {
+    if (raw[key] !== undefined && (!raw[key] || typeof raw[key] !== 'object' || Array.isArray(raw[key]))) return false;
+  }
+  if (raw.sets !== undefined && (!raw.sets || typeof raw.sets !== 'object' || Array.isArray(raw.sets))) return false;
+  if (raw.sets) {
+    for (const value of Object.values(raw.sets)) {
+      if (value == null) continue;
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+      if (value.vocabulary !== undefined && !validVocabulary(value.vocabulary)) return false;
+    }
+  }
+  return raw.version !== undefined || raw.vocabulary !== undefined || raw.grammarRules !== undefined ||
+    ['titles', 'done', 'log', 'sets'].some(key => raw[key] !== undefined);
+}
+
+function hasMeaningfulData(candidate) {
+  const value = normalizeState(candidate);
+  if (Object.keys(value.titles).length || Object.keys(value.done).length || Object.keys(value.log).length) return true;
+  if (value.vocabulary.length || value.grammarRules.length) return true;
+  return Object.values(value.sets).some(set => set && typeof set.notes === 'string' && set.notes.trim());
+}
+
+function findBrowserData() {
+  try {
+    for (const key of BROWSER_DATA_KEYS) {
+      const stored = localStorage.getItem(key);
+      if (stored === null) continue;
+      try {
+        const raw = JSON.parse(stored);
+        if (isStateLike(raw)) return { key, raw, meaningful: hasMeaningfulData(raw) };
+      } catch (e) { /* continue to the next known application key */ }
+    }
+  } catch (e) { /* browser storage may be unavailable */ }
+  return null;
+}
+
+function removeBrowserDataKeys() {
+  try {
+    for (const key of BROWSER_DATA_KEYS) localStorage.removeItem(key);
+  } catch (e) { /* the verified cloud copy remains the source of truth */ }
+}
+
+let supabaseClient = null;
+let currentUser = null;
+let cloudReady = false;
+let serverUpdatedAt = null;
+let loadingUserId = null;
+let sessionGeneration = 0;
+let saveTimer = null;
+let saveInFlight = false;
+let saveQueued = false;
+let stateRevision = 0;
+let lastSavedRevision = 0;
+let conflictPending = false;
+let authMode = 'signin';
+let recoveryMode = false;
+let pendingSignupAvatar = null;
+let pendingSignupEmail = '';
+let signupPreviewUrl = '';
+let profilePreviewUrl = '';
+let nameRequiredResolve = null;
+let deferredProfileNotice = '';
+
+const systemScreen = $('systemScreen'), systemTitle = $('systemTitle'),
+      systemMessage = $('systemMessage'), systemRetry = $('systemRetry');
+const authGate = $('authGate'), authPanel = $('authPanel'), passwordPanel = $('passwordPanel'),
+      authTitle = $('authTitle'), authCopy = $('authCopy'), authForm = $('authForm'),
+      authName = $('authName'), authEmail = $('authEmail'), authPassword = $('authPassword'),
+      authAvatar = $('authAvatar'), authSubmit = $('authSubmit'),
+      authToggle = $('authToggle'), forgotPassword = $('forgotPassword'), authMessage = $('authMessage');
+const passwordForm = $('passwordForm'), newPassword = $('newPassword'),
+      passwordSubmit = $('passwordSubmit'), passwordMessage = $('passwordMessage');
+const appShell = $('appShell'), signOutBtn = $('signOutBtn'),
+      syncStatus = $('syncStatus'), syncRetry = $('syncRetry');
+const profileGreetingName = $('profileGreetingName'), profileAvatarInitial = $('profileAvatarInitial'),
+      profileAvatarImage = $('profileAvatarImage'), profilePictureBtn = $('profilePictureBtn');
+const nameRequiredBackdrop = $('nameRequiredBackdrop'), nameRequiredForm = $('nameRequiredForm'),
+      requiredDisplayName = $('requiredDisplayName'), nameRequiredMessage = $('nameRequiredMessage'),
+      nameRequiredSave = $('nameRequiredSave'), nameRequiredSignOut = $('nameRequiredSignOut');
+const profilePictureBackdrop = $('profilePictureBackdrop'), profilePictureInput = $('profilePictureInput'),
+      profilePictureImage = $('profilePictureImage'), profilePictureInitial = $('profilePictureInitial'),
+      profilePictureMessage = $('profilePictureMessage'), profilePictureUpload = $('profilePictureUpload'),
+      profilePictureRemove = $('profilePictureRemove');
+const migrationBackdrop = $('migrationBackdrop'), migrationMessage = $('migrationMessage'),
+      migrationPrimary = $('migrationPrimary'), migrationSecondary = $('migrationSecondary'),
+      migrationCancel = $('migrationCancel');
+const conflictBackdrop = $('conflictBackdrop');
+
+function showSystemState(title, message, retry) {
+  appShell.hidden = true;
+  authGate.hidden = true;
+  systemScreen.hidden = false;
+  systemTitle.textContent = title;
+  systemMessage.textContent = message;
+  systemRetry.hidden = typeof retry !== 'function';
+  systemRetry.onclick = typeof retry === 'function' ? retry : null;
+}
+
+function setAuthMessage(message, type) {
+  authMessage.textContent = message || '';
+  authMessage.className = 'auth-message' + (type ? ' ' + type : '');
+}
+
+function showAuthState(message, type) {
+  appShell.hidden = true;
+  systemScreen.hidden = true;
+  authGate.hidden = false;
+  authPanel.hidden = false;
+  passwordPanel.hidden = true;
+  setAuthMessage(message, type);
+}
+
+function showPasswordState() {
+  appShell.hidden = true;
+  systemScreen.hidden = true;
+  authGate.hidden = false;
+  authPanel.hidden = true;
+  passwordPanel.hidden = false;
+  passwordMessage.textContent = '';
+  setTimeout(() => newPassword.focus(), 0);
+}
+
+function showTrackerState() {
+  systemScreen.hidden = true;
+  authGate.hidden = true;
+  appShell.hidden = false;
+}
+
+function setSyncState(kind, message, retryable) {
+  syncStatus.dataset.state = kind;
+  syncStatus.textContent = message;
+  syncRetry.hidden = !retryable;
+}
+
+function setAuthMode(mode) {
+  authMode = mode === 'signup' ? 'signup' : 'signin';
+  const signingUp = authMode === 'signup';
+  authTitle.textContent = signingUp ? 'Create your account' : 'Sign in';
+  authCopy.textContent = signingUp
+    ? 'Create a private account to sync your tracker across devices.'
+    : 'Continue to your private English tracker.';
+  authSubmit.textContent = signingUp ? 'Create account' : 'Sign in';
+  authToggle.textContent = signingUp ? 'Already have an account?' : 'Create an account';
+  forgotPassword.hidden = signingUp;
+  $('signupNameField').hidden = !signingUp;
+  $('signupAvatarField').hidden = !signingUp;
+  authName.required = signingUp;
+  authPassword.autocomplete = signingUp ? 'new-password' : 'current-password';
+  if (!signingUp) {
+    authAvatar.value = '';
+    if (!pendingSignupEmail) pendingSignupAvatar = null;
+    clearObjectUrl('signup');
+    showAvatarPreview($('signupAvatarImage'), $('signupAvatarInitial'), '', authName.value || 'Y');
+  }
+  setAuthMessage('');
+}
+
+function cleanDisplayName(value) {
+  return String(value || '').trim().replace(/\s+/gu, ' ').slice(0, 80);
+}
+
+function displayNameError(value) {
+  const name = cleanDisplayName(value);
+  const visibleLength = Array.from(name.replace(/\s/gu, '')).length;
+  if (visibleLength < 2) return 'Enter at least 2 letters for your name.';
+  if (!/^[\p{L}\p{M}][\p{L}\p{M}\s'’\-]*$/u.test(name)) {
+    return 'Use letters, spaces, apostrophes or hyphens only.';
+  }
+  return '';
+}
+
+function displayNameForUser(user) {
+  const value = user && user.user_metadata && user.user_metadata.display_name;
+  return displayNameError(value) ? '' : cleanDisplayName(value);
+}
+
+function firstName(name) {
+  return cleanDisplayName(name).split(' ')[0] || 'there';
+}
+
+function avatarInitial(name) {
+  const chars = Array.from(cleanDisplayName(name));
+  return (chars[0] || 'E').toLocaleUpperCase();
+}
+
+function clearObjectUrl(kind) {
+  const current = kind === 'signup' ? signupPreviewUrl : profilePreviewUrl;
+  if (current) URL.revokeObjectURL(current);
+  if (kind === 'signup') signupPreviewUrl = '';
+  else profilePreviewUrl = '';
+}
+
+function showAvatarPreview(image, initial, source, name, alt) {
+  initial.textContent = avatarInitial(name);
+  image.onerror = () => {
+    image.hidden = true;
+    image.removeAttribute('src');
+  };
+  if (!source) {
+    image.hidden = true;
+    image.removeAttribute('src');
+    image.alt = '';
+    return;
+  }
+  image.alt = alt || '';
+  image.hidden = false;
+  image.src = source;
+}
+
+function avatarSourceForUser(user) {
+  const value = user && user.user_metadata && user.user_metadata.avatar_url;
+  if (typeof value !== 'string' || !value.trim()) return '';
+  const stored = value.trim();
+  if (/^https:\/\//i.test(stored)) return stored;
+  if (!supabaseClient || stored.startsWith('/') || stored.includes('..')) return '';
+  const result = supabaseClient.storage.from('avatars').getPublicUrl(stored);
+  const publicUrl = result && result.data && result.data.publicUrl;
+  if (!publicUrl) return '';
+  const version = user.updated_at || '';
+  return publicUrl + (version ? '?v=' + encodeURIComponent(version) : '');
+}
+
+function renderProfile(user) {
+  const name = displayNameForUser(user) || 'English learner';
+  profileGreetingName.textContent = firstName(name);
+  showAvatarPreview(
+    profileAvatarImage,
+    profileAvatarInitial,
+    avatarSourceForUser(user),
+    name,
+    'Profile picture for ' + name
+  );
+}
+
+function validateAvatarFile(file) {
+  if (!file) return 'Choose an image first.';
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    return 'Choose a JPG, PNG or WebP image.';
+  }
+  if (file.size > 2 * 1024 * 1024) return 'The image must be 2 MB or smaller.';
+  return '';
+}
+
+function avatarStorageErrorMessage(error, action) {
+  const details = [error && error.message, error && error.error, error && error.statusCode]
+    .filter(Boolean).join(' ').toLowerCase();
+  if (details.includes('bucket not found')) {
+    return 'Avatar storage is not set up yet. Run supabase-setup.sql in the Supabase SQL Editor, then try again.';
+  }
+  if (details.includes('row-level security') || details.includes('policy') || details.includes('unauthorized')) {
+    return 'Avatar storage permissions are not installed. Run the updated supabase-setup.sql, then try again.';
+  }
+  if (details.includes('maximum') || details.includes('too large') || details.includes('payload')) {
+    return 'The processed picture is too large for Avatar Storage. Choose a smaller image.';
+  }
+  if (details.includes('mime') || details.includes('content type')) {
+    return 'Avatar Storage rejected this image type. Choose a JPG, PNG or WebP image.';
+  }
+  if ((typeof navigator !== 'undefined' && !navigator.onLine) || details.includes('network')) {
+    return 'You appear to be offline. Reconnect and try again.';
+  }
+  return action === 'remove'
+    ? 'The picture could not be removed. Check your connection and Storage setup.'
+    : 'The picture could not be uploaded. Check your connection and Storage setup.';
+}
+
+function safeAuthError(error) {
+  const message = String(error && error.message || '').toLowerCase();
+  if (message.includes('invalid login') || message.includes('invalid credentials')) return 'Email or password is incorrect.';
+  if (message.includes('email not confirmed')) return 'Please confirm your email before signing in.';
+  if (message.includes('password') && (message.includes('short') || message.includes('least'))) return 'Please use a longer password.';
+  if (message.includes('rate') || message.includes('too many')) return 'Too many attempts. Please wait and try again.';
+  if (message.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return 'You appear to be offline. Reconnect and try again.';
+  }
+  return 'The authentication request could not be completed. Please try again.';
+}
+
+function setAuthBusy(busy) {
+  authSubmit.disabled = busy;
+  authName.disabled = busy;
+  authEmail.disabled = busy;
+  authPassword.disabled = busy;
+  authAvatar.disabled = busy;
+  authToggle.disabled = busy;
+  forgotPassword.disabled = busy;
+}
+
+function authRedirectUrl() {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  return url.href;
+}
+
+function imageFileToWebp(file) {
+  return new Promise((resolve, reject) => {
+    const source = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      try {
+        const side = Math.min(image.naturalWidth, image.naturalHeight);
+        if (!side) throw new Error('Image has no visible content');
+        const canvas = document.createElement('canvas');
+        const outputSize = Math.min(512, side);
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Image processing is unavailable');
+        const sourceX = (image.naturalWidth - side) / 2;
+        const sourceY = (image.naturalHeight - side) / 2;
+        context.drawImage(image, sourceX, sourceY, side, side, 0, 0, outputSize, outputSize);
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(source);
+          if (blob) resolve(blob);
+          else reject(new Error('Image conversion failed'));
+        }, 'image/webp', 0.86);
+      } catch (error) {
+        URL.revokeObjectURL(source);
+        reject(error);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(source);
+      reject(new Error('The selected image could not be read'));
+    };
+    image.src = source;
+  });
+}
+
+async function uploadAvatarForUser(user, file) {
+  const validationError = validateAvatarFile(file);
+  if (validationError) throw new Error(validationError);
+  const webp = await imageFileToWebp(file);
+  const path = user.id + '/avatar.webp';
+  const { error: uploadError } = await supabaseClient.storage
+    .from('avatars')
+    .upload(path, webp, { contentType: 'image/webp', cacheControl: '3600', upsert: true });
+  if (uploadError) throw uploadError;
+  const { data, error: metadataError } = await supabaseClient.auth.updateUser({
+    data: { display_name: displayNameForUser(user), avatar_url: path }
+  });
+  if (metadataError) throw metadataError;
+  return data.user;
+}
+
+async function removeAvatarForUser(user) {
+  const currentPath = user && user.user_metadata && user.user_metadata.avatar_url;
+  if (typeof currentPath === 'string' && currentPath.startsWith(user.id + '/') && !currentPath.includes('..')) {
+    const { error: removeError } = await supabaseClient.storage.from('avatars').remove([currentPath]);
+    if (removeError) throw removeError;
+  }
+  const { data, error } = await supabaseClient.auth.updateUser({
+    data: { display_name: displayNameForUser(user), avatar_url: null }
+  });
+  if (error) throw error;
+  return data.user;
+}
+
+authName.addEventListener('input', () => {
+  if (!signupPreviewUrl) {
+    showAvatarPreview($('signupAvatarImage'), $('signupAvatarInitial'), '', authName.value || 'Y');
+  }
+});
+
+authAvatar.addEventListener('change', () => {
+  const file = authAvatar.files && authAvatar.files[0];
+  const error = file ? validateAvatarFile(file) : '';
+  if (error) {
+    authAvatar.value = '';
+    pendingSignupAvatar = null;
+    clearObjectUrl('signup');
+    showAvatarPreview($('signupAvatarImage'), $('signupAvatarInitial'), '', authName.value || 'Y');
+    setAuthMessage(error, 'error');
+    return;
+  }
+  pendingSignupAvatar = file || null;
+  clearObjectUrl('signup');
+  signupPreviewUrl = file ? URL.createObjectURL(file) : '';
+  showAvatarPreview(
+    $('signupAvatarImage'),
+    $('signupAvatarInitial'),
+    signupPreviewUrl,
+    authName.value || 'Y'
+  );
+  if (file) setAuthMessage('');
+});
+
+function clearPrivateSession() {
+  sessionGeneration++;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  saveInFlight = false;
+  saveQueued = false;
+  cloudReady = false;
+  serverUpdatedAt = null;
+  loadingUserId = null;
+  currentUser = null;
+  state = defaultState();
+  stateRevision = 0;
+  lastSavedRevision = 0;
+  conflictPending = false;
+  renderProfile(null);
+  appShell.hidden = true;
+}
+
+async function fetchCloudRow(userId) {
+  const { data, error } = await supabaseClient
+    .from('tracker_state')
+    .select('state, updated_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function writeCloudStateVerified(nextState, options) {
+  options = options || {};
+  const userId = currentUser && currentUser.id;
+  if (!userId) throw new Error('No authenticated user');
+  const cleanState = normalizeState(nextState);
+  const timestamp = new Date().toISOString();
+  let response;
+
+  if (options.expectedUpdatedAt && !options.force) {
+    response = await supabaseClient
+      .from('tracker_state')
+      .update({ state: cleanState, updated_at: timestamp })
+      .eq('user_id', userId)
+      .eq('updated_at', options.expectedUpdatedAt)
+      .select('state, updated_at')
+      .maybeSingle();
+    if (!response.error && !response.data) throw new Error('Cloud state changed');
+  } else {
+    response = await supabaseClient
+      .from('tracker_state')
+      .upsert({ user_id: userId, state: cleanState, updated_at: timestamp }, { onConflict: 'user_id' })
+      .select('state, updated_at')
+      .single();
+  }
+
+  if (response.error) throw response.error;
+  if (!currentUser || currentUser.id !== userId) throw new Error('Account changed during save');
+  const verified = await fetchCloudRow(userId);
+  if (!verified || JSON.stringify(normalizeState(verified.state)) !== JSON.stringify(cleanState)) {
+    throw new Error('Cloud verification failed');
+  }
+  return { state: cleanState, updatedAt: verified.updated_at };
+}
+
+function chooseBrowserMigration(hasCloudData) {
+  return new Promise(resolve => {
+    migrationMessage.textContent = hasCloudData
+      ? 'We found older progress and vocabulary in this browser and data in your cloud account. Keeping the cloud copy will discard the old browser copy after the cloud row is verified. Replacing cloud data will also remove any cloud Grammar rules and requires an additional confirmation.'
+      : 'We found progress and vocabulary saved in this browser. Move it to your cloud account, or start empty and discard the browser copy after the empty cloud row is verified.';
+    migrationPrimary.textContent = hasCloudData ? 'Keep Cloud Data' : 'Move to Cloud';
+    migrationSecondary.textContent = hasCloudData ? 'Replace Cloud Data with Browser Data' : 'Start with Empty Account';
+    migrationPrimary.onclick = () => { popModal(); resolve(hasCloudData ? 'keep' : 'move'); };
+    migrationSecondary.onclick = () => { popModal(); resolve(hasCloudData ? 'replace' : 'empty'); };
+    migrationCancel.onclick = () => { popModal(); resolve('cancel'); };
+    pushModal(migrationBackdrop);
+    migrationPrimary.focus();
+  });
+}
+
+async function cancelMigrationAndSignOut() {
+  try { await supabaseClient.auth.signOut({ scope: 'local' }); }
+  catch (e) { clearPrivateSession(); showAuthState(); }
+}
+
+function requireDisplayName(user) {
+  if (displayNameForUser(user)) return Promise.resolve(user);
+  requiredDisplayName.value = '';
+  nameRequiredMessage.textContent = '';
+  nameRequiredMessage.className = 'auth-message profile-message';
+  return new Promise(resolve => {
+    nameRequiredResolve = resolve;
+    pushModal(nameRequiredBackdrop, { locked: true });
+    setTimeout(() => requiredDisplayName.focus(), 0);
+  });
+}
+
+nameRequiredForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const name = cleanDisplayName(requiredDisplayName.value);
+  const validationError = displayNameError(name);
+  if (validationError) {
+    nameRequiredMessage.textContent = validationError;
+    nameRequiredMessage.className = 'auth-message profile-message error';
+    requiredDisplayName.focus();
+    return;
+  }
+  nameRequiredSave.disabled = true;
+  nameRequiredSignOut.disabled = true;
+  requiredDisplayName.disabled = true;
+  nameRequiredMessage.textContent = 'Saving your name…';
+  nameRequiredMessage.className = 'auth-message profile-message';
+  try {
+    const avatarValue = currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url;
+    const { data, error } = await supabaseClient.auth.updateUser({
+      data: { display_name: name, avatar_url: avatarValue || null }
+    });
+    if (error) throw error;
+    const updatedUser = data.user;
+    currentUser = updatedUser;
+    renderProfile(updatedUser);
+    const resolve = nameRequiredResolve;
+    nameRequiredResolve = null;
+    popModal(true);
+    if (resolve) resolve(updatedUser);
+  } catch (error) {
+    nameRequiredMessage.textContent = safeAuthError(error);
+    nameRequiredMessage.className = 'auth-message profile-message error';
+  } finally {
+    nameRequiredSave.disabled = false;
+    nameRequiredSignOut.disabled = false;
+    requiredDisplayName.disabled = false;
+  }
+});
+
+nameRequiredSignOut.addEventListener('click', async () => {
+  const resolve = nameRequiredResolve;
+  const signedOut = await performSignOut(nameRequiredSignOut, true);
+  if (!signedOut) return;
+  nameRequiredResolve = null;
+  popModal(true);
+  if (resolve) resolve(null);
+});
+
+async function loadCloudStateForUser(user, generation) {
+  const browserData = findBrowserData();
+  const row = await fetchCloudRow(user.id);
+  if (generation !== sessionGeneration || !currentUser || currentUser.id !== user.id) return false;
+  let nextState;
+  let updatedAt = row && row.updated_at;
+
+  if (row) {
+    nextState = normalizeState(row.state);
+    if (browserData && browserData.meaningful && !nextState.settings.browserMigrationHandled) {
+      let choice;
+      while (true) {
+        choice = await chooseBrowserMigration(true);
+        if (choice === 'cancel') { await cancelMigrationAndSignOut(); return false; }
+        if (choice !== 'replace') break;
+        const confirmed = await confirmDecision(
+          'Replace your cloud progress, notes, vocabulary and grammar rules with the data saved in this browser?',
+          'Replace cloud data'
+        );
+        if (confirmed) break;
+      }
+      if (choice === 'replace') {
+        nextState = normalizeState(browserData.raw);
+        nextState.settings.browserMigrationHandled = true;
+        const saved = await writeCloudStateVerified(nextState, { force: true });
+        nextState = saved.state;
+        updatedAt = saved.updatedAt;
+        removeBrowserDataKeys();
+      } else if (choice === 'keep') {
+        nextState.settings.browserMigrationHandled = true;
+        const saved = await writeCloudStateVerified(nextState, { expectedUpdatedAt: row.updated_at });
+        nextState = saved.state;
+        updatedAt = saved.updatedAt;
+        removeBrowserDataKeys();
+      }
+    } else {
+      const needsNormalisedSave = JSON.stringify(row.state) !== JSON.stringify(nextState);
+      if (needsNormalisedSave) {
+        const saved = await writeCloudStateVerified(nextState, { expectedUpdatedAt: row.updated_at });
+        nextState = saved.state;
+        updatedAt = saved.updatedAt;
+      }
+      if (browserData && (!browserData.meaningful || nextState.settings.browserMigrationHandled)) removeBrowserDataKeys();
+    }
+  } else {
+    if (browserData && browserData.meaningful) {
+      const choice = await chooseBrowserMigration(false);
+      if (choice === 'cancel') { await cancelMigrationAndSignOut(); return false; }
+      nextState = choice === 'move' ? normalizeState(browserData.raw) : defaultState();
+      nextState.settings.browserMigrationHandled = true;
+    } else {
+      nextState = defaultState();
+      nextState.settings.browserMigrationHandled = true;
+    }
+    const saved = await writeCloudStateVerified(nextState, { force: true });
+    nextState = saved.state;
+    updatedAt = saved.updatedAt;
+    if (browserData) removeBrowserDataKeys();
+  }
+
+  if (generation !== sessionGeneration || !currentUser || currentUser.id !== user.id) return false;
+  state = normalizeState(nextState);
+  serverUpdatedAt = updatedAt;
+  cloudReady = true;
+  stateRevision = 0;
+  lastSavedRevision = 0;
+  renderProfile(user);
+  setSyncState('saved', 'Saved', false);
+  renderAll();
+  switchView(initialView);
+  showTrackerState();
+  if (deferredProfileNotice) {
+    toast(deferredProfileNotice);
+    deferredProfileNotice = '';
+  }
+  return true;
+}
+
+async function beginUserSession(user) {
+  if (loadingUserId === user.id || (cloudReady && currentUser && currentUser.id === user.id)) return;
+  if (currentUser && currentUser.id !== user.id) clearPrivateSession();
+  currentUser = user;
+  loadingUserId = user.id;
+  const generation = ++sessionGeneration;
+  showSystemState('Loading cloud data', 'Loading your progress, notes, vocabulary and grammar rules…');
+  try {
+    let preparedUser = user;
+    if (pendingSignupAvatar && pendingSignupEmail &&
+        String(user.email || '').toLowerCase() === pendingSignupEmail.toLowerCase()) {
+      try {
+        preparedUser = await uploadAvatarForUser(user, pendingSignupAvatar);
+      } catch (error) {
+        deferredProfileNotice = avatarStorageErrorMessage(error, 'upload');
+      } finally {
+        pendingSignupAvatar = null;
+        pendingSignupEmail = '';
+        authAvatar.value = '';
+        clearObjectUrl('signup');
+      }
+    }
+    if (generation !== sessionGeneration) return;
+    currentUser = preparedUser;
+    preparedUser = await requireDisplayName(preparedUser);
+    if (!preparedUser || generation !== sessionGeneration) return;
+    currentUser = preparedUser;
+    await loadCloudStateForUser(preparedUser, generation);
+  } catch (error) {
+    if (generation !== sessionGeneration) return;
+    cloudReady = false;
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    showSystemState(
+      offline ? 'Offline' : 'Cloud load failed',
+      offline ? 'Reconnect to the internet, then retry loading your tracker.' : 'Your cloud data could not be loaded. Nothing has been overwritten.',
+      () => beginUserSession(currentUser || user)
+    );
+  } finally {
+    if (generation === sessionGeneration) loadingUserId = null;
+  }
+}
+
+async function handleAuthSession(session, event) {
+  if (event === 'PASSWORD_RECOVERY' && session && session.user) {
+    recoveryMode = true;
+    clearPrivateSession();
+    currentUser = session.user;
+    showPasswordState();
+    return;
+  }
+  if (!session || !session.user) {
+    recoveryMode = false;
+    clearPrivateSession();
+    showAuthState();
+    return;
+  }
+  if (recoveryMode) { showPasswordState(); return; }
+  await beginUserSession(session.user);
+}
+
+async function initializeApp() {
+  showSystemState('Initialising application', 'Checking your secure cloud connection…');
+  const config = window.SUPABASE_CONFIG || {};
+  const configMissing = typeof config.url !== 'string' || !/^https?:\/\//.test(config.url) ||
+    config.url.includes('YOUR_SUPABASE') || typeof config.publishableKey !== 'string' ||
+    !config.publishableKey.trim() || config.publishableKey.includes('YOUR_SUPABASE');
+  if (configMissing) {
+    showSystemState(
+      'Supabase configuration is missing.',
+      'Copy supabase-config.example.js to supabase-config.js and add your project URL and publishable key.'
+    );
+    return;
+  }
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    showSystemState(
+      offline ? 'Offline' : 'Cloud library unavailable',
+      offline ? 'Reconnect to the internet, then retry loading your tracker.' : 'The Supabase client could not be loaded. Check your connection and retry.',
+      () => window.location.reload()
+    );
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(config.url, config.publishableKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    setTimeout(() => { handleAuthSession(session, event).catch(() => showAuthState()); }, 0);
+  });
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    showSystemState('Initialisation failed', 'The authentication session could not be checked.', () => initializeApp());
+    return;
+  }
+  await handleAuthSession(data.session, 'INITIAL_SESSION');
+}
+
+authToggle.addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
+
+authForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const signingUp = authMode === 'signup';
+  const name = signingUp ? cleanDisplayName(authName.value) : '';
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if (signingUp) {
+    const nameError = displayNameError(name);
+    if (nameError) { setAuthMessage(nameError, 'error'); authName.focus(); return; }
+    const avatarFile = authAvatar.files && authAvatar.files[0];
+    const avatarError = avatarFile ? validateAvatarFile(avatarFile) : '';
+    if (avatarError) { setAuthMessage(avatarError, 'error'); authAvatar.focus(); return; }
+    pendingSignupAvatar = avatarFile || null;
+    pendingSignupEmail = email;
+  }
+  if (!email || !password) { setAuthMessage('Enter your email and password.', 'error'); return; }
+  setAuthBusy(true);
+  setAuthMessage(authMode === 'signup' ? 'Creating your account…' : 'Signing in…');
+  try {
+    const result = signingUp
+      ? await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: authRedirectUrl(), data: { display_name: name } }
+        })
+      : await supabaseClient.auth.signInWithPassword({ email, password });
+    if (result.error) throw result.error;
+    if (signingUp && !result.data.session) {
+      setAuthMessage(
+        pendingSignupAvatar
+          ? 'Check your email to confirm your account, then sign in here to upload your selected picture.'
+          : 'Check your email to confirm your account, then sign in.',
+        'success'
+      );
+    } else {
+      setAuthMessage('Signed in. Loading your cloud data…', 'success');
+    }
+  } catch (error) {
+    if (signingUp) pendingSignupEmail = '';
+    setAuthMessage(safeAuthError(error), 'error');
+  } finally {
+    setAuthBusy(false);
+  }
+});
+
+forgotPassword.addEventListener('click', async () => {
+  const email = authEmail.value.trim();
+  if (!email) { setAuthMessage('Enter your email first.', 'error'); authEmail.focus(); return; }
+  forgotPassword.disabled = true;
+  setAuthMessage('Sending password reset instructions…');
+  try {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl() });
+    if (error) throw error;
+    setAuthMessage('If an account exists for that email, reset instructions have been sent.', 'success');
+  } catch (error) {
+    setAuthMessage(safeAuthError(error), 'error');
+  } finally {
+    forgotPassword.disabled = false;
+  }
+});
+
+passwordForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const password = newPassword.value;
+  if (password.length < 6) {
+    passwordMessage.textContent = 'Please use at least 6 characters.';
+    passwordMessage.className = 'auth-message error';
+    return;
+  }
+  passwordSubmit.disabled = true;
+  passwordMessage.textContent = 'Updating password…';
+  passwordMessage.className = 'auth-message';
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ password });
+    if (error) throw error;
+    recoveryMode = false;
+    passwordMessage.textContent = 'Password updated.';
+    passwordMessage.className = 'auth-message success';
+    const { data } = await supabaseClient.auth.getSession();
+    await handleAuthSession(data.session, 'USER_UPDATED');
+  } catch (error) {
+    passwordMessage.textContent = safeAuthError(error);
+    passwordMessage.className = 'auth-message error';
+  } finally {
+    passwordSubmit.disabled = false;
+  }
+});
+
+async function performSignOut(button, skipFlush) {
+  const control = button || signOutBtn;
+  control.disabled = true;
+  try {
+    if (!skipFlush && stateRevision !== lastSavedRevision) {
+      const saved = await flushCloudSave(false);
+      if (!saved) {
+        toast('Unsynced changes remain on this device. Retry before signing out.');
+        return false;
+      }
+    }
+    const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
+    if (error) throw error;
+    clearPrivateSession();
+    showAuthState('Signed out.', 'success');
+    return true;
+  } catch (error) {
+    toast('Could not sign out. Please try again.');
+    return false;
+  } finally {
+    control.disabled = false;
+  }
+}
+
+signOutBtn.addEventListener('click', () => performSignOut(signOutBtn, false));
+
+function setProfilePictureBusy(busy) {
+  profilePictureInput.disabled = busy;
+  profilePictureUpload.disabled = busy;
+  profilePictureRemove.disabled = busy;
+  $('profilePictureClose').disabled = busy;
+  $('profilePictureCancel').disabled = busy;
+}
+
+function closeProfilePictureDialog() {
+  clearObjectUrl('profile');
+  profilePictureInput.value = '';
+  popModal();
+}
+
+function openProfilePictureDialog() {
+  if (!currentUser) return;
+  clearObjectUrl('profile');
+  profilePictureInput.value = '';
+  profilePictureMessage.textContent = '';
+  profilePictureMessage.className = 'auth-message profile-message';
+  const name = displayNameForUser(currentUser) || 'English learner';
+  showAvatarPreview(
+    profilePictureImage,
+    profilePictureInitial,
+    avatarSourceForUser(currentUser),
+    name
+  );
+  profilePictureRemove.hidden = !(currentUser.user_metadata && currentUser.user_metadata.avatar_url);
+  pushModal(profilePictureBackdrop);
+  profilePictureInput.focus();
+}
+
+profilePictureBtn.addEventListener('click', openProfilePictureDialog);
+$('profilePictureClose').addEventListener('click', closeProfilePictureDialog);
+$('profilePictureCancel').addEventListener('click', closeProfilePictureDialog);
+
+profilePictureInput.addEventListener('change', () => {
+  const file = profilePictureInput.files && profilePictureInput.files[0];
+  const error = file ? validateAvatarFile(file) : '';
+  if (error) {
+    profilePictureInput.value = '';
+    profilePictureMessage.textContent = error;
+    profilePictureMessage.className = 'auth-message profile-message error';
+    return;
+  }
+  profilePictureMessage.textContent = '';
+  profilePictureMessage.className = 'auth-message profile-message';
+  clearObjectUrl('profile');
+  profilePreviewUrl = file ? URL.createObjectURL(file) : '';
+  showAvatarPreview(
+    profilePictureImage,
+    profilePictureInitial,
+    profilePreviewUrl || avatarSourceForUser(currentUser),
+    displayNameForUser(currentUser) || 'English learner'
+  );
+});
+
+profilePictureUpload.addEventListener('click', async () => {
+  const file = profilePictureInput.files && profilePictureInput.files[0];
+  const validationError = validateAvatarFile(file);
+  if (validationError) {
+    profilePictureMessage.textContent = validationError;
+    profilePictureMessage.className = 'auth-message profile-message error';
+    profilePictureInput.focus();
+    return;
+  }
+  const userId = currentUser && currentUser.id;
+  setProfilePictureBusy(true);
+  profilePictureMessage.textContent = 'Uploading your picture…';
+  profilePictureMessage.className = 'auth-message profile-message';
+  try {
+    const updatedUser = await uploadAvatarForUser(currentUser, file);
+    if (!currentUser || currentUser.id !== userId) return;
+    currentUser = updatedUser;
+    renderProfile(updatedUser);
+    closeProfilePictureDialog();
+    toast('Profile picture updated');
+  } catch (error) {
+    profilePictureMessage.textContent = avatarStorageErrorMessage(error, 'upload');
+    profilePictureMessage.className = 'auth-message profile-message error';
+  } finally {
+    setProfilePictureBusy(false);
+  }
+});
+
+profilePictureRemove.addEventListener('click', async () => {
+  const confirmed = await confirmDecision('Remove your profile picture?', 'Remove');
+  if (!confirmed || !currentUser) return;
+  const userId = currentUser.id;
+  setProfilePictureBusy(true);
+  profilePictureMessage.textContent = 'Removing your picture…';
+  profilePictureMessage.className = 'auth-message profile-message';
+  try {
+    const updatedUser = await removeAvatarForUser(currentUser);
+    if (!currentUser || currentUser.id !== userId) return;
+    currentUser = updatedUser;
+    renderProfile(updatedUser);
+    closeProfilePictureDialog();
+    toast('Profile picture removed');
+  } catch (error) {
+    profilePictureMessage.textContent = avatarStorageErrorMessage(error, 'remove');
+    profilePictureMessage.className = 'auth-message profile-message error';
+  } finally {
+    setProfilePictureBusy(false);
+  }
+});
+
+function saveState() {
+  if (!cloudReady || !currentUser) return;
+  stateRevision++;
+  setSyncState('saving', 'Saving…', false);
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => flushCloudSave(false), 600);
+}
+
+function showCloudConflict() {
+  conflictPending = true;
+  setSyncState('failed', 'Newer cloud data', false);
+  if (conflictBackdrop.hidden) pushModal(conflictBackdrop);
+}
+
+async function flushCloudSave(force) {
+  if (!cloudReady || !currentUser) return false;
+  if (!force && stateRevision === lastSavedRevision) return true;
+  if (saveInFlight) { saveQueued = true; return false; }
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  saveInFlight = true;
+  saveQueued = false;
+  const userId = currentUser.id;
+  const revision = stateRevision;
+  const snapshot = normalizeState(state);
+  const expectedUpdatedAt = serverUpdatedAt;
+  setSyncState('saving', 'Saving…', false);
+
+  try {
+    let query = supabaseClient
+      .from('tracker_state')
+      .update({ state: snapshot, updated_at: new Date().toISOString() })
+      .eq('user_id', userId);
+    if (!force) query = query.eq('updated_at', expectedUpdatedAt);
+    const { data, error } = await query.select('updated_at').maybeSingle();
+    if (error) throw error;
+    if (!data) { showCloudConflict(); return false; }
+    if (!currentUser || currentUser.id !== userId) return false;
+    serverUpdatedAt = data.updated_at;
+    lastSavedRevision = revision;
+    conflictPending = false;
+    if (stateRevision === lastSavedRevision) setSyncState('saved', 'Saved', false);
+    else saveQueued = true;
+    return true;
+  } catch (error) {
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    setSyncState(offline ? 'offline' : 'failed', offline ? 'Offline' : 'Sync failed — retry', true);
+    return false;
+  } finally {
+    saveInFlight = false;
+    if (saveQueued && !conflictPending) {
+      saveQueued = false;
+      saveTimer = setTimeout(() => flushCloudSave(false), 100);
+    }
+  }
+}
+
+async function reloadCloudState() {
+  if (!currentUser) return;
+  setSyncState('saving', 'Loading…', false);
+  try {
+    const row = await fetchCloudRow(currentUser.id);
+    if (!row) throw new Error('Cloud state missing');
+    state = normalizeState(row.state);
+    serverUpdatedAt = row.updated_at;
+    stateRevision = 0;
+    lastSavedRevision = 0;
+    conflictPending = false;
+    renderAll();
+    setSyncState('saved', 'Saved', false);
+  } catch (error) {
+    setSyncState(navigator.onLine ? 'failed' : 'offline', navigator.onLine ? 'Sync failed — retry' : 'Offline', true);
+  }
+}
+
+$('reloadCloud').addEventListener('click', () => { popModal(); reloadCloudState(); });
+$('keepDevice').addEventListener('click', () => { popModal(); conflictPending = false; flushCloudSave(true); });
+syncRetry.addEventListener('click', () => flushCloudSave(false));
+
+window.addEventListener('offline', () => {
+  if (cloudReady) setSyncState('offline', 'Offline', true);
+});
+window.addEventListener('online', () => {
+  if (!cloudReady) return;
+  if (stateRevision !== lastSavedRevision) flushCloudSave(false);
+  else setSyncState('saved', 'Saved', false);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && cloudReady && stateRevision !== lastSavedRevision) flushCloudSave(false);
+});
+
+/* ==========================================================================
+   3. DERIVED DATA HELPERS
+   ========================================================================== */
+function displayTitle(n) { return state.titles[String(n)] || ''; }
+
+function ensureSet(n) {
+  const key = String(n);
+  if (!state.sets[key]) state.sets[key] = { notes: '' };
+  return state.sets[key];
+}
+function setNotes(n) {
+  const s = state.sets[String(n)];
+  return s && typeof s.notes === 'string' ? s.notes : '';
+}
+// Central vocabulary entries linked to exactly one set.
+function setVocab(n) {
+  return state.vocabulary.filter(v => v.setNumber === n);
+}
+
+function doneCountForSet(n) {
+  let c = 0;
+  for (let d = 1; d <= DAYS_PER_SET; d++) if (state.done[n + '-' + d]) c++;
+  return c;
+}
+function totalDone() {
+  let c = 0;
+  for (let n = 1; n <= TOTAL_SETS; n++) c += doneCountForSet(n);
+  return c;
+}
+function currentSetNo() {
+  for (let n = 1; n <= TOTAL_SETS; n++) if (doneCountForSet(n) < DAYS_PER_SET) return n;
+  return null; // everything complete
+}
+function nextOpenDay(n) {
+  for (let d = 1; d <= DAYS_PER_SET; d++) if (!state.done[n + '-' + d]) return d;
+  return null;
+}
+
+function vocabCounts() {
+  const c = { total: 0, new: 0, learning: 0, mastered: 0, set: 0, general: 0 };
+  for (const v of state.vocabulary) {
+    c.total++;
+    c[v.status]++;
+    if (v.setNumber === null) c.general++; else c.set++;
+  }
+  return c;
+}
+
+function locationLabel(setNumber, compact) {
+  return setNumber === null ? (compact ? 'General' : 'General Vocabulary') : 'Set ' + pad2(setNumber);
+}
+
+// Searchable text for one entry (used by Browse and Flashcards)
+function entryHaystack(v) {
+  let s = v.term + ' ' + v.example + ' ' + v.definition + ' ' + v.arabicMeaning;
+  if (v.setNumber !== null) {
+    s += ' set ' + v.setNumber + ' set ' + pad2(v.setNumber) + ' ' + displayTitle(v.setNumber);
+  }
+  return s.toLowerCase();
+}
+
+function matchesSetSelection(v, selection) {
+  if (!selection.general && !selection.sets.length) return true;
+  if (selection.general && v.setNumber === null) return true;
+  return v.setNumber !== null && selection.sets.includes(v.setNumber);
+}
+
+function createScopeFilter(container, onChange) {
+  const shell = document.createElement('details');
+  shell.className = 'set-filter-details';
+  const summary = el('summary', null, 'All Vocabulary');
+  shell.appendChild(summary);
+  const panel = el('div', 'set-filter-panel');
+  shell.appendChild(panel);
+  container.appendChild(shell);
+
+  const fieldset = el('fieldset', 'set-choice-fieldset');
+  fieldset.appendChild(el('legend', 'sr-only', 'Vocabulary scope'));
+  const actions = el('div', 'set-picker-actions');
+  const grid = el('div', 'set-check-grid');
+  const setBoxes = [];
+  let generalBox = null;
+
+  function getSelection() {
+    return {
+      general: !!(generalBox && generalBox.checked),
+      sets: setBoxes.filter(box => box.checked).map(box => Number(box.value))
+    };
+  }
+
+  function summaryText(selection) {
+    if (!selection.general && !selection.sets.length) return 'All Vocabulary';
+    if (!selection.general && selection.sets.length === 1) return 'Set ' + pad2(selection.sets[0]);
+    if (!selection.general) return selection.sets.length + ' sets selected';
+    if (!selection.sets.length) return 'General Vocabulary';
+    return 'General + ' + selection.sets.length + (selection.sets.length === 1 ? ' set' : ' sets');
+  }
+
+  function changed() {
+    const selection = getSelection();
+    summary.textContent = summaryText(selection);
+    if (onChange) onChange(selection);
+  }
+
+  function clear() {
+    if (generalBox) generalBox.checked = false;
+    for (const box of setBoxes) box.checked = false;
+    changed();
+  }
+
+  function actionButton(label, handler) {
+    const button = el('button', 'set-picker-action', label);
+    button.type = 'button';
+    button.addEventListener('click', handler);
+    actions.appendChild(button);
+  }
+
+  function addChoice(label, value, extraClass) {
+    const wrapper = el('label', 'set-check' + (extraClass ? ' ' + extraClass : ''));
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = value;
+    input.addEventListener('change', changed);
+    wrapper.appendChild(input);
+    wrapper.appendChild(document.createTextNode(label));
+    grid.appendChild(wrapper);
+    return input;
+  }
+
+  actionButton('All Vocabulary', clear);
+  actionButton('Select All Sets', () => {
+    for (const box of setBoxes) box.checked = true;
+    changed();
+  });
+  actionButton('Clear Selection', clear);
+  fieldset.appendChild(actions);
+
+  generalBox = addChoice('General Vocabulary', 'general', 'general-choice');
+  for (let n = 1; n <= TOTAL_SETS; n++) setBoxes.push(addChoice('Set ' + pad2(n), String(n)));
+  fieldset.appendChild(grid);
+  panel.appendChild(fieldset);
+
+  return {
+    getSelection,
+    setSelection(numbers, general) {
+      const selected = new Set(normalizeSetNumbers(numbers));
+      for (const box of setBoxes) box.checked = selected.has(Number(box.value));
+      if (generalBox) generalBox.checked = !!general;
+      changed();
+    },
+    clear
+  };
+}
+
+// Streak: consecutive logged days ending today (or yesterday if today not yet logged)
+function calcStreak() {
+  const day = new Date();
+  if (!state.log[dateKey(day)]) day.setDate(day.getDate() - 1);
+  let streak = 0;
+  while (state.log[dateKey(day)]) { streak++; day.setDate(day.getDate() - 1); }
+  return streak;
+}
+
+/* ==========================================================================
+   4. TOASTS (small non-blocking confirmations)
+   ========================================================================== */
+const toastsBox = $('toasts');
+function toast(msg) {
+  const t = el('div', 'toast', msg);
+  toastsBox.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 250);
+  }, 2400);
+}
+
+/* ==========================================================================
+   5. MODAL PLUMBING — stack, focus trap, Escape, confirm dialog
+   ========================================================================== */
+const modalStack = [];
+
+function getFocusable(root) {
+  return Array.from(root.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )).filter(node => !node.disabled && node.offsetParent !== null);
+}
+
+function pushModal(backdrop, options) {
+  modalStack.push({ backdrop, prevFocus: document.activeElement, locked: !!(options && options.locked) });
+  backdrop.style.zIndex = String(100 + modalStack.length);
+  backdrop.hidden = false;
+  document.body.classList.add('no-scroll');
+  backdrop.querySelector('.modal').focus();
+}
+
+function popModal(force) {
+  const candidate = modalStack[modalStack.length - 1];
+  if (candidate && candidate.locked && !force) return false;
+  const top = modalStack.pop();
+  if (!top) return;
+  top.backdrop.hidden = true;
+  top.backdrop.style.removeProperty('z-index');
+  if (!modalStack.length) document.body.classList.remove('no-scroll');
+  if (top.prevFocus && document.contains(top.prevFocus)) top.prevFocus.focus();
+  return true;
+}
+
+// Focus trap + Escape for whichever modal is on top
+document.addEventListener('keydown', (e) => {
+  if (!modalStack.length) return;
+  const topEntry = modalStack[modalStack.length - 1];
+  const top = topEntry.backdrop;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (!topEntry.locked) popModal();
+    return;
+  }
+  if (e.key === 'Tab') {
+    const focusables = getFocusable(top);
+    if (!focusables.length) { e.preventDefault(); return; }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === top.querySelector('.modal'))) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault(); first.focus();
+    }
+  }
+});
+
+// Clicking the dimmed backdrop closes the top modal
+for (const backdrop of [
+  $('setModalBackdrop'), $('wordModalBackdrop'), $('confirmBackdrop'),
+  $('exportVocabBackdrop'), $('grammarFormBackdrop'), $('grammarDetailsBackdrop'),
+  profilePictureBackdrop
+]) {
+  backdrop.addEventListener('mousedown', (e) => {
+    if (e.target === backdrop) popModal();
+  });
+}
+
+// Small confirm dialog (used instead of browser alerts/confirms)
+const confirmBackdrop = $('confirmBackdrop');
+const confirmMessage = $('confirmMessage');
+const confirmOk = $('confirmOk');
+const confirmCancel = $('confirmCancel');
+
+function confirmDecision(message, okLabel) {
+  return new Promise(resolve => {
+    confirmMessage.textContent = message;
+    confirmOk.textContent = okLabel || 'Confirm';
+    confirmOk.onclick = () => { popModal(); resolve(true); };
+    confirmCancel.onclick = () => { popModal(); resolve(false); };
+    pushModal(confirmBackdrop);
+    confirmOk.focus();
+  });
+}
+
+function confirmAction(message, onConfirm, okLabel) {
+  confirmDecision(message, okLabel).then(confirmed => {
+    if (confirmed) onConfirm();
+  });
+}
+
+/* ==========================================================================
+   6. TOP-LEVEL NAVIGATION (Tracker / Vocabulary / Grammar / Flashcards)
+   ========================================================================== */
+const VIEWS = {
+  tracker: { el: $('view-tracker'), btn: $('nav-tracker') },
+  vocab: { el: $('view-vocab'), btn: $('nav-vocab') },
+  grammar: { el: $('view-grammar'), btn: $('nav-grammar') },
+  flashcards: { el: $('view-flashcards'), btn: $('nav-flashcards') }
+};
+
+function switchView(name) {
+  if (!VIEWS[name]) name = 'tracker';
+  for (const key of Object.keys(VIEWS)) {
+    const active = key === name;
+    VIEWS[key].el.hidden = !active;
+    VIEWS[key].btn.classList.toggle('active', active);
+    if (active) VIEWS[key].btn.setAttribute('aria-current', 'page');
+    else VIEWS[key].btn.removeAttribute('aria-current');
+  }
+  if (name === 'vocab') renderBrowse();
+  if (name === 'grammar') renderGrammar();
+  if (name === 'flashcards') buildDeck(false);
+  try { sessionStorage.setItem('ee_tracker_view', name); } catch (e) { /* ignore */ }
+}
+
+$('nav-tracker').addEventListener('click', () => switchView('tracker'));
+$('nav-vocab').addEventListener('click', () => switchView('vocab'));
+$('nav-grammar').addEventListener('click', () => switchView('grammar'));
+$('nav-flashcards').addEventListener('click', () => switchView('flashcards'));
+
+/* ==========================================================================
+   7. DASHBOARD RENDERING
+   ========================================================================== */
+const heroSet = $('heroSet'), heroSetSub = $('heroSetSub');
+const overallFill = $('overallFill'), overallPct = $('overallPct'),
+      overallText = $('overallText'), overallBar = $('overallBar');
+const statStreak = $('statStreak'), statDays = $('statDays');
+const vTotal = $('vTotal'), vNew = $('vNew'), vLearning = $('vLearning'), vMastered = $('vMastered');
+const voBreakdown = $('voBreakdown');
+const logBtn = $('logBtn');
+
+function renderDashboard() {
+  const doneDays = totalDone();
+  const pct = Math.round((doneDays / TOTAL_DAYS) * 100);
+  overallFill.style.width = pct + '%';
+  overallPct.textContent = pct + '%';
+  overallText.textContent = doneDays + ' of ' + TOTAL_DAYS + ' listening days';
+  overallBar.setAttribute('aria-valuenow', String(doneDays));
+
+  const cs = currentSetNo();
+  if (cs === null) {
+    heroSet.textContent = 'All sets complete!';
+    heroSetSub.textContent = 'Congratulations — ' + TOTAL_DAYS + ' days of listening.';
+  } else {
+    const title = displayTitle(cs);
+    heroSet.textContent = 'Set ' + cs + (title ? ' · ' + title : '');
+    heroSetSub.textContent = doneCountForSet(cs) + ' of ' + DAYS_PER_SET + ' days completed';
+  }
+
+  statStreak.textContent = String(calcStreak());
+  statDays.textContent = String(doneDays);
+
+  const counts = vocabCounts();
+  vTotal.textContent = String(counts.total);
+  vNew.textContent = String(counts.new);
+  vLearning.textContent = String(counts.learning);
+  vMastered.textContent = String(counts.mastered);
+  voBreakdown.textContent = 'General: ' + counts.general + ' · Set Vocabulary: ' + counts.set;
+
+  if (cs === null) {
+    logBtn.textContent = 'All sets complete \u{1F389}';
+    logBtn.disabled = true;
+  } else if (state.log[dateKey(new Date())]) {
+    logBtn.textContent = 'Logged today ✓';
+    logBtn.disabled = true;
+  } else {
+    logBtn.textContent = 'Log today’s listening';
+    logBtn.disabled = false;
+  }
+}
+
+logBtn.addEventListener('click', () => {
+  const today = dateKey(new Date());
+  if (state.log[today]) { toast('Already logged today'); return; }
+  const cs = currentSetNo();
+  if (cs === null) return;
+  state.log[today] = true;
+  const day = nextOpenDay(cs);
+  if (day) state.done[cs + '-' + day] = true;
+  saveState();
+  renderDashboard();
+  renderCards();
+  toast('Progress saved');
+});
+
+// Dashboard vocabulary actions
+$('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
+$('dashBrowse').addEventListener('click', () => switchView('vocab'));
+$('dashFlashcards').addEventListener('click', () => switchView('flashcards'));
+
+/* ==========================================================================
+   8. SET CARDS GRID
+   ========================================================================== */
+const setsGrid = $('setsGrid');
+
+function renderCards() {
+  const cs = currentSetNo();
+  setsGrid.textContent = '';
+  for (let n = 1; n <= TOTAL_SETS; n++) {
+    const dc = doneCountForSet(n);
+    const wc = setVocab(n).length;
+    const hasNotes = setNotes(n).trim().length > 0;
+    const title = displayTitle(n);
+
+    const card = el('button', 'set-card');
+    card.type = 'button';
+    if (n === cs) card.classList.add('current');
+    if (dc === DAYS_PER_SET) card.classList.add('complete');
+    card.setAttribute('aria-label',
+      'Open Set ' + n + (title ? ', ' + title : '') + ': ' + dc + ' of ' + DAYS_PER_SET + ' days, ' +
+      wc + (wc === 1 ? ' word' : ' words') + (hasNotes ? ', notes added' : ''));
+
+    const top = el('div', 'set-card-top');
+    top.appendChild(el('span', 'set-no', 'Set ' + n));
+    if (dc === DAYS_PER_SET) top.appendChild(el('span', 'chip chip-done', '✓ Done'));
+    else if (n === cs) top.appendChild(el('span', 'chip chip-current', 'Current'));
+    card.appendChild(top);
+
+    const titleP = el('p', 'set-title' + (title ? '' : ' placeholder'), title || 'Untitled set');
+    card.appendChild(titleP);
+
+    const bar = el('div', 'day-bar');
+    for (let d = 1; d <= DAYS_PER_SET; d++) {
+      bar.appendChild(el('span', 'day-seg' + (state.done[n + '-' + d] ? ' on' : '')));
+    }
+    card.appendChild(bar);
+
+    const meta = el('div', 'set-meta');
+    meta.appendChild(el('span', null, dc + '/' + DAYS_PER_SET + ' days'));
+    meta.appendChild(el('span', 'sep', '·'));
+    meta.appendChild(el('span', null, wc + (wc === 1 ? ' word' : ' words')));
+    if (hasNotes) {
+      const flag = el('span', 'note-flag', '✎');
+      flag.appendChild(el('span', 'sr-only', ' Notes added'));
+      meta.appendChild(flag);
+    }
+    card.appendChild(meta);
+
+    card.addEventListener('click', () => openSetModal(n));
+    setsGrid.appendChild(card);
+  }
+}
+
+/* ==========================================================================
+   9. SHARED RE-RENDER AFTER ANY VOCABULARY CHANGE
+   ========================================================================== */
+function renderAfterVocabChange() {
+  saveState();
+  renderDashboard();
+  renderCards();
+  if (!setModalBackdrop.hidden && openSetNo !== null) renderVocabPanel();
+  if (!VIEWS.vocab.el.hidden) renderBrowse();
+  if (!VIEWS.flashcards.el.hidden) buildDeck(false);
+}
+
+/* ==========================================================================
+   10. VOCABULARY LIST ITEMS (shared by set modal + Browse view)
+   ========================================================================== */
+function buildVocabItem(v) {
+  const li = el('li', 'vocab-item');
+
+  const main = el('div', 'vocab-main');
+  main.appendChild(el('p', 'vocab-term', v.term));
+  if (v.example) main.appendChild(el('p', 'vocab-example', '“' + v.example + '”'));
+  if (v.definition) main.appendChild(el('p', 'vocab-definition', v.definition));
+  if (v.arabicMeaning) {
+    const arabic = el('p', 'vocab-arabic', v.arabicMeaning);
+    arabic.setAttribute('dir', 'auto');
+    main.appendChild(arabic);
+  }
+  main.appendChild(el('p', 'vocab-location', locationLabel(v.setNumber, true)));
+  li.appendChild(main);
+
+  const side = el('div', 'vocab-side');
+  const sel = el('select', 'vocab-status s-' + v.status);
+  sel.setAttribute('aria-label', 'Status for ' + v.term);
+  for (const st of STATUSES) {
+    sel.appendChild(new Option(STATUS_LABEL[st], st, false, st === v.status));
+  }
+  sel.addEventListener('change', () => {
+    v.status = sel.value;
+    v.updatedAt = new Date().toISOString();
+    sel.className = 'vocab-status s-' + v.status;
+    saveState();
+    renderDashboard();
+    toast('Status updated');
+  });
+  side.appendChild(sel);
+
+  const actions = el('div', 'vocab-actions');
+  const editBtn = el('button', 'link-btn', 'Edit');
+  editBtn.type = 'button';
+  editBtn.setAttribute('aria-label', 'Edit ' + v.term);
+  editBtn.addEventListener('click', () => openWordModal({ mode: 'edit', entry: v }));
+  const delBtn = el('button', 'link-btn danger', 'Delete');
+  delBtn.type = 'button';
+  delBtn.setAttribute('aria-label', 'Delete ' + v.term);
+  delBtn.addEventListener('click', () => {
+    confirmAction('Delete “' + v.term + '”? This cannot be undone.', () => {
+      const idx = state.vocabulary.findIndex(x => x.id === v.id);
+      if (idx > -1) state.vocabulary.splice(idx, 1);
+      renderAfterVocabChange();
+      toast('Word deleted');
+    }, 'Delete');
+  });
+  actions.appendChild(editBtn);
+  actions.appendChild(delBtn);
+  side.appendChild(actions);
+  li.appendChild(side);
+
+  return li;
+}
+
+/* ==========================================================================
+   11. SET DETAILS MODAL — tabs, progress days, set vocabulary, notes
+   ========================================================================== */
+const setModalBackdrop = $('setModalBackdrop');
+const setModalChip = $('setModalChip');
+const setTitleInput = $('setTitleInput');
+const tabButtons = [$('tab-progress'), $('tab-vocab'), $('tab-notes')];
+const panels = { 'tab-progress': $('panel-progress'), 'tab-vocab': $('panel-vocab'), 'tab-notes': $('panel-notes') };
+const setDayCount = $('setDayCount'), setStatusChip = $('setStatusChip'), dayToggles = $('dayToggles');
+const vocabCountLine = $('vocabCountLine'), vocabList = $('vocabList'), vocabEmpty = $('vocabEmpty');
+const addWordBtn = $('addWordBtn');
+const notesArea = $('notesArea'), notesSave = $('notesSave'), notesCancel = $('notesCancel');
+
+let openSetNo = null;
+
+function openSetModal(n) {
+  openSetNo = n;
+  setModalChip.textContent = 'Set ' + n;
+  setTitleInput.value = displayTitle(n);
+  selectTab('tab-progress');
+  renderProgressPanel();
+  renderVocabPanel();
+  notesArea.value = setNotes(n);
+  pushModal(setModalBackdrop);
+}
+
+$('setModalClose').addEventListener('click', () => popModal());
+
+// Set title edits save on change
+setTitleInput.addEventListener('change', () => {
+  if (openSetNo === null) return;
+  const v = setTitleInput.value.trim().slice(0, 80);
+  if (v) state.titles[String(openSetNo)] = v;
+  else delete state.titles[String(openSetNo)];
+  saveState();
+  renderDashboard();
+  renderCards();
+  toast('Title saved');
+});
+
+/* ---- Tabs (accessible: arrow keys + aria-selected) ---- */
+function selectTab(tabId) {
+  for (const btn of tabButtons) {
+    const active = btn.id === tabId;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+    btn.tabIndex = active ? 0 : -1;
+    panels[btn.id].hidden = !active;
+  }
+}
+for (const btn of tabButtons) {
+  btn.addEventListener('click', () => selectTab(btn.id));
+  btn.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const i = tabButtons.indexOf(btn);
+    const next = e.key === 'ArrowRight'
+      ? tabButtons[(i + 1) % tabButtons.length]
+      : tabButtons[(i + tabButtons.length - 1) % tabButtons.length];
+    selectTab(next.id);
+    next.focus();
+  });
+}
+
+/* ---- Progress panel: five toggleable study days ---- */
+function renderProgressPanel() {
+  const n = openSetNo;
+  const dc = doneCountForSet(n);
+  setDayCount.textContent = dc + ' of ' + DAYS_PER_SET + ' days completed';
+  if (dc === 0) { setStatusChip.textContent = 'Not started'; setStatusChip.className = 'status-chip s-none'; }
+  else if (dc === DAYS_PER_SET) { setStatusChip.textContent = 'Completed'; setStatusChip.className = 'status-chip s-done'; }
+  else { setStatusChip.textContent = 'In progress'; setStatusChip.className = 'status-chip s-progress'; }
+
+  dayToggles.textContent = '';
+  for (let d = 1; d <= DAYS_PER_SET; d++) {
+    const on = !!state.done[n + '-' + d];
+    const btn = el('button', 'day-toggle');
+    btn.type = 'button';
+    btn.setAttribute('aria-pressed', String(on));
+    btn.setAttribute('aria-label', 'Day ' + d + (on ? ', studied' : ', not studied'));
+    btn.appendChild(el('span', 'mark', on ? '✓' : '·'));
+    btn.appendChild(el('span', null, 'Day ' + d));
+    btn.addEventListener('click', () => {
+      if (state.done[n + '-' + d]) delete state.done[n + '-' + d];
+      else state.done[n + '-' + d] = true;
+      saveState();
+      renderProgressPanel();
+      renderDashboard();
+      renderCards();
+      toast('Progress saved');
+    });
+    dayToggles.appendChild(btn);
+  }
+}
+
+/* ---- Vocabulary panel: central entries linked to this set ---- */
+function renderVocabPanel() {
+  const words = setVocab(openSetNo);
+  vocabCountLine.textContent = words.length + (words.length === 1 ? ' word' : ' words') + ' in this set';
+  vocabEmpty.hidden = words.length > 0;
+  vocabList.textContent = '';
+  for (const w of words) vocabList.appendChild(buildVocabItem(w));
+}
+
+// The launch location determines whether a word is General or set vocabulary.
+addWordBtn.addEventListener('click', () => {
+  openWordModal({ mode: 'add', presetSet: openSetNo });
+});
+
+/* ---- Notes panel ---- */
+notesSave.addEventListener('click', () => {
+  ensureSet(openSetNo).notes = notesArea.value.trim();
+  saveState();
+  renderCards();
+  toast('Notes saved');
+});
+notesCancel.addEventListener('click', () => {
+  notesArea.value = setNotes(openSetNo);
+});
+
+/* ==========================================================================
+   12. ADD / EDIT WORD MODAL — standalone, with duplicate detection
+   ========================================================================== */
+const wordModalBackdrop = $('wordModalBackdrop');
+const wordModalTitle = $('wordModalTitle');
+const wordForm = $('wordForm');
+const wmLocation = $('wmLocation'), wmTerm = $('wmTerm'), wmExample = $('wmExample'),
+      wmDefinition = $('wmDefinition'), wmArabic = $('wmArabic');
+const wordFormActions = $('wordFormActions');
+const dupPanel = $('dupPanel'), dupTerm = $('dupTerm'), dupInfo = $('dupInfo'),
+      dupAddAnyway = $('dupAddAnyway'), dupEdit = $('dupEdit'), dupCancel = $('dupCancel');
+
+const wm = { mode: 'add', editId: null, setNumber: null, allowDuplicate: false, dupId: null };
+
+function updateWordLocation(isAdding) {
+  wmLocation.textContent = isAdding && wm.setNumber !== null
+    ? 'Adding to Set ' + pad2(wm.setNumber)
+    : locationLabel(wm.setNumber, false);
+}
+
+function fillWordForm(v) {
+  wmTerm.value = v.term;
+  wmExample.value = v.example;
+  wmDefinition.value = v.definition;
+  wmArabic.value = v.arabicMeaning;
+  wm.setNumber = v.setNumber;
+  updateWordLocation(false);
+}
+
+function openWordModal(opts) {
+  opts = opts || {};
+  wm.mode = opts.mode === 'edit' ? 'edit' : 'add';
+  wm.editId = null;
+  wm.allowDuplicate = false;
+  hideDupPanel();
+
+  if (wm.mode === 'edit') {
+    wm.editId = opts.entry.id;
+    wordModalTitle.textContent = 'Edit Word';
+    fillWordForm(opts.entry);
+  } else {
+    wordModalTitle.textContent = 'Add New Word';
+    wmTerm.value = ''; wmExample.value = ''; wmDefinition.value = ''; wmArabic.value = '';
+    wm.setNumber = normalizeSetNumber(opts.presetSet);
+    updateWordLocation(true);
+  }
+  pushModal(wordModalBackdrop);
+  wmTerm.focus();
+}
+
+function doWordSave() {
+  const term = wmTerm.value.trim();
+  const example = wmExample.value.trim();
+  if (!term || !example) {
+    toast('Word and example sentence are required');
+    (!term ? wmTerm : wmExample).focus();
+    return;
+  }
+  // Duplicate detection (adds only): lowercase trimmed comparison.
+  // The user can still add the word anyway or jump to the existing entry.
+  if (wm.mode === 'add' && !wm.allowDuplicate) {
+    const dup = state.vocabulary.find(v => v.term.trim().toLowerCase() === term.toLowerCase());
+    if (dup) { showDupPanel(dup); return; }
+  }
+  const now = new Date().toISOString();
+  const fields = {
+    term: term.slice(0, 120),
+    example: example.slice(0, 240),
+    definition: wmDefinition.value.trim().slice(0, 240),
+    arabicMeaning: wmArabic.value.trim().slice(0, 240)
+  };
+  if (wm.mode === 'edit') {
+    const v = state.vocabulary.find(x => x.id === wm.editId);
+    if (v) Object.assign(v, fields, { updatedAt: now });
+    toast('Word updated');
+  } else {
+    state.vocabulary.push(Object.assign({
+      id: uid(), status: 'new', setNumber: wm.setNumber, createdAt: now, updatedAt: now
+    }, fields));
+    toast('Word added');
+  }
+  popModal();
+  renderAfterVocabChange();
+}
+
+wordForm.addEventListener('submit', (e) => { e.preventDefault(); doWordSave(); });
+$('wmCancel').addEventListener('click', () => popModal());
+$('wordModalClose').addEventListener('click', () => popModal());
+
+function showDupPanel(dup) {
+  wm.dupId = dup.id;
+  dupTerm.textContent = dup.term;
+  dupInfo.textContent = [dup.definition || dup.example, locationLabel(dup.setNumber, false), STATUS_LABEL[dup.status]]
+    .filter(Boolean).join(' · ');
+  dupPanel.hidden = false;
+  wordFormActions.hidden = true;
+  dupAddAnyway.focus();
+}
+function hideDupPanel() {
+  dupPanel.hidden = true;
+  wordFormActions.hidden = false;
+  wm.dupId = null;
+}
+dupCancel.addEventListener('click', () => hideDupPanel());
+dupAddAnyway.addEventListener('click', () => {
+  wm.allowDuplicate = true;
+  hideDupPanel();
+  doWordSave();
+});
+dupEdit.addEventListener('click', () => {
+  const v = state.vocabulary.find(x => x.id === wm.dupId);
+  hideDupPanel();
+  if (!v) return;
+  wm.mode = 'edit';
+  wm.editId = v.id;
+  wordModalTitle.textContent = 'Edit Word';
+  fillWordForm(v);
+  wmTerm.focus();
+});
+
+/* ==========================================================================
+   13. BROWSE VOCABULARY VIEW — filters, search, sort
+   ========================================================================== */
+const bvStatus = $('bvStatus'), bvSort = $('bvSort'), bvSearch = $('bvSearch'),
+      bvCount = $('bvCount'), bvList = $('bvList'), bvEmpty = $('bvEmpty');
+const browseSetPicker = createScopeFilter($('bvSetFilter'), renderBrowse);
+
+const STATUS_ORDER = { new: 0, learning: 1, mastered: 2 };
+function sortVocab(list, mode) {
+  const byTerm = (a, b) => a.term.localeCompare(b.term, undefined, { sensitivity: 'base' });
+  const byCreated = (a, b) => (a.createdAt || '').localeCompare(b.createdAt || '');
+  switch (mode) {
+    case 'oldest': return list.sort(byCreated);
+    case 'az': return list.sort(byTerm);
+    case 'za': return list.sort((a, b) => byTerm(b, a));
+    case 'status': return list.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || byTerm(a, b));
+    default: return list.sort((a, b) => byCreated(b, a)); // newest first
+  }
+}
+
+function renderBrowse() {
+  const q = bvSearch.value.trim().toLowerCase();
+  const setSelection = browseSetPicker.getSelection();
+  let list = state.vocabulary.filter(v => {
+    if (bvStatus.value !== 'all' && v.status !== bvStatus.value) return false;
+    if (!matchesSetSelection(v, setSelection)) return false;
+    if (q && !entryHaystack(v).includes(q)) return false;
+    return true;
+  });
+  sortVocab(list, bvSort.value);
+
+  bvCount.textContent = list.length + (list.length === 1 ? ' word' : ' words') + ' shown';
+  bvList.textContent = '';
+  for (const v of list) bvList.appendChild(buildVocabItem(v));
+  bvEmpty.hidden = list.length > 0;
+}
+
+for (const control of [bvStatus, bvSort]) {
+  control.addEventListener('change', renderBrowse);
+}
+bvSearch.addEventListener('input', renderBrowse);
+$('bvAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
+
+/* ========================================================================== 
+   14. GRAMMAR RULES — search, add/edit/details/delete
+   ========================================================================== */
+const grammarSearch = $('grammarSearch'), grammarList = $('grammarList'), grammarEmpty = $('grammarEmpty'),
+      grammarNoMatches = $('grammarNoMatches');
+const grammarFormBackdrop = $('grammarFormBackdrop'), grammarForm = $('grammarForm'),
+      grammarFormTitle = $('grammarFormTitle'), grammarFormSave = $('grammarFormSave'),
+      grammarRuleTitle = $('grammarRuleTitle'), grammarExplanation = $('grammarExplanation'),
+      grammarExamples = $('grammarExamples'), grammarNotes = $('grammarNotes'),
+      grammarTitleError = $('grammarTitleError'), grammarExplanationError = $('grammarExplanationError');
+const grammarDetailsBackdrop = $('grammarDetailsBackdrop'), grammarDetailsTitle = $('grammarDetailsTitle'),
+      grammarDetailsExplanation = $('grammarDetailsExplanation'),
+      grammarExamplesSection = $('grammarExamplesSection'), grammarDetailsExamples = $('grammarDetailsExamples'),
+      grammarNotesSection = $('grammarNotesSection'), grammarDetailsNotes = $('grammarDetailsNotes');
+
+const grammarEditor = { editId: null };
+let grammarDetailsRuleId = null;
+
+function grammarHaystack(rule) {
+  return [rule.title, rule.explanation, rule.examples.join(' '), rule.notes]
+    .join(' ')
+    .toLocaleLowerCase();
+}
+
+function grammarRuleById(id) {
+  return state.grammarRules.find(rule => rule.id === id) || null;
+}
+
+function grammarMetaText(rule) {
+  const parts = [];
+  if (rule.examples.length) parts.push(rule.examples.length + (rule.examples.length === 1 ? ' example' : ' examples'));
+  if (rule.notes) parts.push('Has notes');
+  return parts.join(' · ');
+}
+
+function buildGrammarItem(rule) {
+  const item = el('li', 'grammar-item');
+  const main = el('button', 'grammar-card-main');
+  main.type = 'button';
+  main.setAttribute('aria-label', 'View ' + rule.title);
+
+  main.appendChild(el('span', 'grammar-rule-title', rule.title));
+  main.appendChild(el('span', 'grammar-preview', rule.explanation));
+  const meta = grammarMetaText(rule);
+  if (meta) main.appendChild(el('span', 'grammar-meta', meta));
+  main.addEventListener('click', () => openGrammarDetails(rule.id));
+  item.appendChild(main);
+
+  const actions = el('div', 'grammar-actions');
+  const viewButton = el('button', 'link-btn', 'View');
+  viewButton.type = 'button';
+  viewButton.setAttribute('aria-label', 'View ' + rule.title);
+  viewButton.addEventListener('click', () => openGrammarDetails(rule.id));
+  const editButton = el('button', 'link-btn', 'Edit');
+  editButton.type = 'button';
+  editButton.setAttribute('aria-label', 'Edit ' + rule.title);
+  editButton.addEventListener('click', () => openGrammarForm(rule));
+  const deleteButton = el('button', 'link-btn danger', 'Delete');
+  deleteButton.type = 'button';
+  deleteButton.setAttribute('aria-label', 'Delete ' + rule.title);
+  deleteButton.addEventListener('click', () => requestGrammarDelete(rule.id));
+  actions.appendChild(viewButton);
+  actions.appendChild(editButton);
+  actions.appendChild(deleteButton);
+  item.appendChild(actions);
+  return item;
+}
+
+function renderGrammar() {
+  const query = grammarSearch.value.trim().toLocaleLowerCase();
+  const rules = state.grammarRules
+    .filter(rule => !query || grammarHaystack(rule).includes(query))
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '') ||
+      (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+  grammarList.textContent = '';
+  for (const rule of rules) grammarList.appendChild(buildGrammarItem(rule));
+  grammarList.hidden = rules.length === 0;
+  grammarEmpty.hidden = state.grammarRules.length !== 0;
+  grammarNoMatches.hidden = state.grammarRules.length === 0 || rules.length !== 0;
+}
+
+function setGrammarFieldError(input, errorNode, message) {
+  errorNode.textContent = message || '';
+  errorNode.hidden = !message;
+  if (message) input.setAttribute('aria-invalid', 'true');
+  else input.removeAttribute('aria-invalid');
+}
+
+function clearGrammarErrors() {
+  setGrammarFieldError(grammarRuleTitle, grammarTitleError, '');
+  setGrammarFieldError(grammarExplanation, grammarExplanationError, '');
+}
+
+function openGrammarForm(rule) {
+  clearGrammarErrors();
+  grammarEditor.editId = rule ? rule.id : null;
+  grammarFormTitle.textContent = rule ? 'Edit Grammar Rule' : 'Add Grammar Rule';
+  grammarFormSave.textContent = rule ? 'Save Changes' : 'Save Rule';
+  grammarRuleTitle.value = rule ? rule.title : '';
+  grammarExplanation.value = rule ? rule.explanation : '';
+  grammarExamples.value = rule ? rule.examples.join('\n') : '';
+  grammarNotes.value = rule ? rule.notes : '';
+  pushModal(grammarFormBackdrop);
+  grammarRuleTitle.focus();
+}
+
+function renderGrammarDetails(rule) {
+  grammarDetailsTitle.textContent = rule.title;
+  grammarDetailsExplanation.textContent = rule.explanation;
+
+  grammarDetailsExamples.textContent = '';
+  for (const example of rule.examples) grammarDetailsExamples.appendChild(el('li', null, example));
+  grammarExamplesSection.hidden = rule.examples.length === 0;
+
+  grammarDetailsNotes.textContent = rule.notes;
+  grammarNotesSection.hidden = !rule.notes;
+}
+
+function openGrammarDetails(id) {
+  const rule = grammarRuleById(id);
+  if (!rule) return;
+  grammarDetailsRuleId = rule.id;
+  renderGrammarDetails(rule);
+  pushModal(grammarDetailsBackdrop);
+}
+
+function closeGrammarDetails() {
+  if (grammarDetailsBackdrop.hidden) return;
+  grammarDetailsRuleId = null;
+  popModal();
+}
+
+async function requestGrammarDelete(id) {
+  const rule = grammarRuleById(id);
+  if (!rule) return;
+  const confirmed = await confirmDecision(
+    'Delete “' + rule.title + '”? This action cannot be undone.',
+    'Delete'
+  );
+  if (!confirmed) return;
+  const index = state.grammarRules.findIndex(candidate => candidate.id === id);
+  if (index < 0) return;
+  state.grammarRules.splice(index, 1);
+  if (!grammarDetailsBackdrop.hidden && grammarDetailsRuleId === id) closeGrammarDetails();
+  saveState();
+  renderGrammar();
+  toast('Grammar rule deleted');
+}
+
+grammarForm.addEventListener('submit', event => {
+  event.preventDefault();
+  clearGrammarErrors();
+  const title = grammarRuleTitle.value.trim();
+  const explanation = grammarExplanation.value.trim();
+  let firstInvalid = null;
+  if (visibleCharacterCount(title) < 2) {
+    setGrammarFieldError(grammarRuleTitle, grammarTitleError, 'Enter a rule title with at least two visible characters.');
+    firstInvalid = grammarRuleTitle;
+  }
+  if (!explanation) {
+    setGrammarFieldError(grammarExplanation, grammarExplanationError, 'Enter an explanation.');
+    if (!firstInvalid) firstInvalid = grammarExplanation;
+  }
+  if (firstInvalid) { firstInvalid.focus(); return; }
+
+  const examples = grammarExamples.value
+    .split(/\r?\n/u)
+    .map(example => example.trim())
+    .filter(Boolean);
+  const fields = {
+    title,
+    explanation,
+    examples,
+    notes: grammarNotes.value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (grammarEditor.editId) {
+    const rule = grammarRuleById(grammarEditor.editId);
+    if (!rule) { popModal(); renderGrammar(); return; }
+    Object.assign(rule, fields);
+    popModal();
+    saveState();
+    renderGrammar();
+    toast('Grammar rule updated');
+    return;
+  }
+
+  let id = grammarUid();
+  while (grammarRuleById(id)) id = grammarUid();
+  state.grammarRules.push(Object.assign({ id, createdAt: fields.updatedAt }, fields));
+  popModal();
+  saveState();
+  renderGrammar();
+  toast('Grammar rule added');
+});
+
+for (const input of [grammarRuleTitle, grammarExplanation]) {
+  input.addEventListener('input', () => {
+    if (input === grammarRuleTitle) setGrammarFieldError(grammarRuleTitle, grammarTitleError, '');
+    else setGrammarFieldError(grammarExplanation, grammarExplanationError, '');
+  });
+}
+
+$('addGrammarRule').addEventListener('click', () => openGrammarForm(null));
+$('grammarEmptyAdd').addEventListener('click', () => openGrammarForm(null));
+$('grammarFormClose').addEventListener('click', () => popModal());
+$('grammarFormCancel').addEventListener('click', () => popModal());
+$('grammarDetailsClose').addEventListener('click', closeGrammarDetails);
+$('grammarDetailsEdit').addEventListener('click', () => {
+  const rule = grammarRuleById(grammarDetailsRuleId);
+  if (!rule) return;
+  closeGrammarDetails();
+  openGrammarForm(rule);
+});
+$('grammarDetailsDelete').addEventListener('click', () => requestGrammarDelete(grammarDetailsRuleId));
+grammarSearch.addEventListener('input', renderGrammar);
+
+/* ========================================================================== 
+   15. FLASHCARDS — deck building, filters and review controls
+   ========================================================================== */
+const fcStatusFilter = $('fcStatusFilter');
+const fcStage = $('fcStage'), fcEmpty = $('fcEmpty');
+const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer'),
+      fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
+      fcBackLocation = $('fcBackLocation'), fcStatusChip = $('fcStatusChip');
+const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
+const flashSetPicker = createScopeFilter($('fcSetFilter'), () => buildDeck(false));
+
+// The deck stores entry ids so edits always show live data
+const fc = { deck: [], index: 0, revealed: false };
+
+function getDeckEntry(id) {
+  return state.vocabulary.find(v => v.id === id) || null;
+}
+
+function buildDeck(shuffle) {
+  const setSelection = flashSetPicker.getSelection();
+  const statusF = fcStatusFilter.value;
+  const deck = [];
+  for (const v of state.vocabulary) {
+    if (!matchesSetSelection(v, setSelection)) continue;
+    if (statusF !== 'all' && v.status !== statusF) continue;
+    deck.push(v.id);
+  }
+  if (shuffle) fisherYates(deck);
+  fc.deck = deck;
+  fc.index = 0;
+  fc.revealed = false;
+  renderFlashcard();
+}
+
+function renderFlashcard() {
+  fc.deck = fc.deck.filter(id => getDeckEntry(id) !== null);
+  if (!fc.deck.length) {
+    fcStage.hidden = true;
+    fcEmpty.hidden = false;
+    return;
+  }
+  fcStage.hidden = false;
+  fcEmpty.hidden = true;
+  if (fc.index >= fc.deck.length) fc.index = 0;
+
+  const entry = getDeckEntry(fc.deck[fc.index]);
+  fcSetLine.textContent = locationLabel(entry.setNumber, false);
+  fcTerm.textContent = entry.term;
+  if (entry.definition) {
+    fcDefinition.textContent = entry.definition;
+    fcDefinition.hidden = false;
+  } else {
+    fcDefinition.hidden = true;
+  }
+  if (entry.arabicMeaning) {
+    fcArabic.textContent = entry.arabicMeaning;
+    fcArabic.hidden = false;
+  } else {
+    fcArabic.hidden = true;
+  }
+  if (entry.example) {
+    fcExample.textContent = '“' + entry.example + '”';
+    fcExample.hidden = false;
+  } else {
+    fcExample.hidden = true;
+  }
+  fcBackLocation.textContent = locationLabel(entry.setNumber, false);
+  fcStatusChip.textContent = STATUS_LABEL[entry.status];
+  fcStatusChip.className = 'status-chip s-' + entry.status;
+
+  fcAnswer.hidden = !fc.revealed;
+  fcReveal.hidden = fc.revealed;
+  fcGrade.hidden = !fc.revealed;
+  fcCounter.textContent = 'Card ' + (fc.index + 1) + ' of ' + fc.deck.length;
+}
+
+function stepCard(delta) {
+  if (!fc.deck.length) return;
+  fc.index = (fc.index + delta + fc.deck.length) % fc.deck.length;
+  fc.revealed = false;
+  renderFlashcard();
+}
+
+$('fcPrev').addEventListener('click', () => stepCard(-1));
+$('fcNext').addEventListener('click', () => stepCard(1));
+fcReveal.addEventListener('click', () => {
+  fc.revealed = true;
+  renderFlashcard();
+});
+
+// Grade buttons update the status and then advance to the next card.
+for (const btn of fcGrade.querySelectorAll('[data-status]')) {
+  btn.addEventListener('click', () => {
+    const entry = fc.deck.length ? getDeckEntry(fc.deck[fc.index]) : null;
+    if (!entry) return;
+    entry.status = btn.dataset.status;
+    entry.updatedAt = new Date().toISOString();
+    saveState();
+    renderDashboard();
+    toast('Marked as ' + STATUS_LABEL[entry.status]);
+    stepCard(1);
+  });
+}
+
+$('fcShuffle').addEventListener('click', () => { buildDeck(true); toast('Cards shuffled'); });
+$('fcRestart').addEventListener('click', () => { buildDeck(false); toast('Review restarted'); });
+fcStatusFilter.addEventListener('change', () => buildDeck(false));
+
+/* ==========================================================================
+   16. VOCABULARY-ONLY EXPORT
+   ========================================================================== */
+const exportVocabBackdrop = $('exportVocabBackdrop');
+const exportCsv = $('exportCsv'), exportTxt = $('exportTxt');
+
+function downloadTextFile(content, type, filename) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function csvCell(value) {
+  return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"';
+}
+
+function exportVocabularyCsv() {
+  if (!state.vocabulary.length) { toast('No vocabulary to export.'); return; }
+  const columns = ['Word/Phrase', 'Definition', 'Arabic Meaning', 'Example Sentence'];
+  const rows = state.vocabulary.map(entry => [
+    entry.term,
+    entry.definition,
+    entry.arabicMeaning,
+    entry.example
+  ]);
+  const csv = '\uFEFF' + [columns, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+  downloadTextFile(csv, 'text/csv;charset=utf-8', 'english-vocabulary-' + dateKey(new Date()) + '.csv');
+  toast('Vocabulary CSV exported');
+}
+
+function exportVocabularyTxt() {
+  if (!state.vocabulary.length) { toast('No vocabulary to export.'); return; }
+  const blocks = state.vocabulary.map(entry => {
+    const lines = ['Word: ' + entry.term];
+    if (entry.definition) lines.push('Definition: ' + entry.definition);
+    if (entry.arabicMeaning) lines.push('Arabic Meaning: ' + entry.arabicMeaning);
+    if (entry.example) lines.push('Example Sentence: ' + entry.example);
+    return lines.join('\r\n');
+  });
+  downloadTextFile(
+    blocks.join('\r\n\r\n----------------------------------------\r\n\r\n'),
+    'text/plain;charset=utf-8',
+    'english-vocabulary-' + dateKey(new Date()) + '.txt'
+  );
+  toast('Vocabulary TXT exported');
+}
+
+$('vocabExportBtn').addEventListener('click', () => {
+  if (!state.vocabulary.length) { toast('No vocabulary to export.'); return; }
+  exportCsv.disabled = false;
+  exportTxt.disabled = false;
+  pushModal(exportVocabBackdrop);
+});
+$('exportVocabClose').addEventListener('click', () => popModal());
+exportCsv.addEventListener('click', () => { popModal(); exportVocabularyCsv(); });
+exportTxt.addEventListener('click', () => { popModal(); exportVocabularyTxt(); });
+
+/* ==========================================================================
+   17. INIT
+   ========================================================================== */
+function renderAll() {
+  renderDashboard();
+  renderCards();
+  if (!VIEWS.vocab.el.hidden) renderBrowse();
+  if (!VIEWS.grammar.el.hidden) renderGrammar();
+  if (!VIEWS.flashcards.el.hidden) buildDeck(false);
+}
+
+let initialView = 'tracker';
+try {
+  const saved = sessionStorage.getItem('ee_tracker_view');
+  if (saved && VIEWS[saved]) initialView = saved;
+} catch (e) { /* ignore */ }
+initializeApp();
+</script>
+</body>
+</html>

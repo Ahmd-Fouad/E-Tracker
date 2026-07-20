@@ -1,0 +1,16 @@
+
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Local backups
+*.before-*.html
+*.messy-backup.html
+*.backup.html
+
+# Vercel local files
+.vercel
