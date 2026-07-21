@@ -350,6 +350,69 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .metric-num { font-family: "Space Grotesk", sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
 .metric-streak .metric-num { color: var(--accent); }
 .metric-tile .metric-label { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+.metrics-card .status-metrics { border-top: 0; padding-top: 0; }
+
+/* 7b. DAILY GUIDANCE — Today's Mission + Weekly Goal ---------------------- */
+.mission-section { display: flex; flex-direction: column; gap: 14px; }
+.guidance-card { display: flex; flex-direction: column; gap: 16px; }
+.guidance-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mission-badge {
+  font-size: 12px; font-weight: 600; color: var(--success);
+  background: var(--success-tint); border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 3px 11px; border-radius: var(--pill);
+}
+
+.mission-tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.mission-task { display: flex; align-items: flex-start; gap: 12px; }
+.mission-check {
+  flex: none; width: 22px; height: 22px; margin-top: 1px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 12px; line-height: 1;
+  color: var(--text-3); background: var(--surface-2); border: 1px solid var(--border-strong);
+}
+.mission-task.is-done .mission-check { color: var(--success); border-color: rgba(52, 211, 153, 0.4); background: var(--success-tint); }
+.mission-task-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.mission-task-title { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.mission-task.is-done .mission-task-title,
+.mission-task.is-empty .mission-task-title { color: var(--text-2); font-weight: 500; }
+.mission-task-note { font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
+
+.mission-actions { display: flex; flex-direction: column; gap: 10px; }
+.mission-actions .btn { width: 100%; }
+.mission-actions .btn-primary { min-height: 48px; font-size: 15px; }
+.mission-done { margin: 0; font-size: 15px; font-weight: 600; color: var(--success); }
+
+.weekly-goal {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding-top: 14px; border-top: 1px solid var(--border);
+}
+.weekly-label { font-size: 13px; color: var(--text-2); font-weight: 500; }
+.weekly-goal.is-complete .weekly-label { color: var(--success); font-weight: 600; }
+.weekly-dots { display: inline-flex; gap: 6px; }
+.weekly-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border-strong); }
+.weekly-dot.on { background: var(--accent); border-color: transparent; }
+
+/* Five-Day Study Method inside the set modal */
+.day-method { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; color: var(--primary-light); }
+.day-method-helper { margin: 0 0 12px; font-size: 13px; color: var(--text-2); }
+.day-toggle.is-current { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary-ring); }
+
+/* Flashcards daily-review banner */
+.fc-daily-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 10px 14px;
+  background: var(--primary-tint); border: 1px solid rgba(124, 108, 242, 0.3); border-radius: var(--r-md);
+}
+.fc-daily-label { font-size: 13.5px; font-weight: 600; color: var(--primary-light); }
+.flashcards.daily-mode #fcSetFilter,
+.flashcards.daily-mode #fcStatusFilter,
+.flashcards.daily-mode .filter-bar > label[for="fcStatusFilter"] { display: none; }
+
+@media (min-width: 560px) {
+  .mission-actions { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .mission-actions .btn { width: auto; }
+  .mission-actions .btn-primary { padding: 12px 24px; }
+}
 
 /* 8. TRACKER — VOCAB SUMMARY ---------------------------------------------- */
 .vocab-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
@@ -369,6 +432,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   text-align: left; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--r-md);
   padding: 15px 16px; display: flex; flex-direction: column; gap: 10px;
+  min-width: 0; /* allow the grid item to shrink so long titles ellipsize instead of overflowing */
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
 }
 .set-card:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow); }
@@ -814,16 +878,45 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
   <!-- ============ VIEW: TRACKER ============ -->
   <div id="view-tracker">
-    <section aria-label="Study progress">
-      <div class="card status-card">
-        <div class="status-head">
-          <div class="status-lead">
-            <p class="eyebrow">Current set</p>
-            <h2 class="status-set" id="heroSet">Set 1</h2>
-            <p class="status-sub" id="heroSetSub">0 of 5 days completed</p>
-          </div>
-          <button class="btn btn-primary btn-log" id="logBtn">Log today&rsquo;s listening</button>
+    <!-- Daily guidance: what to study now, today's short review, this week's goal -->
+    <section class="mission-section" aria-labelledby="missionHeading">
+      <div class="card guidance-card">
+        <div class="guidance-head">
+          <h2 class="eyebrow" id="missionHeading">Today&rsquo;s Mission</h2>
+          <span class="mission-badge" id="missionBadge" hidden>Completed &#10003;</span>
         </div>
+
+        <ul class="mission-tasks">
+          <li class="mission-task" id="missionLessonTask">
+            <span class="mission-check" id="missionLessonCheck" aria-hidden="true">&#9675;</span>
+            <span class="mission-task-body">
+              <span class="mission-task-title" id="missionLessonTitle">Continue Set 1 &middot; Day 1</span>
+              <span class="mission-task-note" id="missionLessonNote">Listen for meaning</span>
+            </span>
+          </li>
+          <li class="mission-task" id="missionVocabTask">
+            <span class="mission-check" id="missionVocabCheck" aria-hidden="true">&#9675;</span>
+            <span class="mission-task-body">
+              <span class="mission-task-title" id="missionVocabTitle">Review vocabulary</span>
+            </span>
+          </li>
+        </ul>
+
+        <div class="mission-actions">
+          <button class="btn btn-primary" id="missionBtn" type="button">Start Today&rsquo;s Session</button>
+          <button class="btn btn-ghost btn-sm" id="logBtn" type="button">Log today&rsquo;s listening</button>
+        </div>
+        <p class="mission-done" id="missionDone" hidden>Today&rsquo;s mission completed &#10003;</p>
+
+        <div class="weekly-goal">
+          <span class="weekly-label" id="weeklyLabel">Weekly goal: 0 of 5 study days</span>
+          <span class="weekly-dots" id="weeklyDots" aria-hidden="true"></span>
+        </div>
+
+        <p class="sr-only" id="missionLive" aria-live="polite"></p>
+      </div>
+
+      <div class="card metrics-card" aria-label="Overall progress">
         <div class="status-metrics">
           <div class="metric-progress">
             <div class="metric-top">
@@ -939,6 +1032,11 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
     <section class="flashcards" aria-label="Flashcard review">
       <div class="fc-head">
         <h2 id="fcHeading" tabindex="-1">Review Flashcards</h2>
+      </div>
+
+      <div class="fc-daily-banner" id="fcDailyBanner" hidden>
+        <span class="fc-daily-label" id="fcDailyLabel">Daily review</span>
+        <button class="btn btn-ghost btn-sm" id="fcExitDaily" type="button">Review all words</button>
       </div>
 
       <div class="filter-bar">
@@ -1062,6 +1160,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <span id="setDayCount">0 of 5 days completed</span>
         <span class="status-chip s-none" id="setStatusChip">Not started</span>
       </p>
+      <p class="day-method" id="setDayMethod"></p>
+      <p class="day-method-helper" id="setDay5Helper" hidden></p>
       <div class="day-toggles" id="dayToggles"></div>
       <p class="hint">Tap a day to mark it as studied. Use &ldquo;Log today&rsquo;s listening&rdquo; on the tracker for your daily study.</p>
     </div>
@@ -1231,9 +1331,23 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 8;
+const STATE_VERSION = 9;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
+
+// Fixed learning purpose for each of the five study days (Five-Day Study Method).
+const DAY_PURPOSE = {
+  1: 'Listen for meaning',
+  2: 'Listen with the transcript',
+  3: 'Read aloud and shadow',
+  4: 'Review vocabulary',
+  5: 'Speak or write a summary'
+};
+const DAY5_HELPER = 'Retell the lesson for one minute or write a short summary.';
+const DAILY_QUEUE_SIZE = 5;
+const WEEKLY_GOAL = 5;
+// Kept lightweight and bounded; retains far more than the current and recent weeks.
+const STUDY_HISTORY_LIMIT = 180;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1295,6 +1409,8 @@ function defaultState() {
     sets: {},
     vocabulary: [],
     grammarRules: [],
+    // v9: unique local "YYYY-MM-DD" dates on which a study day was completed.
+    studyDates: [],
     settings: { browserMigrationHandled: false }
   };
 }
@@ -1494,6 +1610,21 @@ function normalizeState(raw) {
       s.grammarRules.push(rule);
     }
   }
+
+  // v9 study-date history for the weekly goal. Idempotent: existing v9 dates are
+  // preserved and back-filled from the logged listening days of earlier versions,
+  // then deduplicated, sorted and bounded to the most recent dates.
+  const studyDateSet = new Set();
+  const collectDates = value => {
+    if (!Array.isArray(value)) return;
+    for (const item of value) {
+      if (typeof item === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item)) studyDateSet.add(item);
+    }
+  };
+  collectDates(raw.studyDates);
+  for (const key of Object.keys(s.log)) studyDateSet.add(key);
+  s.studyDates = [...studyDateSet].sort().slice(-STUDY_HISTORY_LIMIT);
+
   return s;
 }
 
@@ -1910,6 +2041,11 @@ function clearPrivateSession() {
   stateRevision = 0;
   lastSavedRevision = 0;
   conflictPending = false;
+  // Reset per-session daily-guidance state so nothing carries across accounts.
+  fcDailyMode = false;
+  dailyQueue = null;
+  dailyReviewed.clear();
+  prevLessonDone = prevVocabDone = prevMissionDone = null;
   renderProfile(null);
   appShell.hidden = true;
 }
@@ -2564,6 +2700,34 @@ function nextOpenDay(n) {
   return null;
 }
 
+// Record today's local date the moment a study day is completed. Deduplicated,
+// sorted and bounded. Existing dates are never removed when a day is un-ticked.
+function recordStudyDate(key) {
+  if (!Array.isArray(state.studyDates)) state.studyDates = [];
+  if (state.studyDates.includes(key)) return false;
+  state.studyDates.push(key);
+  state.studyDates.sort();
+  if (state.studyDates.length > STUDY_HISTORY_LIMIT) {
+    state.studyDates = state.studyDates.slice(-STUDY_HISTORY_LIMIT);
+  }
+  return true;
+}
+
+// Monday–Sunday week (local). Counts unique study dates within the current week.
+function weeklyStudyCount() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // back up to Monday
+  const startKey = dateKey(start);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const endKey = dateKey(end);
+  const dates = Array.isArray(state.studyDates) ? state.studyDates : [];
+  let count = 0;
+  for (const d of dates) if (d >= startKey && d <= endKey) count++; // dates are already unique
+  return count;
+}
+
 function vocabCounts() {
   const c = { total: 0, new: 0, learning: 0, mastered: 0, set: 0, general: 0 };
   for (const v of state.vocabulary) {
@@ -2820,12 +2984,11 @@ function switchView(name) {
 $('nav-tracker').addEventListener('click', () => switchView('tracker'));
 $('nav-vocab').addEventListener('click', () => switchView('vocab'));
 $('nav-grammar').addEventListener('click', () => switchView('grammar'));
-$('nav-flashcards').addEventListener('click', () => switchView('flashcards'));
+$('nav-flashcards').addEventListener('click', () => { exitDailyMode(); switchView('flashcards'); });
 
 /* ==========================================================================
    7. DASHBOARD RENDERING
    ========================================================================== */
-const heroSet = $('heroSet'), heroSetSub = $('heroSetSub');
 const overallFill = $('overallFill'), overallPct = $('overallPct'),
       overallText = $('overallText'), overallBar = $('overallBar');
 const statStreak = $('statStreak'), statDays = $('statDays');
@@ -2842,14 +3005,6 @@ function renderDashboard() {
   overallBar.setAttribute('aria-valuenow', String(doneDays));
 
   const cs = currentSetNo();
-  if (cs === null) {
-    heroSet.textContent = 'All sets complete!';
-    heroSetSub.textContent = 'Congratulations — ' + TOTAL_DAYS + ' days of listening.';
-  } else {
-    const title = displayTitle(cs);
-    heroSet.textContent = 'Set ' + cs + (title ? ' · ' + title : '');
-    heroSetSub.textContent = doneCountForSet(cs) + ' of ' + DAYS_PER_SET + ' days completed';
-  }
 
   statStreak.textContent = String(calcStreak());
   statDays.textContent = String(doneDays);
@@ -2871,6 +3026,8 @@ function renderDashboard() {
     logBtn.textContent = 'Log today’s listening';
     logBtn.disabled = false;
   }
+
+  renderMission();
 }
 
 logBtn.addEventListener('click', () => {
@@ -2881,6 +3038,7 @@ logBtn.addEventListener('click', () => {
   state.log[today] = true;
   const day = nextOpenDay(cs);
   if (day) state.done[cs + '-' + day] = true;
+  recordStudyDate(today);
   saveState();
   renderDashboard();
   renderCards();
@@ -2889,6 +3047,125 @@ logBtn.addEventListener('click', () => {
 
 // Dashboard quick-add (Browse and Flashcards live in the main navigation)
 $('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
+
+/* ==========================================================================
+   7b. TODAY'S MISSION + WEEKLY GOAL
+   ========================================================================== */
+const missionBtn = $('missionBtn'), missionBadge = $('missionBadge'), missionDone = $('missionDone');
+const missionLessonTask = $('missionLessonTask'), missionLessonCheck = $('missionLessonCheck'),
+      missionLessonTitle = $('missionLessonTitle'), missionLessonNote = $('missionLessonNote');
+const missionVocabTask = $('missionVocabTask'), missionVocabCheck = $('missionVocabCheck'),
+      missionVocabTitle = $('missionVocabTitle');
+const weeklyLabel = $('weeklyLabel'), weeklyDots = $('weeklyDots'), missionLive = $('missionLive');
+
+let missionAction = 'start'; // 'start' opens the current set, 'review' opens the daily queue
+let prevLessonDone = null, prevVocabDone = null, prevMissionDone = null;
+
+function setMissionCheck(taskEl, checkEl, done, empty) {
+  taskEl.classList.toggle('is-done', done);
+  taskEl.classList.toggle('is-empty', !!empty && !done);
+  checkEl.textContent = done ? '✓' : (empty ? '–' : '○'); // check / dash / circle
+}
+
+function announceMission(lessonDone, vocabDone, missionComplete) {
+  if (prevLessonDone === null) { // seed on first render without announcing
+    prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+    return;
+  }
+  let msg = '';
+  if (missionComplete && !prevMissionDone) msg = 'Today’s mission completed.';
+  else if (lessonDone && !prevLessonDone) msg = 'Today’s lesson complete.';
+  else if (vocabDone && !prevVocabDone) msg = 'Daily vocabulary review complete.';
+  if (msg) missionLive.textContent = msg;
+  prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+}
+
+function renderWeeklyGoal() {
+  const count = weeklyStudyCount();
+  const complete = count >= WEEKLY_GOAL;
+  weeklyLabel.textContent = complete
+    ? 'Weekly goal completed ✓'
+    : 'Weekly goal: ' + count + ' of ' + WEEKLY_GOAL + ' study days';
+  const wrap = weeklyLabel.closest('.weekly-goal');
+  if (wrap) wrap.classList.toggle('is-complete', complete);
+  weeklyDots.textContent = '';
+  const filled = Math.min(count, WEEKLY_GOAL);
+  for (let i = 0; i < WEEKLY_GOAL; i++) {
+    weeklyDots.appendChild(el('span', 'weekly-dot' + (i < filled ? ' on' : '')));
+  }
+}
+
+function renderMission() {
+  const cs = currentSetNo();
+  const allSetsComplete = cs === null;
+  const studiedToday = Array.isArray(state.studyDates) && state.studyDates.includes(dateKey(new Date()));
+  const lessonDone = allSetsComplete || studiedToday;
+
+  // Lesson task
+  if (allSetsComplete) {
+    setMissionCheck(missionLessonTask, missionLessonCheck, true, false);
+    missionLessonTitle.textContent = 'All lesson sets complete';
+    missionLessonNote.hidden = true;
+  } else if (lessonDone) {
+    setMissionCheck(missionLessonTask, missionLessonCheck, true, false);
+    missionLessonTitle.textContent = 'Today’s lesson complete';
+    missionLessonNote.hidden = true;
+  } else {
+    setMissionCheck(missionLessonTask, missionLessonCheck, false, false);
+    const day = nextOpenDay(cs);
+    missionLessonTitle.textContent = 'Continue Set ' + cs + ' · Day ' + day;
+    missionLessonNote.textContent = DAY_PURPOSE[day] || '';
+    missionLessonNote.hidden = false;
+  }
+
+  // Vocabulary task
+  const vocabCount = dailyQueueCount();
+  const vocabDone = dailyQueueComplete();
+  if (vocabCount === 0) {
+    setMissionCheck(missionVocabTask, missionVocabCheck, false, true);
+    missionVocabTitle.textContent = 'No vocabulary review needed today';
+  } else if (vocabDone) {
+    setMissionCheck(missionVocabTask, missionVocabCheck, true, false);
+    missionVocabTitle.textContent = vocabCount + (vocabCount === 1 ? ' word reviewed' : ' words reviewed');
+  } else {
+    setMissionCheck(missionVocabTask, missionVocabCheck, false, false);
+    missionVocabTitle.textContent = 'Review ' + vocabCount + (vocabCount === 1 ? ' vocabulary word' : ' vocabulary words');
+  }
+
+  const vocabPending = vocabCount > 0 && !vocabDone;
+  const missionComplete = lessonDone && !vocabPending;
+
+  // One primary action, plus the ghost quick-log while a lesson is still pending.
+  if (!lessonDone) {
+    missionAction = 'start';
+    missionBtn.hidden = false;
+    missionBtn.textContent = 'Start Today’s Session';
+    missionDone.hidden = true;
+    logBtn.hidden = allSetsComplete;
+  } else if (vocabPending) {
+    missionAction = 'review';
+    missionBtn.hidden = false;
+    missionBtn.textContent = 'Review Today’s Words';
+    missionDone.hidden = true;
+    logBtn.hidden = true;
+  } else {
+    missionAction = 'done';
+    missionBtn.hidden = true;
+    missionDone.hidden = false;
+    logBtn.hidden = true;
+  }
+  missionBadge.hidden = !missionComplete;
+
+  renderWeeklyGoal();
+  announceMission(lessonDone, vocabDone, missionComplete);
+}
+
+missionBtn.addEventListener('click', () => {
+  if (missionAction === 'review') { startDailyReview(); return; }
+  const cs = currentSetNo();
+  if (cs === null) return;
+  openSetModal(cs, nextOpenDay(cs)); // open the current set focused on the current day
+});
 
 /* ==========================================================================
    8. SET CARDS GRID
@@ -3022,14 +3299,18 @@ const setTitleInput = $('setTitleInput');
 const tabButtons = [$('tab-progress'), $('tab-vocab'), $('tab-notes')];
 const panels = { 'tab-progress': $('panel-progress'), 'tab-vocab': $('panel-vocab'), 'tab-notes': $('panel-notes') };
 const setDayCount = $('setDayCount'), setStatusChip = $('setStatusChip'), dayToggles = $('dayToggles');
+const setDayMethod = $('setDayMethod'), setDay5Helper = $('setDay5Helper');
 const vocabCountLine = $('vocabCountLine'), vocabList = $('vocabList'), vocabEmpty = $('vocabEmpty');
 const addWordBtn = $('addWordBtn');
 const notesArea = $('notesArea'), notesSave = $('notesSave'), notesCancel = $('notesCancel');
 
 let openSetNo = null;
+let setModalFocusDay = null; // when opened from Today's Mission, the current study day to highlight
 
-function openSetModal(n) {
+function openSetModal(n, focusDay) {
   openSetNo = n;
+  const fd = Number(focusDay);
+  setModalFocusDay = Number.isInteger(fd) && fd >= 1 && fd <= DAYS_PER_SET ? fd : null;
   setModalChip.textContent = 'Set ' + n;
   setTitleInput.value = displayTitle(n);
   selectTab('tab-progress');
@@ -3037,6 +3318,11 @@ function openSetModal(n) {
   renderVocabPanel();
   notesArea.value = setNotes(n);
   pushModal(setModalBackdrop);
+  // When launched from the mission, move focus straight to the current day.
+  if (setModalFocusDay) {
+    const current = dayToggles.querySelector('.day-toggle.is-current');
+    if (current) current.focus();
+  }
 }
 
 $('setModalClose').addEventListener('click', () => popModal());
@@ -3086,18 +3372,38 @@ function renderProgressPanel() {
   else if (dc === DAYS_PER_SET) { setStatusChip.textContent = 'Completed'; setStatusChip.className = 'status-chip s-done'; }
   else { setStatusChip.textContent = 'In progress'; setStatusChip.className = 'status-chip s-progress'; }
 
+  // Five-Day Study Method: show the purpose of the current (or focused) day.
+  const currentDay = setModalFocusDay || nextOpenDay(n);
+  if (currentDay) {
+    setDayMethod.textContent = 'Day ' + currentDay + ' · ' + DAY_PURPOSE[currentDay];
+    setDayMethod.hidden = false;
+    if (currentDay === 5) { setDay5Helper.textContent = DAY5_HELPER; setDay5Helper.hidden = false; }
+    else setDay5Helper.hidden = true;
+  } else {
+    setDayMethod.textContent = 'All five days complete';
+    setDayMethod.hidden = false;
+    setDay5Helper.hidden = true;
+  }
+
   dayToggles.textContent = '';
   for (let d = 1; d <= DAYS_PER_SET; d++) {
     const on = !!state.done[n + '-' + d];
-    const btn = el('button', 'day-toggle');
+    const isCurrent = d === currentDay;
+    const btn = el('button', 'day-toggle' + (isCurrent ? ' is-current' : ''));
     btn.type = 'button';
     btn.setAttribute('aria-pressed', String(on));
-    btn.setAttribute('aria-label', 'Day ' + d + (on ? ', studied' : ', not studied'));
+    btn.setAttribute('aria-label',
+      'Day ' + d + ' — ' + DAY_PURPOSE[d] + (on ? ', studied' : ', not studied') + (isCurrent ? ', current day' : ''));
+    if (isCurrent) btn.setAttribute('aria-current', 'step');
     btn.appendChild(el('span', 'mark', on ? '✓' : '·'));
     btn.appendChild(el('span', null, 'Day ' + d));
     btn.addEventListener('click', () => {
-      if (state.done[n + '-' + d]) delete state.done[n + '-' + d];
-      else state.done[n + '-' + d] = true;
+      if (state.done[n + '-' + d]) {
+        delete state.done[n + '-' + d];
+      } else {
+        state.done[n + '-' + d] = true;
+        recordStudyDate(dateKey(new Date())); // completing a study day counts toward the weekly goal
+      }
       saveState();
       renderProgressPanel();
       renderDashboard();
@@ -3524,23 +3830,95 @@ const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer')
       fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
       fcBackLocation = $('fcBackLocation'), fcStatusChip = $('fcStatusChip');
 const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
-const flashSetPicker = createScopeFilter($('fcSetFilter'), () => buildDeck(false));
+// Changing a filter leaves the daily-review queue and returns to normal browsing.
+const flashSetPicker = createScopeFilter($('fcSetFilter'), () => { exitDailyMode(); buildDeck(false); });
 
 // The deck stores entry ids so edits always show live data
 const fc = { deck: [], index: 0, revealed: false };
+
+/* ---- Daily vocabulary review queue (Feature 3) ---- */
+let fcDailyMode = false;
+let dailyQueue = null;             // { dateKey, ids: [] } — stable snapshot for the local day
+const dailyReviewed = new Set();   // ids revealed or graded this session
+const fcDailyBanner = $('fcDailyBanner'), fcDailyLabel = $('fcDailyLabel');
 
 function getDeckEntry(id) {
   return state.vocabulary.find(v => v.id === id) || null;
 }
 
+// Deterministic: Learning first, then New (Mastered excluded), oldest first, capped at five.
+function computeDailyQueue() {
+  const weight = s => (s === 'learning' ? 0 : (s === 'new' ? 1 : 2));
+  return state.vocabulary
+    .filter(v => v.status !== 'mastered')
+    .slice()
+    .sort((a, b) => weight(a.status) - weight(b.status)
+      || (a.createdAt || '').localeCompare(b.createdAt || '')
+      || String(a.id).localeCompare(String(b.id)))
+    .slice(0, DAILY_QUEUE_SIZE)
+    .map(v => v.id);
+}
+
+// One snapshot per local day, so re-renders do not reshuffle the queue. Recomputed
+// on a new day or when the snapshot has drained (e.g. its words were deleted).
+function ensureDailyQueue() {
+  const today = dateKey(new Date());
+  if (dailyQueue) dailyQueue.ids = dailyQueue.ids.filter(id => getDeckEntry(id) !== null);
+  if (!dailyQueue || dailyQueue.dateKey !== today || dailyQueue.ids.length === 0) {
+    dailyQueue = { dateKey: today, ids: computeDailyQueue() };
+    dailyReviewed.clear();
+  }
+  return dailyQueue;
+}
+
+function dailyQueueCount() { return ensureDailyQueue().ids.length; }
+function dailyQueueComplete() {
+  const ids = ensureDailyQueue().ids;
+  return ids.length > 0 && ids.every(id => dailyReviewed.has(id));
+}
+function markDailyReviewed(id) {
+  if (!fcDailyMode || !id || dailyReviewed.has(id)) return;
+  dailyReviewed.add(id);
+  renderMission();
+}
+
+function updateDailyBanner() {
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.toggle('daily-mode', fcDailyMode);
+  fcDailyBanner.hidden = !fcDailyMode;
+  if (fcDailyMode) {
+    const n = ensureDailyQueue().ids.length;
+    fcDailyLabel.textContent = 'Daily review · ' + n + (n === 1 ? ' word' : ' words');
+  }
+}
+
+function startDailyReview() {
+  ensureDailyQueue();
+  if (!dailyQueue.ids.length) { toast('No vocabulary to review today'); return; }
+  fcDailyMode = true;
+  updateDailyBanner();
+  switchView('flashcards'); // switchView builds the deck, which honours daily mode
+}
+
+function exitDailyMode() {
+  if (!fcDailyMode) return;
+  fcDailyMode = false;
+  updateDailyBanner();
+}
+
 function buildDeck(shuffle) {
-  const setSelection = flashSetPicker.getSelection();
-  const statusF = fcStatusFilter.value;
-  const deck = [];
-  for (const v of state.vocabulary) {
-    if (!matchesSetSelection(v, setSelection)) continue;
-    if (statusF !== 'all' && v.status !== statusF) continue;
-    deck.push(v.id);
+  let deck;
+  if (fcDailyMode) {
+    deck = ensureDailyQueue().ids.slice();
+  } else {
+    const setSelection = flashSetPicker.getSelection();
+    const statusF = fcStatusFilter.value;
+    deck = [];
+    for (const v of state.vocabulary) {
+      if (!matchesSetSelection(v, setSelection)) continue;
+      if (statusF !== 'all' && v.status !== statusF) continue;
+      deck.push(v.id);
+    }
   }
   if (shuffle) fisherYates(deck);
   fc.deck = deck;
@@ -3548,6 +3926,8 @@ function buildDeck(shuffle) {
   fc.revealed = false;
   renderFlashcard();
 }
+
+$('fcExitDaily').addEventListener('click', () => { exitDailyMode(); buildDeck(false); });
 
 function renderFlashcard() {
   fc.deck = fc.deck.filter(id => getDeckEntry(id) !== null);
@@ -3602,6 +3982,7 @@ $('fcPrev').addEventListener('click', () => stepCard(-1));
 $('fcNext').addEventListener('click', () => stepCard(1));
 fcReveal.addEventListener('click', () => {
   fc.revealed = true;
+  if (fc.deck.length) markDailyReviewed(fc.deck[fc.index]);
   renderFlashcard();
 });
 
@@ -3612,6 +3993,7 @@ for (const btn of fcGrade.querySelectorAll('[data-status]')) {
     if (!entry) return;
     entry.status = btn.dataset.status;
     entry.updatedAt = new Date().toISOString();
+    markDailyReviewed(entry.id);
     saveState();
     renderDashboard();
     toast('Marked as ' + STATUS_LABEL[entry.status]);
@@ -3621,7 +4003,7 @@ for (const btn of fcGrade.querySelectorAll('[data-status]')) {
 
 $('fcShuffle').addEventListener('click', () => { buildDeck(true); toast('Cards shuffled'); });
 $('fcRestart').addEventListener('click', () => { buildDeck(false); toast('Review restarted'); });
-fcStatusFilter.addEventListener('change', () => buildDeck(false));
+fcStatusFilter.addEventListener('change', () => { exitDailyMode(); buildDeck(false); });
 
 /* ==========================================================================
    16. VOCABULARY-ONLY EXPORT
