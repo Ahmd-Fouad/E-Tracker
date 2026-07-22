@@ -428,6 +428,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
 /* 9. TRACKER — SET CARDS -------------------------------------------------- */
 .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.sets-toggle-wrap { display: flex; justify-content: center; margin-top: 16px; }
+.sets-toggle { min-height: 44px; }
 .set-card {
   text-align: left; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--r-md);
@@ -443,8 +445,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .chip { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--pill); }
 .chip-current { color: var(--primary-light); background: var(--primary-tint); }
 .chip-done { color: var(--success); background: var(--success-tint); }
-.set-title { margin: 0; font-size: 13.5px; font-weight: 500; min-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.set-title.placeholder { color: var(--text-3); font-style: italic; font-weight: 400; }
+.set-title { margin: 0; font-size: 13.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-bar { display: flex; gap: 5px; }
 .day-seg { flex: 1; height: 6px; border-radius: var(--pill); background: var(--surface-2); }
 .day-seg.on { background: linear-gradient(90deg, var(--primary-strong), var(--primary-light)); }
@@ -984,6 +985,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <p class="section-hint">Open a set to manage its progress, vocabulary and notes.</p>
       </div>
       <div class="sets-grid" id="setsGrid"></div>
+      <div class="sets-toggle-wrap">
+        <button class="btn btn-ghost btn-sm sets-toggle" id="setsToggle" type="button"
+                aria-expanded="false" aria-controls="setsGrid">Show all 30 sets</button>
+      </div>
     </section>
   </div>
 
@@ -2748,7 +2753,11 @@ document.addEventListener('visibilitychange', () => {
 /* ==========================================================================
    3. DERIVED DATA HELPERS
    ========================================================================== */
-function displayTitle(n) { return state.titles[String(n)] || ''; }
+function displayTitle(n) {
+  const value = state.titles[String(n)];
+  const title = typeof value === 'string' ? value.trim() : '';
+  return title && title !== 'Untitled set' ? title : '';
+}
 
 function ensureSet(n) {
   const key = String(n);
@@ -3267,11 +3276,34 @@ missionBtn.addEventListener('click', () => {
    8. SET CARDS GRID
    ========================================================================== */
 const setsGrid = $('setsGrid');
+const setsToggle = $('setsToggle');
+let setGridExpanded = false;
+
+function collapsedSetNumbers(currentSet) {
+  if (currentSet === null) {
+    return Array.from({ length: 8 }, (_, index) => TOTAL_SETS - 7 + index);
+  }
+
+  const relevant = [];
+  const recentlyCompleted = currentSet > 1 && doneCountForSet(currentSet - 1) === DAYS_PER_SET
+    ? currentSet - 1
+    : null;
+  if (recentlyCompleted !== null) relevant.push(recentlyCompleted);
+  for (let n = currentSet; n <= Math.min(TOTAL_SETS, currentSet + 6); n++) relevant.push(n);
+
+  return [...new Set(relevant)]
+    .filter(n => n >= 1 && n <= TOTAL_SETS)
+    .sort((a, b) => a - b)
+    .slice(0, 8);
+}
 
 function renderCards() {
   const cs = currentSetNo();
+  const visibleSets = setGridExpanded
+    ? Array.from({ length: TOTAL_SETS }, (_, index) => index + 1)
+    : collapsedSetNumbers(cs);
   setsGrid.textContent = '';
-  for (let n = 1; n <= TOTAL_SETS; n++) {
+  for (const n of visibleSets) {
     const dc = doneCountForSet(n);
     const wc = setVocab(n).length;
     const hasNotes = setNotes(n).trim().length > 0;
@@ -3279,10 +3311,15 @@ function renderCards() {
 
     const card = el('button', 'set-card');
     card.type = 'button';
-    if (n === cs) card.classList.add('current');
+    if (n === cs) {
+      card.classList.add('current');
+      card.setAttribute('aria-current', 'step');
+    }
     if (dc === DAYS_PER_SET) card.classList.add('complete');
     card.setAttribute('aria-label',
-      'Open Set ' + n + (title ? ', ' + title : '') + ': ' + dc + ' of ' + DAYS_PER_SET + ' days, ' +
+      'Open Set ' + n + (title ? ', ' + title : '') +
+      (n === cs ? ', current set' : '') + (dc === DAYS_PER_SET ? ', completed' : '') +
+      ': ' + dc + ' of ' + DAYS_PER_SET + ' days, ' +
       wc + (wc === 1 ? ' word' : ' words') + (hasNotes ? ', notes added' : ''));
 
     const top = el('div', 'set-card-top');
@@ -3291,8 +3328,7 @@ function renderCards() {
     else if (n === cs) top.appendChild(el('span', 'chip chip-current', 'Current'));
     card.appendChild(top);
 
-    const titleP = el('p', 'set-title' + (title ? '' : ' placeholder'), title || 'Untitled set');
-    card.appendChild(titleP);
+    if (title) card.appendChild(el('p', 'set-title', title));
 
     const bar = el('div', 'day-bar');
     for (let d = 1; d <= DAYS_PER_SET; d++) {
@@ -3314,7 +3350,25 @@ function renderCards() {
     card.addEventListener('click', () => openSetModal(n));
     setsGrid.appendChild(card);
   }
+
+  setsToggle.textContent = setGridExpanded ? 'Show fewer sets' : 'Show all 30 sets';
+  setsToggle.setAttribute('aria-expanded', String(setGridExpanded));
 }
+
+setsToggle.addEventListener('click', () => {
+  const isCollapsing = setGridExpanded;
+  setGridExpanded = !setGridExpanded;
+  renderCards();
+
+  if (isCollapsing) {
+    requestAnimationFrame(() => {
+      const rect = setsToggle.getBoundingClientRect();
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        setsToggle.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+});
 
 /* ==========================================================================
    9. SHARED RE-RENDER AFTER ANY VOCABULARY CHANGE
