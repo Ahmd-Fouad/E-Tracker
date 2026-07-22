@@ -429,9 +429,14 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
 /* 9. TRACKER — SET CARDS -------------------------------------------------- */
 .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.learning-path-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.learning-path-head-copy { min-width: 0; }
+.learning-path-head .btn { min-height: 44px; flex: none; }
 .learning-path-preview {
   display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.85fr);
-  gap: 12px; align-items: stretch;
+  gap: 12px; align-items: start;
 }
 .path-current-card,
 .path-complete-card,
@@ -457,7 +462,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 }
 .path-set-title { margin: 0; color: var(--text-2); font-size: 13.5px; overflow-wrap: anywhere; }
 .path-current-day { margin: 0; color: var(--text-2); font-size: 13px; }
-.path-current-action { margin-top: auto; }
+.path-current-progress { margin: 0; color: var(--text-3); font-size: 12.5px; overflow-wrap: anywhere; }
+.path-current-action { margin-top: 4px; }
 .path-group { padding: 13px 14px; }
 .path-group-title { margin: 0 0 8px; color: var(--text-3); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .path-set-list { display: grid; gap: 6px; }
@@ -472,8 +478,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .path-set-row-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
 .path-set-row-title { color: var(--text-2); font-size: 12px; overflow-wrap: anywhere; }
 .path-set-row-arrow { color: var(--text-3); flex: none; }
-.learning-path-actions { display: flex; justify-content: flex-start; margin-top: 14px; }
-.learning-path-actions .btn { min-height: 44px; }
 .course-complete-title { margin: 0; color: var(--success); font-size: 16px; font-weight: 700; }
 .course-complete-copy { margin: 0; color: var(--text-2); font-size: 13.5px; }
 .tracker-all-sets { animation: fade-up 0.18s ease; }
@@ -799,6 +803,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 }
 
 @media (max-width: 720px) {
+  .learning-path-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .learning-path-head .btn { width: 100%; }
   .learning-path-preview { grid-template-columns: 1fr; }
   .status-metrics { grid-template-columns: 1fr 1fr; gap: 14px; }
   .metric-progress { grid-column: 1 / -1; }
@@ -821,7 +827,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .profile-greeting { margin-top: 14px; font-size: 21px; }
   .status-set { font-size: 21px; }
   .sets-grid { grid-template-columns: 1fr 1fr; }
-  .path-current-action, .learning-path-actions .btn { width: 100%; }
+  .path-current-action { width: 100%; }
   .set-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-bar select { max-width: 100%; flex: 1 1 45%; }
   .set-filter-details { flex: 1 1 100%; }
@@ -1038,14 +1044,14 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
     </section>
 
     <section aria-labelledby="learningPathHeading">
-      <div class="section-head">
-        <h2 class="section-title" id="learningPathHeading">Your Learning Path</h2>
-        <p class="section-hint">Your current position and what comes next.</p>
-      </div>
-      <div class="learning-path-preview" id="learningPathPreview"></div>
-      <div class="learning-path-actions">
+      <div class="section-head learning-path-head">
+        <div class="learning-path-head-copy">
+          <h2 class="section-title" id="learningPathHeading">Your Learning Path</h2>
+          <p class="section-hint">Your current position and what comes next.</p>
+        </div>
         <button class="btn btn-ghost btn-sm" id="browseAllSets" type="button">Browse all 30 sets</button>
       </div>
+      <div class="learning-path-preview" id="learningPathPreview"></div>
     </section>
     </div>
 
@@ -3458,6 +3464,9 @@ function renderLearningPath() {
     const day = nextOpenDay(cs);
     current.appendChild(el('p', 'path-current-day',
       'Day ' + day + ' · ' + (DAY_PURPOSE[day] || 'Continue learning')));
+    const completedDays = doneCountForSet(cs);
+    current.appendChild(el('p', 'path-current-progress',
+      completedDays + ' of ' + DAYS_PER_SET + ' days completed'));
     const continueBtn = el('button', 'btn btn-primary btn-sm path-current-action', 'Continue Set ' + cs);
     continueBtn.type = 'button';
     continueBtn.addEventListener('click', () => openSetModal(cs, day));
