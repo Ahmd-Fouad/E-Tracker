@@ -535,6 +535,13 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .filter-bar input[type="search"]:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
 .filter-bar input[type="search"] { flex: 1 1 200px; min-width: 150px; }
 .filter-bar select { max-width: 240px; }
+.fc-direction-field {
+  display: flex; align-items: center; gap: 8px; flex: 1 1 250px; min-width: 230px;
+}
+.fc-direction-field label {
+  color: var(--text-2); font-size: 12.5px; font-weight: 600; white-space: nowrap;
+}
+.fc-direction-field select { flex: 1; min-width: 0; }
 
 .set-filter-details { position: relative; flex: 0 1 235px; min-width: 180px; }
 .set-filter-details > summary {
@@ -671,6 +678,27 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .fc-term-line { width: 100%; max-width: 560px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .fc-term { min-width: 0; font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5vw, 30px); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
 .fc-pronounce-slot { display: inline-flex; flex: none; }
+.fc-reverse-face {
+  width: 100%; max-width: 560px; display: grid; justify-items: center; gap: 8px;
+  padding: 6px 0; animation: fade-up 0.22s ease;
+}
+.fc-recall-label {
+  color: var(--primary-light); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.fc-reverse-definition {
+  color: var(--text); font-size: clamp(17px, 3vw, 20px); line-height: 1.55;
+  font-weight: 600; overflow-wrap: anywhere;
+}
+.fc-reverse-arabic {
+  width: 100%; color: var(--text); font-size: 17px; line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.fc-reverse-example {
+  color: var(--text-2); font-size: 14px; font-style: italic; line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.fc-reverse-fallback { color: var(--text-2); font-size: 15px; line-height: 1.55; }
 .fc-answer { margin-top: 6px; padding-top: 16px; border-top: 1px dashed var(--border-strong); width: 100%; max-width: 460px; animation: fade-up 0.22s ease; }
 /* Back information hierarchy: Example (first, prominent) → Definition → Arabic (secondary, smaller) */
 .fc-example { color: var(--text); font-style: italic; font-size: 16px; line-height: 1.5; margin: 0 0 9px; overflow-wrap: anywhere; }
@@ -872,6 +900,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .sets-grid { grid-template-columns: 1fr 1fr; }
   .set-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-bar select { max-width: 100%; flex: 1 1 45%; }
+  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
+  .fc-direction-field select { flex-basis: auto; }
   .set-filter-details { flex: 1 1 100%; }
   .set-filter-panel { width: 100%; position: static; margin-top: 6px; }
   .grammar-toolbar input[type="search"] { flex-basis: 100%; }
@@ -1195,6 +1225,14 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           <option value="learning">Learning</option>
           <option value="mastered">Mastered</option>
         </select>
+        <div class="fc-direction-field">
+          <label for="fcDirection">Review direction</label>
+          <select id="fcDirection">
+            <option value="word-to-meaning">Word &rarr; Meaning</option>
+            <option value="meaning-to-word">Meaning &rarr; Word</option>
+            <option value="random-mix">Random Mix</option>
+          </select>
+        </div>
         <button class="btn btn-ghost btn-sm" id="fcShuffle">Shuffle</button>
         <button class="btn btn-ghost btn-sm" id="fcRestart">Restart review</button>
       </div>
@@ -1203,9 +1241,16 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <div id="fcReview">
           <div class="fc-card">
             <p class="fc-set" id="fcSetLine">General Vocabulary</p>
-            <div class="fc-term-line">
+            <div class="fc-term-line" id="fcWordFace">
               <p class="fc-term" id="fcTerm"></p>
               <span class="fc-pronounce-slot" id="fcPronounceSlot"></span>
+            </div>
+            <div class="fc-reverse-face" id="fcReverseFace" hidden>
+              <p class="fc-recall-label">Recall the English word</p>
+              <p class="fc-reverse-definition" id="fcReverseDefinition" dir="auto" hidden></p>
+              <p class="fc-reverse-arabic" id="fcReverseArabic" dir="rtl" hidden></p>
+              <p class="fc-reverse-example" id="fcReverseExample" dir="auto" hidden></p>
+              <p class="fc-reverse-fallback" id="fcReverseFallback" hidden>No meaning has been added for this word yet.</p>
             </div>
             <div class="fc-answer" id="fcAnswer" hidden>
               <p class="fc-example" id="fcExample" dir="auto"></p>
@@ -4665,11 +4710,31 @@ grammarSearch.addEventListener('input', renderGrammar);
 /* ========================================================================== 
    15. FLASHCARDS — deck building, filters and review controls
    ========================================================================== */
-const fcStatusFilter = $('fcStatusFilter');
+const FLASHCARD_DIRECTION_KEY = 'englishGrowthTracker.flashcardDirection';
+const FLASHCARD_DIRECTIONS = ['word-to-meaning', 'meaning-to-word', 'random-mix'];
+
+function normalizeFlashcardDirection(value) {
+  return FLASHCARD_DIRECTIONS.includes(value) ? value : 'word-to-meaning';
+}
+
+function loadFlashcardDirection() {
+  try { return normalizeFlashcardDirection(localStorage.getItem(FLASHCARD_DIRECTION_KEY)); }
+  catch (error) { return 'word-to-meaning'; }
+}
+
+function saveFlashcardDirection(value) {
+  try { localStorage.setItem(FLASHCARD_DIRECTION_KEY, value); }
+  catch (error) { /* Device preferences remain optional when storage is unavailable. */ }
+}
+
+const fcStatusFilter = $('fcStatusFilter'), fcDirection = $('fcDirection');
 const fcStage = $('fcStage'), fcEmpty = $('fcEmpty');
-const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer'),
+const fcSetLine = $('fcSetLine'), fcWordFace = $('fcWordFace'), fcReverseFace = $('fcReverseFace'),
+      fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer'),
       fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
       fcStatusChip = $('fcStatusChip');
+const fcReverseDefinition = $('fcReverseDefinition'), fcReverseArabic = $('fcReverseArabic'),
+      fcReverseExample = $('fcReverseExample'), fcReverseFallback = $('fcReverseFallback');
 const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
 const fcPronounce = createPronunciationButton({ term: '', spokenForm: '' });
 fcPronounce.id = 'fcPronounce';
@@ -4678,7 +4743,12 @@ $('fcPronounceSlot').appendChild(fcPronounce);
 const flashSetPicker = createScopeFilter($('fcSetFilter'), () => { exitDailyMode(); buildDeck(false); });
 
 // The deck stores entry ids so edits always show live data
-const fc = { deck: [], index: 0, revealed: false, completed: false, lastCardId: null };
+const fc = {
+  deck: [], index: 0, revealed: false, completed: false, lastCardId: null,
+  roundDirection: 'word-to-meaning', directionById: new Map(), dailyReplay: false
+};
+let flashcardDirectionPreference = loadFlashcardDirection();
+fcDirection.value = flashcardDirectionPreference;
 
 // Completion-state elements + per-round review tracking (session only)
 const fcReview = $('fcReview'), fcComplete = $('fcComplete'),
@@ -4694,6 +4764,65 @@ const fcDailyBanner = $('fcDailyBanner'), fcDailyLabel = $('fcDailyLabel'), fcDa
 
 function getDeckEntry(id) {
   return state.vocabulary.find(v => v.id === id) || null;
+}
+
+function startDirectionRound(deck, direction) {
+  fc.roundDirection = normalizeFlashcardDirection(direction);
+  fc.directionById.clear();
+  if (fc.roundDirection !== 'random-mix') return;
+
+  const count = deck.length;
+  let wordFirstCount = Math.floor(count / 2);
+  if (count % 2 && Math.random() < 0.5) wordFirstCount++;
+  const assignments = Array.from({ length: count }, (_, index) =>
+    index < wordFirstCount ? 'word-to-meaning' : 'meaning-to-word'
+  );
+  fisherYates(assignments);
+  deck.forEach((id, index) => fc.directionById.set(id, assignments[index]));
+}
+
+function directionForCard(id) {
+  if (fc.roundDirection !== 'random-mix') return fc.roundDirection;
+  return fc.directionById.get(id) || 'word-to-meaning';
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function safeReverseExample(example, term) {
+  const source = String(example || '').trim();
+  const target = String(term || '').trim();
+  if (!source || !target) return '';
+
+  const targetPattern = target.split(/\s+/).map(escapeRegExp).join('\\s+');
+  try {
+    let replaced = false;
+    const redacted = source.replace(new RegExp(targetPattern, 'gi'), () => {
+      replaced = true;
+      return '_____';
+    });
+    if (replaced) return redacted;
+  } catch (error) {
+    // Fall through to the exact-text safety check and omit any uncertain example.
+  }
+
+  const compactSource = source.replace(/\s+/g, ' ').toLocaleLowerCase();
+  const compactTarget = target.replace(/\s+/g, ' ').toLocaleLowerCase();
+  if (compactSource.includes(compactTarget)) return '';
+
+  // Treat punctuation/spacing variants (for example, "up-sell" for "upsell") as
+  // answer-shaped too. When a safe blank cannot be produced, omission is safer.
+  const plainSource = compactSource.replace(/[^\p{L}\p{N}]+/gu, '');
+  const plainTarget = compactTarget.replace(/[^\p{L}\p{N}]+/gu, '');
+  return plainTarget && plainSource.includes(plainTarget) ? '' : source;
+}
+
+function getReverseCardClue(item) {
+  const definition = String(item && item.definition || '').trim();
+  const arabic = String(item && item.arabicMeaning || '').trim();
+  const example = safeReverseExample(item && item.example, item && item.term);
+  return { definition, arabic, example, hasClue: Boolean(definition || arabic || example) };
 }
 
 function todayReview() {
@@ -4827,6 +4956,7 @@ function startDailyReview() {
 function exitDailyMode() {
   if (!fcDailyMode) return;
   fcDailyMode = false;
+  fc.dailyReplay = false;
   updateDailyBanner();
 }
 
@@ -4846,6 +4976,8 @@ function buildDeck(shuffle) {
   fc.index = 0;
   fc.revealed = false;
   fc.completed = false;
+  fc.dailyReplay = false;
+  startDirectionRound(deck, flashcardDirectionPreference);
   roundReviewed.clear();
   fcLive.textContent = '';
   renderFlashcard();
@@ -4861,6 +4993,8 @@ function buildDailyDeck(shuffle) {
   fc.deck = deck;
   fc.revealed = false;
   fc.completed = false;
+  fc.dailyReplay = false;
+  startDirectionRound(deck, flashcardDirectionPreference);
   fcLive.textContent = '';
   updateDailyBanner();
   roundReviewed.clear();
@@ -4873,6 +5007,51 @@ function buildDailyDeck(shuffle) {
 }
 
 $('fcExitDaily').addEventListener('click', () => { exitDailyMode(); buildDeck(false); });
+
+function renderReverseClue(entry) {
+  const clue = getReverseCardClue(entry);
+  fcReverseDefinition.textContent = clue.definition;
+  fcReverseDefinition.hidden = !clue.definition;
+  fcReverseArabic.textContent = clue.arabic;
+  fcReverseArabic.hidden = !clue.arabic;
+  fcReverseExample.textContent = clue.example ? '“' + clue.example + '”' : '';
+  fcReverseExample.hidden = !clue.example;
+  fcReverseFallback.hidden = clue.hasClue;
+}
+
+function clearFlashcardAnswer() {
+  for (const element of [fcExample, fcDefinition, fcArabic]) {
+    element.textContent = '';
+    element.hidden = true;
+  }
+  fcStatusChip.textContent = '';
+}
+
+function renderFlashcardAnswer(entry) {
+  if (entry.example) {
+    fcExample.textContent = '“' + entry.example + '”';
+    fcExample.hidden = false;
+  } else {
+    fcExample.textContent = '';
+    fcExample.hidden = true;
+  }
+  if (entry.definition) {
+    fcDefinition.textContent = entry.definition;
+    fcDefinition.hidden = false;
+  } else {
+    fcDefinition.textContent = '';
+    fcDefinition.hidden = true;
+  }
+  if (entry.arabicMeaning) {
+    fcArabic.textContent = entry.arabicMeaning;
+    fcArabic.hidden = false;
+  } else {
+    fcArabic.textContent = '';
+    fcArabic.hidden = true;
+  }
+  fcStatusChip.textContent = STATUS_LABEL[entry.status];
+  fcStatusChip.className = 'status-chip s-' + entry.status;
+}
 
 function renderFlashcard() {
   fc.deck = fc.deck.filter(id => getDeckEntry(id) !== null);
@@ -4896,30 +5075,26 @@ function renderFlashcard() {
   if (fc.index >= fc.deck.length) fc.index = 0;
 
   const entry = getDeckEntry(fc.deck[fc.index]);
+  const reverseFront = directionForCard(entry.id) === 'meaning-to-word';
   fcSetLine.textContent = locationLabel(entry.setNumber, false);
-  fcTerm.textContent = entry.term;
-  updatePronunciationButton(fcPronounce, entry);
-  // Back information order: Example → Definition → Arabic meaning
-  if (entry.example) {
-    fcExample.textContent = '“' + entry.example + '”';
-    fcExample.hidden = false;
+  fcWordFace.hidden = reverseFront && !fc.revealed;
+  fcReverseFace.hidden = !reverseFront || fc.revealed;
+
+  if (reverseFront && !fc.revealed) {
+    // Keep the answer out of visible and labelled controls until the user reveals it.
+    fcTerm.textContent = '';
+    updatePronunciationButton(fcPronounce, { term: '', spokenForm: '' });
+    renderReverseClue(entry);
   } else {
-    fcExample.hidden = true;
+    fcTerm.textContent = entry.term;
+    updatePronunciationButton(fcPronounce, entry);
   }
-  if (entry.definition) {
-    fcDefinition.textContent = entry.definition;
-    fcDefinition.hidden = false;
+
+  if (fc.revealed) {
+    renderFlashcardAnswer(entry);
   } else {
-    fcDefinition.hidden = true;
+    clearFlashcardAnswer();
   }
-  if (entry.arabicMeaning) {
-    fcArabic.textContent = entry.arabicMeaning;
-    fcArabic.hidden = false;
-  } else {
-    fcArabic.hidden = true;
-  }
-  fcStatusChip.textContent = STATUS_LABEL[entry.status];
-  fcStatusChip.className = 'status-chip s-' + entry.status;
 
   fcAnswer.hidden = !fc.revealed;
   fcReveal.hidden = fc.revealed;
@@ -5019,6 +5194,8 @@ fcReviewAgain.addEventListener('click', () => {
     [ids[0], ids[j]] = [ids[j], ids[0]];
   }
   fc.deck = ids;
+  fc.dailyReplay = fcDailyMode && Boolean(todayReview() && todayReview().completedAt);
+  startDirectionRound(fc.deck, flashcardDirectionPreference);
   fc.index = 0;
   fc.revealed = false;
   fc.completed = false;
@@ -5044,8 +5221,63 @@ fcCompleteSecondary.addEventListener('click', () => {
   }
 });
 
-$('fcShuffle').addEventListener('click', () => { buildDeck(true); toast('Cards shuffled'); });
-$('fcRestart').addEventListener('click', () => { buildDeck(false); toast('Review restarted'); });
+function shuffleCurrentDeck() {
+  if (!fc.deck.length) { buildDeck(true); return; }
+  const currentId = fc.deck[fc.index];
+  fisherYates(fc.deck);
+  const currentIndex = fc.deck.indexOf(currentId);
+  fc.index = currentIndex >= 0 ? currentIndex : 0;
+  renderFlashcard();
+}
+
+function seedDailyRoundProgress() {
+  roundReviewed.clear();
+  const rec = todayReview();
+  const reviewedSet = new Set(rec ? rec.reviewedIds : []);
+  for (const id of fc.deck) if (reviewedSet.has(id)) roundReviewed.add(id);
+  const firstUnreviewed = fc.deck.findIndex(id => !roundReviewed.has(id));
+  return firstUnreviewed >= 0 ? firstUnreviewed : 0;
+}
+
+function restartCurrentReview() {
+  stopPronunciation();
+  if (!fc.deck.length) { buildDeck(false); return; }
+  fc.revealed = false;
+  fc.completed = false;
+  fcLive.textContent = '';
+  if (fcDailyMode && !fc.dailyReplay) {
+    fc.index = seedDailyRoundProgress();
+    if (roundComplete()) fc.completed = true;
+  } else {
+    roundReviewed.clear();
+    fc.index = 0;
+  }
+  renderFlashcard();
+}
+
+fcDirection.addEventListener('change', () => {
+  flashcardDirectionPreference = normalizeFlashcardDirection(fcDirection.value);
+  fcDirection.value = flashcardDirectionPreference;
+  saveFlashcardDirection(flashcardDirectionPreference);
+  stopPronunciation();
+
+  startDirectionRound(fc.deck, flashcardDirectionPreference);
+  fc.revealed = false;
+  fcLive.textContent = '';
+  if (!fc.completed) {
+    if (fcDailyMode && !fc.dailyReplay) {
+      fc.index = seedDailyRoundProgress();
+      fc.completed = roundComplete();
+    } else {
+      roundReviewed.clear();
+      fc.index = 0;
+    }
+  }
+  renderFlashcard();
+});
+
+$('fcShuffle').addEventListener('click', () => { shuffleCurrentDeck(); toast('Cards shuffled'); });
+$('fcRestart').addEventListener('click', () => { restartCurrentReview(); toast('Review restarted'); });
 fcStatusFilter.addEventListener('change', () => { exitDailyMode(); buildDeck(false); });
 
 /* ==========================================================================
