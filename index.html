@@ -579,8 +579,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md);
   padding: 13px 15px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start;
 }
-.vocab-main { min-width: 0; }
-.vocab-term { margin: 0; font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.vocab-main { min-width: 0; flex: 1; }
+.vocab-term-line { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.vocab-term { min-width: 0; flex: 1; margin: 0; font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
 .vocab-example { margin: 4px 0 0; color: var(--text-3); font-style: italic; font-size: 13px; overflow-wrap: anywhere; }
 .vocab-definition { margin: 4px 0 0; color: var(--text-2); font-size: 13.5px; overflow-wrap: anywhere; }
 .vocab-arabic { margin: 4px 0 0; color: var(--text); font-size: 14.5px; overflow-wrap: anywhere; }
@@ -594,6 +595,19 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .vocab-status.s-learning { color: var(--warning); border-color: rgba(245,180,75,0.4); }
 .vocab-status.s-mastered { color: var(--success); border-color: rgba(52,211,153,0.4); }
 .vocab-actions { display: flex; gap: 4px; }
+
+.pronounce-btn {
+  width: 40px; height: 40px; flex: none; padding: 0;
+  display: inline-grid; place-items: center;
+  background: transparent; color: var(--text-2);
+  border: 1px solid var(--border-strong); border-radius: 10px;
+  transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+}
+.pronounce-btn:hover:not(:disabled) { color: var(--primary-light); border-color: var(--primary); background: var(--primary-tint); }
+.pronounce-btn:active:not(:disabled) { transform: translateY(1px); }
+.pronounce-btn[aria-pressed="true"] { color: var(--primary-light); border-color: var(--primary); background: var(--primary-tint); }
+.pronounce-btn:disabled { color: var(--text-3); opacity: 0.55; cursor: not-allowed; }
+.speaker-icon { width: 19px; height: 19px; display: block; }
 
 .empty-line { color: var(--text-3); font-size: 13.5px; text-align: center; padding: 18px 0; margin: 0; }
 .empty-box {
@@ -654,7 +668,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   box-shadow: var(--shadow-sm);
 }
 .fc-set { color: var(--accent); font-size: 13px; margin: 0; font-weight: 600; }
-.fc-term { font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5vw, 30px); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.fc-term-line { width: 100%; max-width: 560px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.fc-term { min-width: 0; font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5vw, 30px); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.fc-pronounce-slot { display: inline-flex; flex: none; }
 .fc-answer { margin-top: 6px; padding-top: 16px; border-top: 1px dashed var(--border-strong); width: 100%; max-width: 460px; animation: fade-up 0.22s ease; }
 /* Back information hierarchy: Example (first, prominent) → Definition → Arabic (secondary, smaller) */
 .fc-example { color: var(--text); font-style: italic; font-size: 16px; line-height: 1.5; margin: 0 0 9px; overflow-wrap: anywhere; }
@@ -1172,7 +1188,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <div id="fcReview">
           <div class="fc-card">
             <p class="fc-set" id="fcSetLine">General Vocabulary</p>
-            <p class="fc-term" id="fcTerm"></p>
+            <div class="fc-term-line">
+              <p class="fc-term" id="fcTerm"></p>
+              <span class="fc-pronounce-slot" id="fcPronounceSlot"></span>
+            </div>
             <div class="fc-answer" id="fcAnswer" hidden>
               <p class="fc-example" id="fcExample" dir="auto"></p>
               <p class="fc-definition" id="fcDefinition" dir="auto"></p>
@@ -1490,6 +1509,183 @@ function el(tag, cls, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
+
+/* Browser-native, on-demand American-English pronunciation. */
+const PRONUNCIATION_SUPPORTED =
+  'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window &&
+  typeof window.SpeechSynthesisUtterance === 'function' &&
+  typeof window.speechSynthesis.getVoices === 'function' &&
+  typeof window.speechSynthesis.speak === 'function' &&
+  typeof window.speechSynthesis.cancel === 'function';
+let pronunciationVoices = [];
+let activePronunciation = null;
+let pronunciationVoiceListenerAttached = false;
+
+function refreshPronunciationVoices() {
+  if (!PRONUNCIATION_SUPPORTED) return [];
+  try {
+    const voices = window.speechSynthesis.getVoices();
+    if (Array.isArray(voices) && voices.length) pronunciationVoices = voices;
+  } catch (error) { /* browser default voice remains available */ }
+  return pronunciationVoices;
+}
+
+function normaliseVoiceLanguage(voice) {
+  return String(voice && voice.lang || '').replace(/_/g, '-').toLowerCase();
+}
+
+function selectAmericanEnglishVoice(voices) {
+  const available = Array.isArray(voices) ? voices : [];
+  const english = available.filter(voice => normaliseVoiceLanguage(voice).startsWith('en'));
+  return english.find(voice => normaliseVoiceLanguage(voice).startsWith('en-us')) ||
+    english.find(voice => /american|united states|\bus\b/i.test(
+      String(voice && voice.name || '') + ' ' + normaliseVoiceLanguage(voice)
+    )) ||
+    english[0] ||
+    null;
+}
+
+function pronunciationText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function canPronounceText(value) {
+  const text = pronunciationText(value);
+  return Boolean(text && /[A-Za-z\u00C0-\u024F0-9]/.test(text));
+}
+
+function createSpeakerIcon() {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'speaker-icon');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  const speaker = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  speaker.setAttribute('d', 'M11 5 6.5 9H3v6h3.5l4.5 4V5Z');
+  const innerWave = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  innerWave.setAttribute('d', 'M15 9a4.2 4.2 0 0 1 0 6');
+  const outerWave = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  outerWave.setAttribute('d', 'M18 6a8.5 8.5 0 0 1 0 12');
+  svg.append(speaker, innerWave, outerWave);
+  return svg;
+}
+
+function setPronunciationButtonState(button, speaking) {
+  if (!button) return;
+  const text = pronunciationText(button.dataset.pronunciationText);
+  button.setAttribute('aria-pressed', speaking ? 'true' : 'false');
+  button.setAttribute('aria-label', speaking
+    ? 'Stop pronunciation of \u201c' + text + '\u201d'
+    : 'Pronounce \u201c' + text + '\u201d in American English');
+}
+
+function updatePronunciationButton(button, value) {
+  const text = pronunciationText(value);
+  const currentUsesButton = activePronunciation && activePronunciation.button === button;
+  if (currentUsesButton && activePronunciation.text !== text) stopPronunciation();
+  button.dataset.pronunciationText = text;
+  const available = PRONUNCIATION_SUPPORTED && canPronounceText(text);
+  button.disabled = !available;
+  button.title = available
+    ? 'Play pronunciation'
+    : PRONUNCIATION_SUPPORTED
+      ? 'American-English pronunciation is unavailable for this entry'
+      : 'Pronunciation is not supported in this browser';
+  if (!activePronunciation || activePronunciation.button !== button) {
+    button.setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-label', available
+      ? 'Pronounce \u201c' + text + '\u201d in American English'
+      : button.title);
+  }
+}
+
+function createPronunciationButton(value) {
+  const button = el('button', 'pronounce-btn');
+  button.type = 'button';
+  button.appendChild(createSpeakerIcon());
+  updatePronunciationButton(button, value);
+  return button;
+}
+
+function finishPronunciation(utterance) {
+  if (!activePronunciation || activePronunciation.utterance !== utterance) return;
+  const button = activePronunciation.button;
+  utterance.onend = null;
+  utterance.onerror = null;
+  activePronunciation = null;
+  setPronunciationButtonState(button, false);
+}
+
+function stopPronunciation() {
+  if (!PRONUNCIATION_SUPPORTED) return;
+  const current = activePronunciation;
+  activePronunciation = null;
+  if (current) {
+    current.utterance.onend = null;
+    current.utterance.onerror = null;
+    setPronunciationButtonState(current.button, false);
+  }
+  try { window.speechSynthesis.cancel(); } catch (error) { /* no active speech to stop */ }
+}
+
+function playPronunciation(button) {
+  if (!PRONUNCIATION_SUPPORTED || !button || button.disabled) return;
+  const text = pronunciationText(button.dataset.pronunciationText);
+  if (!canPronounceText(text)) return;
+  const wasActive = Boolean(activePronunciation && activePronunciation.button === button);
+  stopPronunciation();
+  if (wasActive) return;
+
+  let utterance;
+  try {
+    utterance = new window.SpeechSynthesisUtterance(text);
+  } catch (error) {
+    return;
+  }
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  const voice = selectAmericanEnglishVoice(refreshPronunciationVoices());
+  if (voice) utterance.voice = voice;
+  utterance.onend = () => finishPronunciation(utterance);
+  utterance.onerror = () => finishPronunciation(utterance);
+  activePronunciation = { button, utterance, text };
+  setPronunciationButtonState(button, true);
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    finishPronunciation(utterance);
+  }
+}
+
+if (PRONUNCIATION_SUPPORTED) {
+  refreshPronunciationVoices();
+  if (!pronunciationVoiceListenerAttached) {
+    if (typeof window.speechSynthesis.addEventListener === 'function') {
+      window.speechSynthesis.addEventListener('voiceschanged', refreshPronunciationVoices);
+    } else {
+      window.speechSynthesis.onvoiceschanged = refreshPronunciationVoices;
+    }
+    pronunciationVoiceListenerAttached = true;
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const button = event.target.closest && event.target.closest('.pronounce-btn');
+  if (button) playPronunciation(button);
+});
+document.addEventListener('click', (event) => {
+  if (event.target.closest && event.target.closest('#signOutBtn, #nameRequiredSignOut')) stopPronunciation();
+}, true);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') stopPronunciation();
+});
 
 // Unique id without external libraries
 function uid() {
@@ -3058,6 +3254,7 @@ function getFocusable(root) {
 }
 
 function pushModal(backdrop, options) {
+  stopPronunciation();
   modalStack.push({ backdrop, prevFocus: document.activeElement, locked: !!(options && options.locked) });
   backdrop.style.zIndex = String(100 + modalStack.length);
   backdrop.hidden = false;
@@ -3070,6 +3267,7 @@ function popModal(force) {
   if (candidate && candidate.locked && !force) return false;
   const top = modalStack.pop();
   if (!top) return;
+  stopPronunciation();
   top.backdrop.hidden = true;
   top.backdrop.style.removeProperty('z-index');
   if (!modalStack.length) document.body.classList.remove('no-scroll');
@@ -3147,6 +3345,7 @@ const VIEWS = {
 
 function switchView(name) {
   if (!VIEWS[name]) name = 'tracker';
+  stopPronunciation();
   for (const key of Object.keys(VIEWS)) {
     const active = key === name;
     VIEWS[key].el.hidden = !active;
@@ -3565,9 +3764,13 @@ function renderAfterVocabChange() {
    ========================================================================== */
 function buildVocabItem(v) {
   const li = el('li', 'vocab-item');
+  li.dataset.vocabularyId = v.id;
 
   const main = el('div', 'vocab-main');
-  main.appendChild(el('p', 'vocab-term', v.term));
+  const termLine = el('div', 'vocab-term-line');
+  termLine.appendChild(el('p', 'vocab-term', v.term));
+  termLine.appendChild(createPronunciationButton(v.term));
+  main.appendChild(termLine);
   if (v.example) main.appendChild(el('p', 'vocab-example', '“' + v.example + '”'));
   if (v.definition) main.appendChild(el('p', 'vocab-definition', v.definition));
   if (v.arabicMeaning) {
@@ -3744,6 +3947,7 @@ function renderProgressPanel() {
 
 /* ---- Vocabulary panel: central entries linked to this set ---- */
 function renderVocabPanel() {
+  stopPronunciation();
   const words = setVocab(openSetNo);
   vocabCountLine.textContent = words.length + (words.length === 1 ? ' word' : ' words') + ' in this set';
   vocabEmpty.hidden = words.length > 0;
@@ -3908,6 +4112,7 @@ function sortVocab(list, mode) {
 }
 
 function renderBrowse() {
+  stopPronunciation();
   const q = bvSearch.value.trim().toLowerCase();
   const setSelection = browseSetPicker.getSelection();
   let list = state.vocabulary.filter(v => {
@@ -4158,6 +4363,9 @@ const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer')
       fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
       fcStatusChip = $('fcStatusChip');
 const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
+const fcPronounce = createPronunciationButton('');
+fcPronounce.id = 'fcPronounce';
+$('fcPronounceSlot').appendChild(fcPronounce);
 // Changing a filter leaves the daily-review queue and returns to normal browsing.
 const flashSetPicker = createScopeFilter($('fcSetFilter'), () => { exitDailyMode(); buildDeck(false); });
 
@@ -4315,6 +4523,7 @@ function exitDailyMode() {
 }
 
 function buildDeck(shuffle) {
+  stopPronunciation();
   if (fcDailyMode) { buildDailyDeck(shuffle); return; }
   const setSelection = flashSetPicker.getSelection();
   const statusF = fcStatusFilter.value;
@@ -4337,6 +4546,7 @@ function buildDeck(shuffle) {
 // Daily deck comes from today's persisted queue; a resume seeds the round from saved progress
 // so the completion state only appears once all of today's words have been reviewed.
 function buildDailyDeck(shuffle) {
+  stopPronunciation();
   const rec = ensureTodayReview();
   const deck = rec ? rec.wordIds.filter(id => getDeckEntry(id) !== null) : [];
   if (shuffle) fisherYates(deck);
@@ -4380,6 +4590,7 @@ function renderFlashcard() {
   const entry = getDeckEntry(fc.deck[fc.index]);
   fcSetLine.textContent = locationLabel(entry.setNumber, false);
   fcTerm.textContent = entry.term;
+  updatePronunciationButton(fcPronounce, entry.term);
   // Back information order: Example → Definition → Arabic meaning
   if (entry.example) {
     fcExample.textContent = '“' + entry.example + '”';
@@ -4410,6 +4621,7 @@ function renderFlashcard() {
 
 function stepCard(delta) {
   if (!fc.deck.length) return;
+  stopPronunciation();
   fc.index = (fc.index + delta + fc.deck.length) % fc.deck.length;
   fc.revealed = false;
   renderFlashcard();
@@ -4449,6 +4661,7 @@ function renderCompletion() {
 }
 
 function showCompletion() {
+  stopPronunciation();
   fc.lastCardId = fc.deck.length ? fc.deck[fc.index] : null; // avoid repeating this card first next round
   fc.completed = true;
   renderFlashcard();
@@ -4488,6 +4701,7 @@ for (const btn of fcGrade.querySelectorAll('[data-status]')) {
 
 // Review Again — same queue, shuffled, fresh round. The daily challenge stays completed.
 fcReviewAgain.addEventListener('click', () => {
+  stopPronunciation();
   let ids = fc.deck.filter(id => getDeckEntry(id) !== null);
   if (!ids.length) { buildDeck(false); return; } // queue no longer valid
   const avoid = ids.length > 1 ? fc.lastCardId : null;
