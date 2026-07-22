@@ -375,6 +375,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .mission-task.is-done .mission-task-title,
 .mission-task.is-empty .mission-task-title { color: var(--text-2); font-weight: 500; }
 .mission-task-note { font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
+.mission-task-action { align-self: flex-start; min-height: 44px; margin-top: 5px; }
 
 .mission-actions { display: flex; flex-direction: column; gap: 10px; }
 .mission-actions .btn { width: 100%; }
@@ -424,8 +425,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .vs-stat.is-new .vs-num { color: var(--primary-light); }
 .vs-stat.is-learning .vs-num { color: var(--warning); }
 .vs-stat.is-mastered .vs-num { color: var(--success); }
-.vs-side { display: flex; align-items: center; gap: 14px; }
+.vs-side { display: flex; align-items: center; justify-content: flex-end; gap: 14px; min-width: 0; flex-wrap: wrap; }
 .vs-breakdown { font-size: 12.5px; color: var(--text-3); }
+.vs-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.vs-actions .btn { min-height: 44px; }
 
 /* 9. TRACKER — SET CARDS -------------------------------------------------- */
 .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -733,6 +736,87 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .fc-complete-actions .btn { width: 100%; }
 }
 
+/* Session-only Quick Recall Quiz, shown inside the existing Flashcards area. */
+.flashcards.quiz-mode > .fc-head,
+.flashcards.quiz-mode > .fc-daily-banner,
+.flashcards.quiz-mode > .filter-bar { display: none; }
+.quick-quiz {
+  width: 100%; padding: 30px 28px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm); animation: fade-up 0.22s ease;
+}
+.quiz-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding-bottom: 18px; border-bottom: 1px solid var(--border);
+}
+.quiz-kicker {
+  margin: 0 0 4px; color: var(--accent); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.quiz-head h2 { font-size: 22px; }
+.quiz-head .btn { min-height: 44px; }
+.quiz-question { width: min(620px, 100%); margin: 24px auto 0; }
+.quiz-progress { margin: 0 0 12px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.quiz-question h3 { margin: 0; font-size: 19px; }
+.quiz-clue {
+  margin: 16px 0 0; color: var(--text); font-size: clamp(17px, 3vw, 20px);
+  font-weight: 600; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.quiz-clue.is-term {
+  font-family: "Space Grotesk", sans-serif; font-size: clamp(23px, 5vw, 30px); font-weight: 700;
+}
+.quiz-form { display: grid; gap: 16px; margin-top: 22px; }
+.quiz-answer-field { display: grid; gap: 7px; min-width: 0; }
+.quiz-answer-field label,
+.quiz-options legend { color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+.quiz-answer-field input {
+  width: 100%; min-width: 0; min-height: 46px; padding: 11px 13px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text); font-size: 16px;
+}
+.quiz-answer-field input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+.quiz-options { min-width: 0; margin: 0; padding: 0; border: 0; }
+.quiz-options-list { display: grid; gap: 9px; margin-top: 8px; }
+.quiz-option {
+  display: flex; align-items: flex-start; gap: 10px; min-width: 0; min-height: 48px;
+  padding: 11px 13px; border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text); cursor: pointer;
+}
+.quiz-option:hover { border-color: var(--primary); }
+.quiz-option:has(input:checked) { border-color: var(--primary); background: var(--primary-tint); }
+.quiz-option input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--primary); }
+.quiz-option span { min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.quiz-form > .btn { justify-self: start; min-height: 44px; }
+.quiz-feedback-wrap { margin-top: 18px; }
+.quiz-feedback { margin: 0; font-size: 16px; font-weight: 700; }
+.quiz-feedback.is-correct { color: var(--success); }
+.quiz-feedback.is-incorrect { color: var(--warning); }
+.quiz-correct-answer { margin: 6px 0 0; color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
+.quiz-continue { margin-top: 16px; min-height: 44px; }
+.quiz-results { width: min(620px, 100%); margin: 28px auto 0; text-align: center; }
+.quiz-results h3 { font-size: 23px; }
+.quiz-score { margin: 10px 0 0; color: var(--text); font-size: 17px; font-weight: 600; }
+.quiz-result-message { margin: 7px 0 0; color: var(--text-2); }
+.quiz-missed { margin-top: 24px; text-align: left; }
+.quiz-missed h4 { margin: 0 0 10px; font-size: 14px; color: var(--text-2); }
+.quiz-missed-list { list-style: none; display: grid; gap: 9px; margin: 0; padding: 0; }
+.quiz-missed-item {
+  min-width: 0; padding: 13px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.quiz-missed-term { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.quiz-missed-detail { margin: 4px 0 0; color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.quiz-result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 24px; }
+.quiz-result-actions .btn { min-height: 44px; }
+@media (max-width: 520px) {
+  .quick-quiz { padding: 22px 16px; }
+  .quiz-head { flex-direction: column; align-items: stretch; }
+  .quiz-head .btn { width: 100%; }
+  .quiz-form > .btn, .quiz-continue { width: 100%; }
+  .quiz-result-actions { flex-direction: column; }
+  .quiz-result-actions .btn { width: 100%; }
+}
+
 /* 14. MODALS -------------------------------------------------------------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(4, 7, 16, 0.72);
@@ -883,6 +967,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .btn-log { width: 100%; }
   .status-head { gap: 14px; }
   .vs-side { width: 100%; justify-content: space-between; }
+  .vs-actions { margin-left: auto; }
   .vs-counts { gap: 18px; width: 100%; justify-content: space-between; }
   .vocab-item { flex-direction: column; }
   .vocab-side { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
@@ -906,6 +991,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .set-filter-panel { width: 100%; position: static; margin-top: 6px; }
   .grammar-toolbar input[type="search"] { flex-basis: 100%; }
   .grammar-toolbar .btn { flex: 1 1 100%; }
+  .vs-side { align-items: stretch; }
+  .vs-actions { width: 100%; margin-left: 0; }
+  .vs-actions .btn { flex: 1 1 120px; }
+  .mission-task-action { width: 100%; }
   .nav-btn { font-size: 10px; }
   .modal { padding: 18px; border-radius: var(--r-lg); }
   .pronunciation-settings-actions { flex-direction: column; }
@@ -1060,6 +1149,14 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
               <span class="mission-task-note" id="missionVocabNote"></span>
             </span>
           </li>
+          <li class="mission-task" id="missionQuizTask" tabindex="-1">
+            <span class="mission-check" id="missionQuizCheck" aria-hidden="true">&#9675;</span>
+            <span class="mission-task-body">
+              <span class="mission-task-title" id="missionQuizTitle">Today&rsquo;s Quick Quiz</span>
+              <span class="mission-task-note" id="missionQuizNote">Complete Today&rsquo;s Words first</span>
+              <button class="btn btn-ghost btn-sm mission-task-action" id="missionQuizBtn" type="button" hidden>Start Quick Quiz</button>
+            </span>
+          </li>
         </ul>
 
         <div class="mission-actions">
@@ -1101,7 +1198,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       </div>
     </section>
 
-    <!-- Compact vocabulary summary with a single quick-add action -->
+    <!-- Compact vocabulary summary with quick practice and add actions -->
     <section aria-label="Vocabulary summary">
       <div class="card vocab-summary">
         <div class="vs-counts">
@@ -1112,7 +1209,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         </div>
         <div class="vs-side">
           <p class="vs-breakdown" id="voBreakdown">General: 0 &middot; Set Vocabulary: 0</p>
-          <button class="btn btn-primary btn-sm" id="dashAddWord">Add word</button>
+          <div class="vs-actions">
+            <button class="btn btn-ghost btn-sm" id="dashQuickQuiz" type="button" hidden>Quick Quiz</button>
+            <button class="btn btn-primary btn-sm" id="dashAddWord" type="button">Add word</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1284,6 +1384,53 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           </div>
         </div>
       </div>
+
+      <section class="quick-quiz" id="quickQuiz" aria-labelledby="quizHeading" hidden>
+        <div class="quiz-head">
+          <div>
+            <p class="quiz-kicker">Vocabulary Review</p>
+            <h2 id="quizHeading">Quick Recall Quiz</h2>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="quizExit" type="button">Back to Tracker</button>
+        </div>
+
+        <div class="quiz-question" id="quizQuestion">
+          <p class="quiz-progress" id="quizProgress">Question 1 of 5</p>
+          <h3 id="quizQuestionHeading" tabindex="-1">Recall the English word</h3>
+          <p class="quiz-clue" id="quizClue" dir="auto"></p>
+          <form class="quiz-form" id="quizForm" novalidate>
+            <div class="quiz-answer-field" id="quizTypedField">
+              <label for="quizAnswer">Type your answer</label>
+              <input id="quizAnswer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="quizClue">
+            </div>
+            <fieldset class="quiz-options" id="quizOptions" aria-describedby="quizClue" hidden>
+              <legend>Choose one answer</legend>
+              <div class="quiz-options-list" id="quizOptionsList"></div>
+            </fieldset>
+            <button class="btn btn-primary" id="quizCheck" type="submit">Check Answer</button>
+          </form>
+          <div class="quiz-feedback-wrap">
+            <p class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite" tabindex="-1" hidden></p>
+            <p class="quiz-correct-answer" id="quizCorrectAnswer" hidden></p>
+          </div>
+          <button class="btn btn-primary quiz-continue" id="quizContinue" type="button" hidden>Continue</button>
+        </div>
+
+        <div class="quiz-results" id="quizResults" hidden>
+          <h3 id="quizResultsHeading" tabindex="-1">Quiz complete &#10003;</h3>
+          <p class="quiz-score" id="quizScore"></p>
+          <p class="quiz-result-message" id="quizResultMessage"></p>
+          <section class="quiz-missed" id="quizMissed" aria-labelledby="quizMissedHeading" hidden>
+            <h4 id="quizMissedHeading">Needs another look</h4>
+            <ul class="quiz-missed-list" id="quizMissedList"></ul>
+          </section>
+          <div class="quiz-result-actions">
+            <button class="btn btn-primary" id="quizRetry" type="button" hidden>Retry Incorrect Answers</button>
+            <button class="btn btn-ghost" id="quizAnother" type="button" hidden>Take Another Quiz</button>
+            <button class="btn btn-ghost" id="quizBack" type="button">Back to Tracker</button>
+          </div>
+        </div>
+      </section>
       <p class="sr-only" id="fcLive" aria-live="polite"></p>
       <div class="empty-box" id="fcEmpty" hidden>No vocabulary has been added for this selection yet.</div>
     </section>
@@ -1574,7 +1721,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 11;
+const STATE_VERSION = 12;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
 
@@ -2055,6 +2202,21 @@ function dateKey(d) {
     String(d.getMonth() + 1).padStart(2, '0') + '-' +
     String(d.getDate()).padStart(2, '0');
 }
+
+function isValidDateKey(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parts = value.split('-').map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.getFullYear() === parts[0] &&
+    date.getMonth() === parts[1] - 1 && date.getDate() === parts[2];
+}
+
+function normalizeIsoTimestamp(value) {
+  if (typeof value !== 'string' || !value.includes('T')) return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
+
 function fisherYates(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -2064,6 +2226,7 @@ function fisherYates(arr) {
 
 /* ========================================================================== 
    2. STATE NORMALISATION, CLOUD STORAGE & AUTHENTICATION
+   v12 adds bounded daily Quick Quiz completions to the existing JSONB document.
    v11 adds an optional spokenForm to vocabulary records in the existing JSONB document.
    v8 simplifies Grammar rules in the existing Supabase JSONB state document.
    Old browser keys are read only for the explicit one-time cloud migration.
@@ -2091,6 +2254,8 @@ function defaultState() {
     studyDates: [],
     // v10: persistent "Today's N Words" daily challenge records (one per local date).
     dailyVocabularyReviews: [],
+    // v12: one completed Quick Quiz record per local calendar date.
+    dailyQuizCompletions: [],
     // v11: vocabulary records include an optional cloud-synced pronunciation override.
     settings: { browserMigrationHandled: false }
   };
@@ -2187,7 +2352,7 @@ function sanitizeGrammarRule(value, id) {
   };
 }
 
-// Accept v1-v11 shapes and return a complete, trusted v11 state.
+// Accept v1-v12 shapes and return a complete, trusted v12 state.
 function normalizeState(raw) {
   const s = defaultState();
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
@@ -2342,6 +2507,39 @@ function normalizeState(raw) {
   dailyRecords.sort((a, b) => a.date.localeCompare(b.date));
   s.dailyVocabularyReviews = dailyRecords.slice(-DAILY_HISTORY_LIMIT);
 
+  // v12 daily Quick Quiz completions. Valid records are merged by local date,
+  // keep the first completion time, retain the strongest valid score, and stay bounded.
+  const quizRecordsByDate = new Map();
+  if (Array.isArray(raw.dailyQuizCompletions)) {
+    for (const rec of raw.dailyQuizCompletions) {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec) || !isValidDateKey(rec.date)) continue;
+      const completedAt = normalizeIsoTimestamp(rec.completedAt);
+      if (!completedAt) continue;
+      const total = Number.isInteger(rec.total) && rec.total >= 1 && rec.total <= 5 ? rec.total : null;
+      const score = total !== null && Number.isInteger(rec.score) && rec.score >= 0 && rec.score <= total
+        ? rec.score
+        : null;
+      let normalized = quizRecordsByDate.get(rec.date);
+      if (!normalized) {
+        normalized = { date: rec.date, completedAt };
+        quizRecordsByDate.set(rec.date, normalized);
+      } else if (completedAt < normalized.completedAt) {
+        normalized.completedAt = completedAt;
+      }
+      if (score !== null && (
+        !Number.isInteger(normalized.score) ||
+        score * normalized.total > normalized.score * total ||
+        (score * normalized.total === normalized.score * total && total > normalized.total)
+      )) {
+        normalized.score = score;
+        normalized.total = total;
+      }
+    }
+  }
+  s.dailyQuizCompletions = [...quizRecordsByDate.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-DAILY_HISTORY_LIMIT);
+
   return s;
 }
 
@@ -2356,6 +2554,7 @@ function isStateLike(raw) {
       (!Number.isInteger(raw.version) || raw.version < 1 || raw.version > STATE_VERSION)) return false;
   if (raw.vocabulary !== undefined && !validVocabulary(raw.vocabulary)) return false;
   if (raw.grammarRules !== undefined && !Array.isArray(raw.grammarRules)) return false;
+  if (raw.dailyQuizCompletions !== undefined && !Array.isArray(raw.dailyQuizCompletions)) return false;
   for (const key of ['titles', 'done', 'log']) {
     if (raw[key] !== undefined && (!raw[key] || typeof raw[key] !== 'object' || Array.isArray(raw[key]))) return false;
   }
@@ -2368,6 +2567,7 @@ function isStateLike(raw) {
     }
   }
   return raw.version !== undefined || raw.vocabulary !== undefined || raw.grammarRules !== undefined ||
+    raw.dailyQuizCompletions !== undefined ||
     ['titles', 'done', 'log', 'sets'].some(key => raw[key] !== undefined);
 }
 
@@ -2375,6 +2575,7 @@ function hasMeaningfulData(candidate) {
   const value = normalizeState(candidate);
   if (Object.keys(value.titles).length || Object.keys(value.done).length || Object.keys(value.log).length) return true;
   if (value.vocabulary.length || value.grammarRules.length) return true;
+  if (value.dailyQuizCompletions.length) return true;
   return Object.values(value.sets).some(set => set && typeof set.notes === 'string' && set.notes.trim());
 }
 
@@ -2763,7 +2964,9 @@ function clearPrivateSession() {
   fc.completed = false;
   fc.deck = [];
   roundReviewed.clear();
-  prevLessonDone = prevVocabDone = prevMissionDone = null;
+  resetQuickRecallQuiz(true);
+  prevLessonDone = prevVocabDone = prevQuizDone = prevMissionDone = null;
+  renderedMissionDate = '';
   renderProfile(null);
   appShell.hidden = true;
 }
@@ -3694,7 +3897,8 @@ const VIEWS = {
   flashcards: { el: $('view-flashcards'), btn: $('nav-flashcards') }
 };
 
-function switchView(name) {
+function switchView(name, options) {
+  options = options || {};
   if (!VIEWS[name]) name = 'tracker';
   stopPronunciation();
   for (const key of Object.keys(VIEWS)) {
@@ -3710,7 +3914,7 @@ function switchView(name) {
   }
   if (name === 'vocab') renderBrowse();
   if (name === 'grammar') renderGrammar();
-  if (name === 'flashcards') buildDeck(false);
+  if (name === 'flashcards' && !options.skipFlashcardBuild) buildDeck(false);
   try { sessionStorage.setItem('ee_tracker_view', name); } catch (e) { /* ignore */ }
 }
 
@@ -3726,7 +3930,7 @@ const overallFill = $('overallFill'), overallPct = $('overallPct'),
       overallText = $('overallText'), overallBar = $('overallBar');
 const statStreak = $('statStreak'), statDays = $('statDays');
 const vTotal = $('vTotal'), vNew = $('vNew'), vLearning = $('vLearning'), vMastered = $('vMastered');
-const voBreakdown = $('voBreakdown');
+const voBreakdown = $('voBreakdown'), dashQuickQuiz = $('dashQuickQuiz');
 const logBtn = $('logBtn');
 
 function renderDashboard() {
@@ -3748,6 +3952,8 @@ function renderDashboard() {
   vLearning.textContent = String(counts.learning);
   vMastered.textContent = String(counts.mastered);
   voBreakdown.textContent = 'General: ' + counts.general + ' · Set Vocabulary: ' + counts.set;
+
+  renderGlobalQuickQuizEntry();
 
   if (cs === null) {
     logBtn.textContent = 'All sets complete \u{1F389}';
@@ -3780,6 +3986,7 @@ logBtn.addEventListener('click', () => {
 
 // Dashboard quick-add (Browse and Flashcards live in the main navigation)
 $('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
+dashQuickQuiz.addEventListener('click', () => startQuickRecallQuiz('tracker-global'));
 
 /* ==========================================================================
    7b. TODAY'S MISSION + WEEKLY GOAL
@@ -3789,10 +3996,14 @@ const missionLessonTask = $('missionLessonTask'), missionLessonCheck = $('missio
       missionLessonTitle = $('missionLessonTitle'), missionLessonNote = $('missionLessonNote');
 const missionVocabTask = $('missionVocabTask'), missionVocabCheck = $('missionVocabCheck'),
       missionVocabTitle = $('missionVocabTitle'), missionVocabNote = $('missionVocabNote');
+const missionQuizTask = $('missionQuizTask'), missionQuizCheck = $('missionQuizCheck'),
+      missionQuizTitle = $('missionQuizTitle'), missionQuizNote = $('missionQuizNote'),
+      missionQuizBtn = $('missionQuizBtn');
 const weeklyLabel = $('weeklyLabel'), weeklyDots = $('weeklyDots'), missionLive = $('missionLive');
 
 let missionAction = 'start'; // 'start' opens the current set, 'review' opens the daily queue
-let prevLessonDone = null, prevVocabDone = null, prevMissionDone = null;
+let prevLessonDone = null, prevVocabDone = null, prevQuizDone = null, prevMissionDone = null;
+let renderedMissionDate = '';
 
 function setMissionCheck(taskEl, checkEl, done, empty) {
   taskEl.classList.toggle('is-done', done);
@@ -3800,17 +4011,20 @@ function setMissionCheck(taskEl, checkEl, done, empty) {
   checkEl.textContent = done ? '✓' : (empty ? '–' : '○'); // check / dash / circle
 }
 
-function announceMission(lessonDone, vocabDone, missionComplete) {
+function announceMission(lessonDone, vocabDone, quizDone, missionComplete) {
   if (prevLessonDone === null) { // seed on first render without announcing
-    prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+    prevLessonDone = lessonDone; prevVocabDone = vocabDone;
+    prevQuizDone = quizDone; prevMissionDone = missionComplete;
     return;
   }
   let msg = '';
   if (missionComplete && !prevMissionDone) msg = 'Today’s mission completed.';
+  else if (quizDone && !prevQuizDone) msg = 'Today’s Quick Quiz complete.';
   else if (lessonDone && !prevLessonDone) msg = 'Today’s lesson complete.';
   else if (vocabDone && !prevVocabDone) msg = 'Daily vocabulary review complete.';
   if (msg) missionLive.textContent = msg;
-  prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+  prevLessonDone = lessonDone; prevVocabDone = vocabDone;
+  prevQuizDone = quizDone; prevMissionDone = missionComplete;
 }
 
 function renderWeeklyGoal() {
@@ -3828,10 +4042,24 @@ function renderWeeklyGoal() {
   }
 }
 
+function dailyQuizCompletion(date) {
+  return state.dailyQuizCompletions.find(record => record.date === date) || null;
+}
+
+function availableQuickQuizCount() {
+  return Math.min(5, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
+}
+
 function renderMission() {
+  const today = dateKey(new Date());
+  if (renderedMissionDate !== today) {
+    renderedMissionDate = today;
+    prevLessonDone = prevVocabDone = prevQuizDone = prevMissionDone = null;
+    missionLive.textContent = '';
+  }
   const cs = currentSetNo();
   const allSetsComplete = cs === null;
-  const studiedToday = Array.isArray(state.studyDates) && state.studyDates.includes(dateKey(new Date()));
+  const studiedToday = Array.isArray(state.studyDates) && state.studyDates.includes(today);
   const lessonDone = allSetsComplete || studiedToday;
 
   // Lesson task
@@ -3877,7 +4105,35 @@ function renderMission() {
     missionVocabNote.hidden = false;
   }
 
-  const missionComplete = lessonDone && !vocabPending;
+  // Quick Quiz task — available from the full vocabulary collection, but unlocked
+  // here only after Today's Words. A global quiz completion still counts today.
+  const quizCount = availableQuickQuizCount();
+  const quizAvailable = quizCount > 0;
+  const quizDone = quizAvailable && dailyQuizCompletion(today) !== null;
+  const canContinueQuiz = quickQuizState.active && quickQuizState.launchDate === today;
+  missionQuizBtn.hidden = true;
+  missionQuizTitle.textContent = 'Today’s Quick Quiz';
+  if (!quizAvailable) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
+    missionQuizNote.textContent = 'Add suitable vocabulary to unlock today’s quiz';
+  } else if (quizDone) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, true, false);
+    missionQuizTitle.textContent = 'Today’s Quick Quiz complete ✓';
+    missionQuizNote.textContent = 'Completed for today · practise again anytime';
+  } else if (!vocabDone) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
+    missionQuizNote.textContent = 'Complete Today’s Words first';
+  } else {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, false);
+    missionQuizNote.textContent = quizCount + (quizCount === 1 ? ' question' : ' questions') + ' · active recall';
+    missionQuizBtn.textContent = canContinueQuiz ? 'Continue Quick Quiz' : 'Start Quick Quiz';
+    missionQuizBtn.hidden = false;
+  }
+  missionQuizNote.hidden = false;
+
+  const vocabSatisfied = !rec || rec.wordIds.length === 0 || vocabDone;
+  const quizSatisfied = !quizAvailable || quizDone;
+  const missionComplete = lessonDone && vocabSatisfied && quizSatisfied;
 
   // One primary action, plus the ghost quick-log while a lesson is still pending.
   if (!lessonDone) {
@@ -3894,15 +4150,20 @@ function renderMission() {
       : 'Continue Review · ' + vocabReviewed + '/' + vocabTotal;
     missionDone.hidden = true;
     logBtn.hidden = true;
-  } else {
+  } else if (missionComplete) {
     missionAction = 'done';
     missionBtn.hidden = true;
     missionDone.hidden = false;
     logBtn.hidden = true;
+  } else {
+    missionAction = 'quiz';
+    missionBtn.hidden = true;
+    missionDone.hidden = true;
+    logBtn.hidden = true;
   }
 
   renderWeeklyGoal();
-  announceMission(lessonDone, vocabDone, missionComplete);
+  announceMission(lessonDone, vocabDone, quizDone, missionComplete);
 }
 
 missionBtn.addEventListener('click', () => {
@@ -3910,6 +4171,15 @@ missionBtn.addEventListener('click', () => {
   const cs = currentSetNo();
   if (cs === null) return;
   openSetModal(cs, nextOpenDay(cs)); // open the current set focused on the current day
+});
+
+missionQuizBtn.addEventListener('click', () => {
+  const today = dateKey(new Date());
+  if (quickQuizState.active && quickQuizState.launchDate === today) {
+    resumeQuickRecallQuiz();
+    return;
+  }
+  startQuickRecallQuiz('today-mission');
 });
 
 /* ==========================================================================
@@ -4758,6 +5028,33 @@ const fcReview = $('fcReview'), fcComplete = $('fcComplete'),
       fcLive = $('fcLive');
 const roundReviewed = new Set(); // ids reviewed (revealed or graded) in the current round
 
+const quickQuiz = $('quickQuiz'), quizQuestion = $('quizQuestion'), quizResults = $('quizResults'),
+      quizProgress = $('quizProgress'), quizQuestionHeading = $('quizQuestionHeading'),
+      quizClue = $('quizClue'), quizForm = $('quizForm'), quizTypedField = $('quizTypedField'),
+      quizAnswer = $('quizAnswer'), quizOptions = $('quizOptions'), quizOptionsList = $('quizOptionsList'),
+      quizCheck = $('quizCheck'), quizFeedback = $('quizFeedback'),
+      quizCorrectAnswer = $('quizCorrectAnswer'), quizContinue = $('quizContinue'),
+      quizResultsHeading = $('quizResultsHeading'), quizScore = $('quizScore'),
+      quizResultMessage = $('quizResultMessage'), quizMissed = $('quizMissed'),
+      quizMissedList = $('quizMissedList'), quizRetry = $('quizRetry'),
+      quizAnother = $('quizAnother');
+
+const quickQuizState = {
+  active: false,
+  items: [],
+  pool: [],
+  questions: [],
+  index: 0,
+  submitted: false,
+  answers: [],
+  history: [],
+  retryRound: false,
+  launchSource: '',
+  launchDate: ''
+};
+let lastQuickQuizWordIds = [];
+let lastQuickQuizSignature = '';
+
 /* ---- Persistent "Today's N Words" daily challenge (Deliverable 2) ---- */
 let fcDailyMode = false;
 const fcDailyBanner = $('fcDailyBanner'), fcDailyLabel = $('fcDailyLabel'), fcDailyProgress = $('fcDailyProgress');
@@ -4828,6 +5125,555 @@ function getReverseCardClue(item) {
 function todayReview() {
   return state.dailyVocabularyReviews.find(r => r.date === dateKey(new Date())) || null;
 }
+
+function resetQuickRecallQuiz(clearPreviousSelection) {
+  quickQuizState.active = false;
+  quickQuizState.items = [];
+  quickQuizState.pool = [];
+  quickQuizState.questions = [];
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.history = [];
+  quickQuizState.retryRound = false;
+  quickQuizState.launchSource = '';
+  quickQuizState.launchDate = '';
+  quickQuiz.hidden = true;
+  quizQuestion.hidden = false;
+  quizResults.hidden = true;
+  quizAnswer.value = '';
+  quizOptionsList.textContent = '';
+  quizFeedback.textContent = '';
+  quizCorrectAnswer.textContent = '';
+  quizScore.textContent = '';
+  quizResultMessage.textContent = '';
+  quizMissedList.textContent = '';
+  quizMissed.hidden = true;
+  quizRetry.hidden = true;
+  quizAnother.hidden = true;
+  if (clearPreviousSelection) {
+    lastQuickQuizWordIds = [];
+    lastQuickQuizSignature = '';
+  }
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.remove('quiz-mode');
+}
+
+function snapshotQuizItem(entry) {
+  return {
+    id: entry.id,
+    term: String(entry.term || '').trim(),
+    definition: String(entry.definition || '').trim(),
+    arabicMeaning: String(entry.arabicMeaning || '').trim(),
+    example: String(entry.example || '').trim(),
+    status: STATUSES.includes(entry.status) ? entry.status : 'new'
+  };
+}
+
+function allVocabularyQuizPool() {
+  const seen = new Set();
+  const items = [];
+  for (const entry of state.vocabulary) {
+    if (!entry || seen.has(entry.id) || !String(entry.term || '').trim()) continue;
+    seen.add(entry.id);
+    items.push(snapshotQuizItem(entry));
+  }
+  return items;
+}
+
+function quizTextRevealsTerm(value, term) {
+  const source = String(value || '').trim().toLowerCase();
+  const target = String(term || '').trim().toLowerCase();
+  if (!source || !target) return false;
+  if (source.includes(target)) return true;
+  const plainSource = source.replace(/[^\p{L}\p{N}]+/gu, '');
+  const plainTarget = target.replace(/[^\p{L}\p{N}]+/gu, '');
+  return Boolean(plainTarget && plainSource.includes(plainTarget));
+}
+
+function quizExampleBlank(item) {
+  const source = String(item && item.example || '').trim();
+  if (!source) return '';
+  const redacted = safeReverseExample(source, item.term);
+  return redacted && redacted !== source && redacted.includes('_____') ? redacted : '';
+}
+
+function typedQuizClue(item) {
+  if (item.definition && !quizTextRevealsTerm(item.definition, item.term)) {
+    return { text: item.definition, direction: 'auto' };
+  }
+  if (item.arabicMeaning && !quizTextRevealsTerm(item.arabicMeaning, item.term)) {
+    return { text: item.arabicMeaning, direction: 'rtl' };
+  }
+  const example = quizExampleBlank(item);
+  return example ? { text: example, direction: 'auto' } : null;
+}
+
+function eligibleQuickQuizItems(pool) {
+  return pool.filter(item => typedQuizClue(item) !== null);
+}
+
+function statusPrioritizedQuizItems(items) {
+  const groups = { learning: [], new: [], mastered: [] };
+  for (const item of items) groups[item.status].push(item);
+  for (const status of STATUSES) fisherYates(groups[status]);
+  return groups.learning.concat(groups.new, groups.mastered);
+}
+
+function selectQuickQuizItems(items, previousIds) {
+  const targetCount = Math.min(5, items.length);
+  const previous = new Set(previousIds || []);
+  const fresh = statusPrioritizedQuizItems(items.filter(item => !previous.has(item.id)));
+  const repeated = statusPrioritizedQuizItems(items.filter(item => previous.has(item.id)));
+  return fresh.concat(repeated).slice(0, targetCount);
+}
+
+function quizMeaning(item, kind) {
+  if (kind === 'definition') return String(item.definition || '').trim();
+  return String(item.arabicMeaning || '').trim();
+}
+
+function createMeaningQuizQuestion(item) {
+  const clue = typedQuizClue(item);
+  if (!clue) return null;
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'meaning-to-word',
+    heading: 'Recall the English word',
+    clue: clue.text,
+    clueDirection: clue.direction,
+    correctAnswer: item.term,
+    options: []
+  };
+}
+
+function createExampleQuizQuestion(item) {
+  const clue = quizExampleBlank(item);
+  if (!clue) return null;
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'example-blank',
+    heading: 'Type the missing word or phrase',
+    clue,
+    clueDirection: 'auto',
+    correctAnswer: item.term,
+    options: []
+  };
+}
+
+function normalizeQuizOption(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function createChoiceQuizQuestion(item, pool) {
+  const kind = item.definition ? 'definition' : (item.arabicMeaning ? 'arabic' : '');
+  if (!kind) return null;
+  const correctAnswer = quizMeaning(item, kind);
+  if (!correctAnswer) return null;
+
+  const seen = new Set([normalizeQuizOption(correctAnswer)]);
+  const distractors = [];
+  const candidates = pool.filter(other => other.id !== item.id);
+  fisherYates(candidates);
+  for (const other of candidates) {
+    const meaning = quizMeaning(other, kind);
+    const key = normalizeQuizOption(meaning);
+    if (!meaning || seen.has(key) || quizTextRevealsTerm(meaning, item.term)) continue;
+    seen.add(key);
+    distractors.push(meaning);
+    if (distractors.length >= 3) break;
+  }
+  if (!distractors.length) return null;
+
+  const options = [correctAnswer].concat(distractors);
+  fisherYates(options);
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'word-to-meaning',
+    heading: 'Choose the correct meaning',
+    clue: item.term,
+    clueDirection: 'auto',
+    optionDirection: kind === 'arabic' ? 'rtl' : 'auto',
+    correctAnswer,
+    correctOption: options.indexOf(correctAnswer),
+    options
+  };
+}
+
+function plannedQuizTypes(count) {
+  if (count <= 1) return ['meaning-to-word'];
+  if (count === 2) return ['meaning-to-word', 'example-blank'];
+  if (count === 3) return ['meaning-to-word', 'example-blank', 'word-to-meaning'];
+  if (count === 4) return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'word-to-meaning'];
+  return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'example-blank', 'word-to-meaning'];
+}
+
+function createQuickQuizQuestion(item, preferredType, pool) {
+  const order = preferredType === 'example-blank'
+    ? ['example-blank', 'meaning-to-word', 'word-to-meaning']
+    : preferredType === 'word-to-meaning'
+      ? ['word-to-meaning', 'meaning-to-word', 'example-blank']
+      : ['meaning-to-word', 'example-blank', 'word-to-meaning'];
+  for (const type of order) {
+    const question = type === 'example-blank'
+      ? createExampleQuizQuestion(item)
+      : type === 'word-to-meaning'
+        ? createChoiceQuizQuestion(item, pool)
+        : createMeaningQuizQuestion(item);
+    if (question) return question;
+  }
+  return null;
+}
+
+function createQuickQuizQuestions(items, pool) {
+  const plans = plannedQuizTypes(items.length);
+  fisherYates(plans);
+  const questions = [];
+  items.forEach((item, index) => {
+    const question = createQuickQuizQuestion(item, plans[index], pool);
+    if (question) questions.push(question);
+  });
+  fisherYates(questions);
+  return questions;
+}
+
+function quickQuizQuestionSignature(questions) {
+  return JSON.stringify(questions.map(question => [
+    question.entryId,
+    question.type,
+    question.options
+  ]));
+}
+
+function createFreshQuickQuizQuestions(items, pool) {
+  let questions = createQuickQuizQuestions(items, pool);
+  let signature = quickQuizQuestionSignature(questions);
+  if (signature !== lastQuickQuizSignature) return { questions, signature };
+
+  if (questions.length > 1) {
+    questions = questions.slice(1).concat(questions[0]);
+    signature = quickQuizQuestionSignature(questions);
+  } else if (questions.length === 1) {
+    const current = questions[0];
+    const alternatives = ['meaning-to-word', 'example-blank', 'word-to-meaning']
+      .filter(type => type !== current.type);
+    fisherYates(alternatives);
+    for (const type of alternatives) {
+      const alternative = createQuickQuizQuestion(items[0], type, pool);
+      if (alternative && alternative.type !== current.type) {
+        questions = [alternative];
+        signature = quickQuizQuestionSignature(questions);
+        break;
+      }
+    }
+  }
+  return { questions, signature };
+}
+
+function renderGlobalQuickQuizEntry() {
+  const available = eligibleQuickQuizItems(allVocabularyQuizPool()).length > 0;
+  dashQuickQuiz.hidden = !available;
+  dashQuickQuiz.disabled = !available;
+}
+
+function renderQuickQuizQuestion() {
+  const question = quickQuizState.questions[quickQuizState.index];
+  if (!question) { renderQuickQuizResults(); return; }
+  quickQuizState.submitted = false;
+  quizQuestion.hidden = false;
+  quizResults.hidden = true;
+  quizScore.textContent = '';
+  quizResultMessage.textContent = '';
+  quizMissedList.textContent = '';
+  quizMissed.hidden = true;
+  quizRetry.hidden = true;
+  quizProgress.textContent = 'Question ' + (quickQuizState.index + 1) + ' of ' + quickQuizState.questions.length;
+  quizQuestionHeading.textContent = question.heading;
+  quizClue.textContent = question.clue;
+  quizClue.dir = question.clueDirection;
+  quizClue.className = 'quiz-clue' + (question.type === 'word-to-meaning' ? ' is-term' : '');
+
+  quizAnswer.value = '';
+  quizAnswer.disabled = false;
+  quizTypedField.hidden = question.type === 'word-to-meaning';
+  quizOptions.hidden = question.type !== 'word-to-meaning';
+  quizOptionsList.textContent = '';
+  if (question.type === 'word-to-meaning') {
+    question.options.forEach((option, index) => {
+      const label = el('label', 'quiz-option');
+      const input = el('input');
+      input.type = 'radio';
+      input.name = 'quizOption';
+      input.value = String(index);
+      const text = el('span', '', option);
+      text.dir = question.optionDirection;
+      label.append(input, text);
+      quizOptionsList.appendChild(label);
+    });
+  }
+
+  quizCheck.hidden = false;
+  quizCheck.disabled = false;
+  quizFeedback.textContent = '';
+  quizFeedback.className = 'quiz-feedback';
+  quizFeedback.hidden = true;
+  quizCorrectAnswer.textContent = '';
+  quizCorrectAnswer.hidden = true;
+  quizContinue.hidden = true;
+  quizQuestionHeading.focus();
+}
+
+function startQuickRecallQuiz(source) {
+  stopPronunciation();
+  renderMission(); // re-check the local date before creating a new quiz snapshot
+  const launchSource = source === 'today-mission' ? 'today-mission' : 'tracker-global';
+  const launchDate = dateKey(new Date());
+  const pool = eligibleQuickQuizItems(allVocabularyQuizPool());
+  const items = selectQuickQuizItems(pool, lastQuickQuizWordIds);
+  const generated = createFreshQuickQuizQuestions(items, pool);
+  const questions = generated.questions;
+  if (!questions.length) {
+    renderGlobalQuickQuizEntry();
+    fcLive.textContent = '';
+    toast('Add vocabulary with a safe clue to start a quiz');
+    dashQuickQuiz.focus();
+    return;
+  }
+
+  resetQuickRecallQuiz();
+  exitDailyMode();
+  lastQuickQuizWordIds = items.map(item => item.id);
+  lastQuickQuizSignature = generated.signature;
+  quickQuizState.active = true;
+  quickQuizState.items = items;
+  quickQuizState.pool = pool;
+  quickQuizState.questions = questions;
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.history = [];
+  quickQuizState.retryRound = false;
+  quickQuizState.launchSource = launchSource;
+  quickQuizState.launchDate = launchDate;
+
+  fcLive.textContent = '';
+  fcStage.hidden = true;
+  fcEmpty.hidden = true;
+  quickQuiz.hidden = false;
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.add('quiz-mode');
+  switchView('flashcards', { skipFlashcardBuild: true });
+  renderQuickQuizQuestion();
+}
+
+function resumeQuickRecallQuiz() {
+  if (!quickQuizState.active) return;
+  stopPronunciation();
+  exitDailyMode();
+  fcStage.hidden = true;
+  fcEmpty.hidden = true;
+  quickQuiz.hidden = false;
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.add('quiz-mode');
+  switchView('flashcards', { skipFlashcardBuild: true });
+  (quizResults.hidden ? quizQuestionHeading : quizResultsHeading).focus();
+}
+
+function normalizeQuizAnswer(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\s+/g, ' ')
+    .replace(/\.+$/, '')
+    .trim();
+}
+
+function quizSelection() {
+  return quizOptionsList.querySelector('input[name="quizOption"]:checked');
+}
+
+function submitQuickQuizAnswer() {
+  if (quickQuizState.submitted) return;
+  const question = quickQuizState.questions[quickQuizState.index];
+  if (!question) return;
+
+  let userAnswer = '';
+  let correct = false;
+  if (question.type === 'word-to-meaning') {
+    const selected = quizSelection();
+    if (!selected) {
+      quizFeedback.textContent = 'Choose an answer before checking.';
+      quizFeedback.className = 'quiz-feedback is-incorrect';
+      quizFeedback.hidden = false;
+      quizFeedback.focus();
+      return;
+    }
+    const selectedIndex = Number(selected.value);
+    userAnswer = question.options[selectedIndex] || '';
+    correct = selectedIndex === question.correctOption;
+    for (const input of quizOptionsList.querySelectorAll('input')) input.disabled = true;
+  } else {
+    userAnswer = quizAnswer.value.trim();
+    if (!normalizeQuizAnswer(userAnswer)) {
+      quizFeedback.textContent = 'Type an answer before checking.';
+      quizFeedback.className = 'quiz-feedback is-incorrect';
+      quizFeedback.hidden = false;
+      quizFeedback.focus();
+      return;
+    }
+    correct = normalizeQuizAnswer(userAnswer) === normalizeQuizAnswer(question.correctAnswer);
+    quizAnswer.disabled = true;
+  }
+
+  quickQuizState.submitted = true;
+  quickQuizState.answers.push({
+    entryId: question.entryId,
+    itemTerm: question.itemTerm,
+    type: question.type,
+    userAnswer,
+    correctAnswer: question.correctAnswer,
+    correct
+  });
+  quizCheck.hidden = true;
+  quizFeedback.textContent = correct ? 'Correct ✓' : 'Not quite';
+  quizFeedback.className = 'quiz-feedback ' + (correct ? 'is-correct' : 'is-incorrect');
+  quizFeedback.hidden = false;
+  quizCorrectAnswer.textContent = correct ? '' : 'Correct answer: ' + question.correctAnswer;
+  quizCorrectAnswer.hidden = correct;
+  quizContinue.textContent = quickQuizState.index + 1 >= quickQuizState.questions.length
+    ? 'See results'
+    : 'Continue';
+  quizContinue.hidden = false;
+  quizFeedback.focus();
+}
+
+function quickQuizResultMessage(score, total) {
+  if (score === total) return 'Excellent recall.';
+  if (score > total / 2) {
+    return 'Good work. Review the missed ' + (total - score === 1 ? 'word' : 'words') + ' once more.';
+  }
+  return 'Good practice. Retry the words that need more attention.';
+}
+
+function recordDailyQuickQuizCompletion(score, total) {
+  if (!cloudReady || !currentUser || !Number.isInteger(total) || total < 1 || total > 5) return false;
+  if (!Number.isInteger(score) || score < 0 || score > total) return false;
+  const today = dateKey(new Date());
+  if (dailyQuizCompletion(today)) {
+    renderMission();
+    return false;
+  }
+  state.dailyQuizCompletions.push({
+    date: today,
+    completedAt: new Date().toISOString(),
+    score,
+    total
+  });
+  state.dailyQuizCompletions.sort((a, b) => a.date.localeCompare(b.date));
+  if (state.dailyQuizCompletions.length > DAILY_HISTORY_LIMIT) {
+    state.dailyQuizCompletions = state.dailyQuizCompletions.slice(-DAILY_HISTORY_LIMIT);
+  }
+  saveState();
+  renderMission();
+  return true;
+}
+
+function renderQuickQuizResults() {
+  const answers = quickQuizState.answers.slice();
+  const incorrect = answers.filter(answer => !answer.correct);
+  const score = answers.length - incorrect.length;
+  if (answers.length) recordDailyQuickQuizCompletion(score, answers.length);
+  quickQuizState.submitted = false;
+  quizContinue.hidden = true;
+  quickQuizState.history.push({
+    retryRound: quickQuizState.retryRound,
+    questions: quickQuizState.questions.map(question =>
+      Object.assign({}, question, { options: question.options.slice() })
+    ),
+    answers
+  });
+
+  quizQuestion.hidden = true;
+  quizResults.hidden = false;
+  if (quickQuizState.retryRound && !incorrect.length) {
+    quizResultsHeading.textContent = 'All corrected ✓';
+    quizScore.textContent = 'You recalled every missed word.';
+    quizResultMessage.textContent = 'Excellent recall.';
+  } else {
+    quizResultsHeading.textContent = 'Quiz complete ✓';
+    quizScore.textContent = 'You got ' + score + ' of ' + answers.length + ' correct.';
+    quizResultMessage.textContent = quickQuizResultMessage(score, answers.length);
+  }
+
+  quizMissedList.textContent = '';
+  for (const answer of incorrect) {
+    const item = el('li', 'quiz-missed-item');
+    item.appendChild(el('strong', 'quiz-missed-term', answer.itemTerm));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Your answer: ' + (answer.userAnswer || 'No answer')));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Correct answer: ' + answer.correctAnswer));
+    quizMissedList.appendChild(item);
+  }
+  quizMissed.hidden = !incorrect.length;
+  quizRetry.hidden = !incorrect.length;
+  quizAnother.hidden = quickQuizState.launchSource !== 'today-mission';
+  quizResultsHeading.focus();
+}
+
+function continueQuickRecallQuiz() {
+  if (!quickQuizState.submitted) return;
+  if (quickQuizState.index + 1 >= quickQuizState.questions.length) {
+    renderQuickQuizResults();
+    return;
+  }
+  quickQuizState.index++;
+  renderQuickQuizQuestion();
+}
+
+function retryIncorrectQuizAnswers() {
+  const incorrectIds = new Set(
+    quickQuizState.answers.filter(answer => !answer.correct).map(answer => answer.entryId)
+  );
+  const items = quickQuizState.items.filter(item => incorrectIds.has(item.id));
+  const questions = createQuickQuizQuestions(items, items);
+  if (!questions.length) return;
+  quickQuizState.questions = questions;
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.retryRound = true;
+  renderQuickQuizQuestion();
+}
+
+function takeAnotherQuickQuiz() {
+  const source = quickQuizState.launchSource === 'today-mission' ? 'today-mission' : 'tracker-global';
+  startQuickRecallQuiz(source);
+}
+
+function returnQuickQuizToTracker() {
+  const restoreMissionFocus = quickQuizState.launchSource === 'today-mission';
+  stopPronunciation();
+  resetQuickRecallQuiz();
+  fcStage.hidden = false;
+  exitDailyMode();
+  switchView('tracker');
+  renderGlobalQuickQuizEntry();
+  (restoreMissionFocus ? missionQuizTask : dashQuickQuiz).focus();
+}
+
+$('quizExit').addEventListener('click', returnQuickQuizToTracker);
+$('quizBack').addEventListener('click', returnQuickQuizToTracker);
+quizForm.addEventListener('submit', event => {
+  event.preventDefault();
+  submitQuickQuizAnswer();
+});
+quizContinue.addEventListener('click', continueQuickRecallQuiz);
+quizRetry.addEventListener('click', retryIncorrectQuizAnswers);
+quizAnother.addEventListener('click', takeAnotherQuickQuiz);
+
 function reviewedInQueue(rec) {
   const wordSet = new Set(rec.wordIds);
   return rec.reviewedIds.filter(id => wordSet.has(id)).length;
@@ -4955,6 +5801,7 @@ function startDailyReview() {
 
 function exitDailyMode() {
   if (!fcDailyMode) return;
+  if (quickQuizState.active) resetQuickRecallQuiz();
   fcDailyMode = false;
   fc.dailyReplay = false;
   updateDailyBanner();
@@ -4962,6 +5809,7 @@ function exitDailyMode() {
 
 function buildDeck(shuffle) {
   stopPronunciation();
+  if (quickQuizState.active) resetQuickRecallQuiz();
   if (fcDailyMode) { buildDailyDeck(shuffle); return; }
   const setSelection = flashSetPicker.getSelection();
   const statusF = fcStatusFilter.value;
@@ -5152,7 +6000,7 @@ function showCompletion() {
   fcLive.textContent = fcDailyMode
     ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
     : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
-  fcReviewAgain.focus(); // move focus to the primary action
+  fcReviewAgain.focus(); // move focus to the primary completion action
 }
 
 $('fcPrev').addEventListener('click', () => stepCard(-1));
