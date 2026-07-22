@@ -446,8 +446,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 }
 .path-current-card {
   border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary-ring), var(--shadow-sm);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 12px;
 }
+.path-current-head { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .path-complete-card {
   border-color: rgba(52, 211, 153, 0.35); display: flex; flex-direction: column; gap: 6px;
 }
@@ -464,8 +465,16 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 }
 .path-set-title { margin: 0; color: var(--text-2); font-size: 13.5px; overflow-wrap: anywhere; }
 .path-current-day { margin: 0; color: var(--text-2); font-size: 13px; }
+.path-current-footer {
+  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+}
+.path-current-progress-block { min-width: 0; display: grid; gap: 6px; }
+.path-day-indicators { display: flex; align-items: center; gap: 5px; line-height: 1; }
+.path-day-indicator { color: var(--text-3); font-size: 13px; }
+.path-day-indicator.is-done { color: var(--primary-light); }
 .path-current-progress { margin: 0; color: var(--text-3); font-size: 12.5px; overflow-wrap: anywhere; }
-.path-current-action { margin-top: 4px; }
+.path-current-action { flex: none; }
 .path-group { padding: 13px 14px; display: flex; flex-direction: column; justify-content: center; }
 .path-group-title { margin: 0 0 8px; color: var(--text-3); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .path-set-list { display: grid; gap: 6px; }
@@ -810,6 +819,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .learning-path-preview { grid-template-columns: 1fr; align-items: start; }
   .path-secondary { grid-auto-rows: auto; height: auto; }
   .path-group { justify-content: flex-start; }
+  .path-current-footer { margin-top: 0; flex-direction: column; align-items: stretch; gap: 12px; }
+  .path-current-action { width: 100%; }
   .status-metrics { grid-template-columns: 1fr 1fr; gap: 14px; }
   .metric-progress { grid-column: 1 / -1; }
   .metric-tile { border-left: 0; padding-left: 0; background: var(--surface-2); border-radius: var(--r-sm); padding: 12px 14px; }
@@ -831,7 +842,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .profile-greeting { margin-top: 14px; font-size: 21px; }
   .status-set { font-size: 21px; }
   .sets-grid { grid-template-columns: 1fr 1fr; }
-  .path-current-action { width: 100%; }
   .set-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-bar select { max-width: 100%; flex: 1 1 45%; }
   .set-filter-details { flex: 1 1 100%; }
@@ -3461,20 +3471,35 @@ function renderLearningPath() {
     learningPathPreview.appendChild(complete);
   } else {
     const current = el('div', 'path-current-card');
-    current.appendChild(el('span', 'path-label', 'Current'));
-    current.appendChild(el('h3', 'path-set-name', 'Set ' + cs));
+    const currentHead = el('div', 'path-current-head');
+    currentHead.appendChild(el('span', 'path-label', 'Current'));
+    currentHead.appendChild(el('h3', 'path-set-name', 'Set ' + cs));
     const title = displayTitle(cs);
-    if (title) current.appendChild(el('p', 'path-set-title', title));
+    if (title) currentHead.appendChild(el('p', 'path-set-title', title));
+    current.appendChild(currentHead);
     const day = nextOpenDay(cs);
     current.appendChild(el('p', 'path-current-day',
       'Day ' + day + ' · ' + (DAY_PURPOSE[day] || 'Continue learning')));
+
     const completedDays = doneCountForSet(cs);
-    current.appendChild(el('p', 'path-current-progress',
+    const currentFooter = el('div', 'path-current-footer');
+    const progressBlock = el('div', 'path-current-progress-block');
+    const indicators = el('div', 'path-day-indicators');
+    indicators.setAttribute('aria-hidden', 'true');
+    for (let d = 1; d <= DAYS_PER_SET; d++) {
+      const isDone = Boolean(state.done[cs + '-' + d]);
+      indicators.appendChild(el('span', 'path-day-indicator' + (isDone ? ' is-done' : ''), isDone ? '●' : '○'));
+    }
+    progressBlock.appendChild(indicators);
+    progressBlock.appendChild(el('p', 'path-current-progress',
       completedDays + ' of ' + DAYS_PER_SET + ' days completed'));
+
     const continueBtn = el('button', 'btn btn-primary btn-sm path-current-action', 'Continue Set ' + cs);
     continueBtn.type = 'button';
     continueBtn.addEventListener('click', () => openSetModal(cs, day));
-    current.appendChild(continueBtn);
+    currentFooter.appendChild(progressBlock);
+    currentFooter.appendChild(continueBtn);
+    current.appendChild(currentFooter);
     learningPathPreview.appendChild(current);
   }
 
