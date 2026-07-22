@@ -260,7 +260,8 @@ p { margin: 0; }
 
 /* 5. MAIN LAYOUT ----------------------------------------------------------- */
 main { padding: 4px 0 calc(var(--nav-h) + 24px); }
-#view-tracker:not([hidden]) { display: flex; flex-direction: column; gap: 22px; }
+#view-tracker:not([hidden]) { display: block; }
+.tracker-dashboard { display: flex; flex-direction: column; gap: 22px; }
 
 .section-head { margin-bottom: 14px; }
 .section-title { font-size: 19px; }
@@ -428,13 +429,78 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
 /* 9. TRACKER — SET CARDS -------------------------------------------------- */
 .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.sets-toggle-wrap { display: flex; justify-content: center; margin-top: 16px; }
-.sets-toggle { min-height: 44px; }
+.learning-path-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.learning-path-head-copy { min-width: 0; }
+.learning-path-head .btn { min-height: 44px; flex: none; }
+.learning-path-preview {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 12px; align-items: stretch;
+}
+.path-current-card,
+.path-complete-card,
+.path-group {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: 16px; min-width: 0; box-shadow: var(--shadow-sm);
+}
+.path-current-card {
+  border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary-ring), var(--shadow-sm);
+  display: flex; flex-direction: column; align-items: stretch; gap: 12px;
+}
+.path-current-head { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.path-complete-card {
+  border-color: rgba(52, 211, 153, 0.35); display: flex; flex-direction: column; gap: 6px;
+}
+.path-secondary {
+  display: grid; grid-auto-rows: minmax(0, 1fr); gap: 12px; height: 100%;
+}
+.path-label {
+  color: var(--text-3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.path-set-name {
+  margin: 0; font-family: "Space Grotesk", sans-serif; font-size: 19px; font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.path-set-title { margin: 0; color: var(--text-2); font-size: 13.5px; overflow-wrap: anywhere; }
+.path-current-day { margin: 0; color: var(--text-2); font-size: 13px; }
+.path-current-footer {
+  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+}
+.path-current-progress-block { min-width: 0; display: grid; gap: 6px; }
+.path-day-indicators { display: flex; align-items: center; gap: 5px; line-height: 1; }
+.path-day-indicator { color: var(--text-3); font-size: 13px; }
+.path-day-indicator.is-done { color: var(--primary-light); }
+.path-current-progress { margin: 0; color: var(--text-3); font-size: 12.5px; overflow-wrap: anywhere; }
+.path-current-action { flex: none; }
+.path-group { padding: 13px 14px; display: flex; flex-direction: column; justify-content: center; }
+.path-group-title { margin: 0 0 8px; color: var(--text-3); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.path-set-list { display: grid; gap: 6px; }
+.path-set-row {
+  width: 100%; min-height: 44px; padding: 9px 10px; text-align: left;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.path-set-row:hover { border-color: var(--primary); background: var(--primary-tint); }
+.path-set-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.path-set-row-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.path-set-row-title { color: var(--text-2); font-size: 12px; overflow-wrap: anywhere; }
+.path-set-row-arrow { color: var(--text-3); flex: none; }
+.course-complete-title { margin: 0; color: var(--success); font-size: 16px; font-weight: 700; }
+.course-complete-copy { margin: 0; color: var(--text-2); font-size: 13.5px; }
+.tracker-all-sets { animation: fade-up 0.18s ease; }
+.all-sets-back { min-height: 44px; margin-bottom: 16px; }
+.all-sets-head { margin-bottom: 16px; }
+.all-sets-heading { font-size: 22px; }
+.all-sets-summary { margin-top: 5px; color: var(--text-2); font-size: 13.5px; }
 .set-card {
   text-align: left; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--r-md);
   padding: 15px 16px; display: flex; flex-direction: column; gap: 10px;
-  min-width: 0; /* allow the grid item to shrink so long titles ellipsize instead of overflowing */
+  min-width: 0;
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
 }
 .set-card:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow); }
@@ -445,7 +511,11 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .chip { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--pill); }
 .chip-current { color: var(--primary-light); background: var(--primary-tint); }
 .chip-done { color: var(--success); background: var(--success-tint); }
-.set-title { margin: 0; font-size: 13.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-title {
+  margin: 0; font-size: 13.5px; line-height: 1.4; font-weight: 500;
+  overflow: hidden; overflow-wrap: anywhere; display: -webkit-box;
+  -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
 .day-bar { display: flex; gap: 5px; }
 .day-seg { flex: 1; height: 6px; border-radius: var(--pill); background: var(--surface-2); }
 .day-seg.on { background: linear-gradient(90deg, var(--primary-strong), var(--primary-light)); }
@@ -744,6 +814,13 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 }
 
 @media (max-width: 720px) {
+  .learning-path-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .learning-path-head .btn { width: 100%; }
+  .learning-path-preview { grid-template-columns: 1fr; align-items: start; }
+  .path-secondary { grid-auto-rows: auto; height: auto; }
+  .path-group { justify-content: flex-start; }
+  .path-current-footer { margin-top: 0; flex-direction: column; align-items: stretch; gap: 12px; }
+  .path-current-action { width: 100%; }
   .status-metrics { grid-template-columns: 1fr 1fr; gap: 14px; }
   .metric-progress { grid-column: 1 / -1; }
   .metric-tile { border-left: 0; padding-left: 0; background: var(--surface-2); border-radius: var(--r-sm); padding: 12px 14px; }
@@ -902,6 +979,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
   <!-- ============ VIEW: TRACKER ============ -->
   <div id="view-tracker">
+    <div class="tracker-dashboard" id="trackerDashboard">
     <!-- Daily guidance: what to study now, today's short review, this week's goal -->
     <section class="mission-section" aria-labelledby="missionHeading">
       <div class="card guidance-card">
@@ -979,16 +1057,25 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       </div>
     </section>
 
-    <section aria-label="Lesson sets">
-      <div class="section-head">
-        <h2 class="section-title">Lesson sets</h2>
-        <p class="section-hint">Open a set to manage its progress, vocabulary and notes.</p>
+    <section aria-labelledby="learningPathHeading">
+      <div class="section-head learning-path-head">
+        <div class="learning-path-head-copy">
+          <h2 class="section-title" id="learningPathHeading">Your Learning Path</h2>
+          <p class="section-hint">Your current position and what comes next.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="browseAllSets" type="button">Browse all 30 sets</button>
+      </div>
+      <div class="learning-path-preview" id="learningPathPreview"></div>
+    </section>
+    </div>
+
+    <section class="tracker-all-sets" id="trackerAllSets" aria-labelledby="allSetsHeading" hidden>
+      <button class="btn btn-ghost btn-sm all-sets-back" id="backToDashboard" type="button">&larr; Back to Dashboard</button>
+      <div class="all-sets-head">
+        <h2 class="all-sets-heading" id="allSetsHeading" tabindex="-1">All Lesson Sets</h2>
+        <p class="all-sets-summary" id="allSetsSummary">0 of 30 sets completed</p>
       </div>
       <div class="sets-grid" id="setsGrid"></div>
-      <div class="sets-toggle-wrap">
-        <button class="btn btn-ghost btn-sm sets-toggle" id="setsToggle" type="button"
-                aria-expanded="false" aria-controls="setsGrid">Show all 30 sets</button>
-      </div>
     </section>
   </div>
 
@@ -3067,7 +3154,10 @@ function switchView(name) {
     if (active) VIEWS[key].btn.setAttribute('aria-current', 'page');
     else VIEWS[key].btn.removeAttribute('aria-current');
   }
-  if (name === 'tracker') renderMission(); // re-check the local date and today's challenge
+  if (name === 'tracker') {
+    showTrackerDashboard(false);
+    renderMission(); // re-check the local date and today's challenge
+  }
   if (name === 'vocab') renderBrowse();
   if (name === 'grammar') renderGrammar();
   if (name === 'flashcards') buildDeck(false);
@@ -3273,37 +3363,27 @@ missionBtn.addEventListener('click', () => {
 });
 
 /* ==========================================================================
-   8. SET CARDS GRID
+   8. TRACKER LEARNING PATH + ALL SETS SUBVIEW
    ========================================================================== */
+const trackerDashboard = $('trackerDashboard');
+const trackerAllSets = $('trackerAllSets');
+const learningPathPreview = $('learningPathPreview');
+const browseAllSets = $('browseAllSets');
+const backToDashboard = $('backToDashboard');
+const allSetsHeading = $('allSetsHeading');
+const allSetsSummary = $('allSetsSummary');
 const setsGrid = $('setsGrid');
-const setsToggle = $('setsToggle');
-let setGridExpanded = false;
 
-function collapsedSetNumbers(currentSet) {
+function recentlyCompletedSet(currentSet) {
   if (currentSet === null) {
-    return Array.from({ length: 8 }, (_, index) => TOTAL_SETS - 7 + index);
+    return doneCountForSet(TOTAL_SETS) === DAYS_PER_SET ? TOTAL_SETS : null;
   }
-
-  const relevant = [];
-  const recentlyCompleted = currentSet > 1 && doneCountForSet(currentSet - 1) === DAYS_PER_SET
+  return currentSet > 1 && doneCountForSet(currentSet - 1) === DAYS_PER_SET
     ? currentSet - 1
     : null;
-  if (recentlyCompleted !== null) relevant.push(recentlyCompleted);
-  for (let n = currentSet; n <= Math.min(TOTAL_SETS, currentSet + 6); n++) relevant.push(n);
-
-  return [...new Set(relevant)]
-    .filter(n => n >= 1 && n <= TOTAL_SETS)
-    .sort((a, b) => a - b)
-    .slice(0, 8);
 }
 
-function renderCards() {
-  const cs = currentSetNo();
-  const visibleSets = setGridExpanded
-    ? Array.from({ length: TOTAL_SETS }, (_, index) => index + 1)
-    : collapsedSetNumbers(cs);
-  setsGrid.textContent = '';
-  for (const n of visibleSets) {
+function buildSetCard(n, currentSet) {
     const dc = doneCountForSet(n);
     const wc = setVocab(n).length;
     const hasNotes = setNotes(n).trim().length > 0;
@@ -3311,21 +3391,21 @@ function renderCards() {
 
     const card = el('button', 'set-card');
     card.type = 'button';
-    if (n === cs) {
+    if (n === currentSet) {
       card.classList.add('current');
       card.setAttribute('aria-current', 'step');
     }
     if (dc === DAYS_PER_SET) card.classList.add('complete');
     card.setAttribute('aria-label',
       'Open Set ' + n + (title ? ', ' + title : '') +
-      (n === cs ? ', current set' : '') + (dc === DAYS_PER_SET ? ', completed' : '') +
+      (n === currentSet ? ', current set' : '') + (dc === DAYS_PER_SET ? ', completed' : '') +
       ': ' + dc + ' of ' + DAYS_PER_SET + ' days, ' +
       wc + (wc === 1 ? ' word' : ' words') + (hasNotes ? ', notes added' : ''));
 
     const top = el('div', 'set-card-top');
     top.appendChild(el('span', 'set-no', 'Set ' + n));
     if (dc === DAYS_PER_SET) top.appendChild(el('span', 'chip chip-done', '✓ Done'));
-    else if (n === cs) top.appendChild(el('span', 'chip chip-current', 'Current'));
+    else if (n === currentSet) top.appendChild(el('span', 'chip chip-current', 'Current'));
     card.appendChild(top);
 
     if (title) card.appendChild(el('p', 'set-title', title));
@@ -3348,27 +3428,125 @@ function renderCards() {
     card.appendChild(meta);
 
     card.addEventListener('click', () => openSetModal(n));
-    setsGrid.appendChild(card);
-  }
-
-  setsToggle.textContent = setGridExpanded ? 'Show fewer sets' : 'Show all 30 sets';
-  setsToggle.setAttribute('aria-expanded', String(setGridExpanded));
+    return card;
 }
 
-setsToggle.addEventListener('click', () => {
-  const isCollapsing = setGridExpanded;
-  setGridExpanded = !setGridExpanded;
-  renderCards();
+function buildPathSetRow(n, relationship) {
+  const title = displayTitle(n);
+  const row = el('button', 'path-set-row');
+  row.type = 'button';
+  row.setAttribute('aria-label',
+    'Open ' + relationship + ' Set ' + n + (title ? ', ' + title : ''));
 
-  if (isCollapsing) {
-    requestAnimationFrame(() => {
-      const rect = setsToggle.getBoundingClientRect();
-      if (rect.top < 0 || rect.bottom > window.innerHeight) {
-        setsToggle.scrollIntoView({ block: 'nearest' });
-      }
-    });
+  const copy = el('span', 'path-set-row-main');
+  copy.appendChild(el('span', 'path-set-row-name', 'Set ' + n));
+  if (title) copy.appendChild(el('span', 'path-set-row-title', title));
+  row.appendChild(copy);
+  const arrow = el('span', 'path-set-row-arrow', '\u203A');
+  arrow.setAttribute('aria-hidden', 'true');
+  row.appendChild(arrow);
+  row.addEventListener('click', () => openSetModal(n));
+  return row;
+}
+
+function appendPathGroup(container, label, setNumbers, relationship) {
+  if (!setNumbers.length) return;
+  const group = el('section', 'path-group');
+  group.appendChild(el('h3', 'path-group-title', label));
+  const list = el('div', 'path-set-list');
+  for (const n of setNumbers) list.appendChild(buildPathSetRow(n, relationship));
+  group.appendChild(list);
+  container.appendChild(group);
+}
+
+function renderLearningPath() {
+  const cs = currentSetNo();
+  const recent = recentlyCompletedSet(cs);
+  learningPathPreview.textContent = '';
+
+  if (cs === null) {
+    const complete = el('div', 'path-complete-card');
+    complete.appendChild(el('p', 'course-complete-title', 'Course complete'));
+    complete.appendChild(el('p', 'course-complete-copy', 'All 30 lesson sets are complete. Keep revisiting any set whenever you want.'));
+    learningPathPreview.appendChild(complete);
+  } else {
+    const current = el('div', 'path-current-card');
+    const currentHead = el('div', 'path-current-head');
+    currentHead.appendChild(el('span', 'path-label', 'Current'));
+    currentHead.appendChild(el('h3', 'path-set-name', 'Set ' + cs));
+    const title = displayTitle(cs);
+    if (title) currentHead.appendChild(el('p', 'path-set-title', title));
+    current.appendChild(currentHead);
+    const day = nextOpenDay(cs);
+    current.appendChild(el('p', 'path-current-day',
+      'Day ' + day + ' · ' + (DAY_PURPOSE[day] || 'Continue learning')));
+
+    const completedDays = doneCountForSet(cs);
+    const currentFooter = el('div', 'path-current-footer');
+    const progressBlock = el('div', 'path-current-progress-block');
+    const indicators = el('div', 'path-day-indicators');
+    indicators.setAttribute('aria-hidden', 'true');
+    for (let d = 1; d <= DAYS_PER_SET; d++) {
+      const isDone = Boolean(state.done[cs + '-' + d]);
+      indicators.appendChild(el('span', 'path-day-indicator' + (isDone ? ' is-done' : ''), isDone ? '●' : '○'));
+    }
+    progressBlock.appendChild(indicators);
+    progressBlock.appendChild(el('p', 'path-current-progress',
+      completedDays + ' of ' + DAYS_PER_SET + ' days completed'));
+
+    const continueBtn = el('button', 'btn btn-primary btn-sm path-current-action', 'Continue Set ' + cs);
+    continueBtn.type = 'button';
+    continueBtn.addEventListener('click', () => openSetModal(cs, day));
+    currentFooter.appendChild(progressBlock);
+    currentFooter.appendChild(continueBtn);
+    current.appendChild(currentFooter);
+    learningPathPreview.appendChild(current);
   }
-});
+
+  const secondary = el('div', 'path-secondary');
+  if (recent !== null) appendPathGroup(secondary, 'Recently Completed', [recent], 'recently completed');
+  const upcoming = cs !== null && cs < TOTAL_SETS ? [cs + 1] : [];
+  appendPathGroup(secondary, 'Up Next', upcoming, 'upcoming');
+  if (secondary.children.length) learningPathPreview.appendChild(secondary);
+}
+
+function completedSetCount() {
+  let count = 0;
+  for (let n = 1; n <= TOTAL_SETS; n++) {
+    if (doneCountForSet(n) === DAYS_PER_SET) count++;
+  }
+  return count;
+}
+
+function renderAllSetCards() {
+  const cs = currentSetNo();
+  allSetsSummary.textContent = completedSetCount() + ' of ' + TOTAL_SETS + ' sets completed';
+  setsGrid.textContent = '';
+  for (let n = 1; n <= TOTAL_SETS; n++) {
+    setsGrid.appendChild(buildSetCard(n, cs));
+  }
+}
+
+function renderCards() {
+  renderLearningPath();
+  if (!trackerAllSets.hidden) renderAllSetCards();
+}
+
+function showTrackerDashboard(restoreBrowseFocus) {
+  trackerDashboard.hidden = false;
+  trackerAllSets.hidden = true;
+  if (restoreBrowseFocus) browseAllSets.focus();
+}
+
+function showAllSets() {
+  renderAllSetCards();
+  trackerDashboard.hidden = true;
+  trackerAllSets.hidden = false;
+  allSetsHeading.focus();
+}
+
+browseAllSets.addEventListener('click', showAllSets);
+backToDashboard.addEventListener('click', () => showTrackerDashboard(true));
 
 /* ==========================================================================
    9. SHARED RE-RENDER AFTER ANY VOCABULARY CHANGE
