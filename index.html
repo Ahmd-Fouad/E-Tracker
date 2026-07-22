@@ -375,6 +375,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .mission-task.is-done .mission-task-title,
 .mission-task.is-empty .mission-task-title { color: var(--text-2); font-weight: 500; }
 .mission-task-note { font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
+.mission-task-action { align-self: flex-start; min-height: 44px; margin-top: 5px; }
 
 .mission-actions { display: flex; flex-direction: column; gap: 10px; }
 .mission-actions .btn { width: 100%; }
@@ -993,6 +994,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .vs-side { align-items: stretch; }
   .vs-actions { width: 100%; margin-left: 0; }
   .vs-actions .btn { flex: 1 1 120px; }
+  .mission-task-action { width: 100%; }
   .nav-btn { font-size: 10px; }
   .modal { padding: 18px; border-radius: var(--r-lg); }
   .pronunciation-settings-actions { flex-direction: column; }
@@ -1145,6 +1147,14 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
             <span class="mission-task-body">
               <span class="mission-task-title" id="missionVocabTitle">Today&rsquo;s 10 Words</span>
               <span class="mission-task-note" id="missionVocabNote"></span>
+            </span>
+          </li>
+          <li class="mission-task" id="missionQuizTask" tabindex="-1">
+            <span class="mission-check" id="missionQuizCheck" aria-hidden="true">&#9675;</span>
+            <span class="mission-task-body">
+              <span class="mission-task-title" id="missionQuizTitle">Today&rsquo;s Quick Quiz</span>
+              <span class="mission-task-note" id="missionQuizNote">Complete Today&rsquo;s Words first</span>
+              <button class="btn btn-ghost btn-sm mission-task-action" id="missionQuizBtn" type="button" hidden>Start Quick Quiz</button>
             </span>
           </li>
         </ul>
@@ -1416,6 +1426,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           </section>
           <div class="quiz-result-actions">
             <button class="btn btn-primary" id="quizRetry" type="button" hidden>Retry Incorrect Answers</button>
+            <button class="btn btn-ghost" id="quizAnother" type="button" hidden>Take Another Quiz</button>
             <button class="btn btn-ghost" id="quizBack" type="button">Back to Tracker</button>
           </div>
         </div>
@@ -1710,7 +1721,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 11;
+const STATE_VERSION = 12;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
 
@@ -2191,6 +2202,21 @@ function dateKey(d) {
     String(d.getMonth() + 1).padStart(2, '0') + '-' +
     String(d.getDate()).padStart(2, '0');
 }
+
+function isValidDateKey(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parts = value.split('-').map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.getFullYear() === parts[0] &&
+    date.getMonth() === parts[1] - 1 && date.getDate() === parts[2];
+}
+
+function normalizeIsoTimestamp(value) {
+  if (typeof value !== 'string' || !value.includes('T')) return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
+
 function fisherYates(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -2200,6 +2226,7 @@ function fisherYates(arr) {
 
 /* ========================================================================== 
    2. STATE NORMALISATION, CLOUD STORAGE & AUTHENTICATION
+   v12 adds bounded daily Quick Quiz completions to the existing JSONB document.
    v11 adds an optional spokenForm to vocabulary records in the existing JSONB document.
    v8 simplifies Grammar rules in the existing Supabase JSONB state document.
    Old browser keys are read only for the explicit one-time cloud migration.
@@ -2227,6 +2254,8 @@ function defaultState() {
     studyDates: [],
     // v10: persistent "Today's N Words" daily challenge records (one per local date).
     dailyVocabularyReviews: [],
+    // v12: one completed Quick Quiz record per local calendar date.
+    dailyQuizCompletions: [],
     // v11: vocabulary records include an optional cloud-synced pronunciation override.
     settings: { browserMigrationHandled: false }
   };
@@ -2323,7 +2352,7 @@ function sanitizeGrammarRule(value, id) {
   };
 }
 
-// Accept v1-v11 shapes and return a complete, trusted v11 state.
+// Accept v1-v12 shapes and return a complete, trusted v12 state.
 function normalizeState(raw) {
   const s = defaultState();
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
@@ -2478,6 +2507,39 @@ function normalizeState(raw) {
   dailyRecords.sort((a, b) => a.date.localeCompare(b.date));
   s.dailyVocabularyReviews = dailyRecords.slice(-DAILY_HISTORY_LIMIT);
 
+  // v12 daily Quick Quiz completions. Valid records are merged by local date,
+  // keep the first completion time, retain the strongest valid score, and stay bounded.
+  const quizRecordsByDate = new Map();
+  if (Array.isArray(raw.dailyQuizCompletions)) {
+    for (const rec of raw.dailyQuizCompletions) {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec) || !isValidDateKey(rec.date)) continue;
+      const completedAt = normalizeIsoTimestamp(rec.completedAt);
+      if (!completedAt) continue;
+      const total = Number.isInteger(rec.total) && rec.total >= 1 && rec.total <= 5 ? rec.total : null;
+      const score = total !== null && Number.isInteger(rec.score) && rec.score >= 0 && rec.score <= total
+        ? rec.score
+        : null;
+      let normalized = quizRecordsByDate.get(rec.date);
+      if (!normalized) {
+        normalized = { date: rec.date, completedAt };
+        quizRecordsByDate.set(rec.date, normalized);
+      } else if (completedAt < normalized.completedAt) {
+        normalized.completedAt = completedAt;
+      }
+      if (score !== null && (
+        !Number.isInteger(normalized.score) ||
+        score * normalized.total > normalized.score * total ||
+        (score * normalized.total === normalized.score * total && total > normalized.total)
+      )) {
+        normalized.score = score;
+        normalized.total = total;
+      }
+    }
+  }
+  s.dailyQuizCompletions = [...quizRecordsByDate.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-DAILY_HISTORY_LIMIT);
+
   return s;
 }
 
@@ -2492,6 +2554,7 @@ function isStateLike(raw) {
       (!Number.isInteger(raw.version) || raw.version < 1 || raw.version > STATE_VERSION)) return false;
   if (raw.vocabulary !== undefined && !validVocabulary(raw.vocabulary)) return false;
   if (raw.grammarRules !== undefined && !Array.isArray(raw.grammarRules)) return false;
+  if (raw.dailyQuizCompletions !== undefined && !Array.isArray(raw.dailyQuizCompletions)) return false;
   for (const key of ['titles', 'done', 'log']) {
     if (raw[key] !== undefined && (!raw[key] || typeof raw[key] !== 'object' || Array.isArray(raw[key]))) return false;
   }
@@ -2504,6 +2567,7 @@ function isStateLike(raw) {
     }
   }
   return raw.version !== undefined || raw.vocabulary !== undefined || raw.grammarRules !== undefined ||
+    raw.dailyQuizCompletions !== undefined ||
     ['titles', 'done', 'log', 'sets'].some(key => raw[key] !== undefined);
 }
 
@@ -2511,6 +2575,7 @@ function hasMeaningfulData(candidate) {
   const value = normalizeState(candidate);
   if (Object.keys(value.titles).length || Object.keys(value.done).length || Object.keys(value.log).length) return true;
   if (value.vocabulary.length || value.grammarRules.length) return true;
+  if (value.dailyQuizCompletions.length) return true;
   return Object.values(value.sets).some(set => set && typeof set.notes === 'string' && set.notes.trim());
 }
 
@@ -2900,7 +2965,8 @@ function clearPrivateSession() {
   fc.deck = [];
   roundReviewed.clear();
   resetQuickRecallQuiz(true);
-  prevLessonDone = prevVocabDone = prevMissionDone = null;
+  prevLessonDone = prevVocabDone = prevQuizDone = prevMissionDone = null;
+  renderedMissionDate = '';
   renderProfile(null);
   appShell.hidden = true;
 }
@@ -3920,7 +3986,7 @@ logBtn.addEventListener('click', () => {
 
 // Dashboard quick-add (Browse and Flashcards live in the main navigation)
 $('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
-dashQuickQuiz.addEventListener('click', startQuickRecallQuiz);
+dashQuickQuiz.addEventListener('click', () => startQuickRecallQuiz('tracker-global'));
 
 /* ==========================================================================
    7b. TODAY'S MISSION + WEEKLY GOAL
@@ -3930,10 +3996,14 @@ const missionLessonTask = $('missionLessonTask'), missionLessonCheck = $('missio
       missionLessonTitle = $('missionLessonTitle'), missionLessonNote = $('missionLessonNote');
 const missionVocabTask = $('missionVocabTask'), missionVocabCheck = $('missionVocabCheck'),
       missionVocabTitle = $('missionVocabTitle'), missionVocabNote = $('missionVocabNote');
+const missionQuizTask = $('missionQuizTask'), missionQuizCheck = $('missionQuizCheck'),
+      missionQuizTitle = $('missionQuizTitle'), missionQuizNote = $('missionQuizNote'),
+      missionQuizBtn = $('missionQuizBtn');
 const weeklyLabel = $('weeklyLabel'), weeklyDots = $('weeklyDots'), missionLive = $('missionLive');
 
 let missionAction = 'start'; // 'start' opens the current set, 'review' opens the daily queue
-let prevLessonDone = null, prevVocabDone = null, prevMissionDone = null;
+let prevLessonDone = null, prevVocabDone = null, prevQuizDone = null, prevMissionDone = null;
+let renderedMissionDate = '';
 
 function setMissionCheck(taskEl, checkEl, done, empty) {
   taskEl.classList.toggle('is-done', done);
@@ -3941,17 +4011,20 @@ function setMissionCheck(taskEl, checkEl, done, empty) {
   checkEl.textContent = done ? '✓' : (empty ? '–' : '○'); // check / dash / circle
 }
 
-function announceMission(lessonDone, vocabDone, missionComplete) {
+function announceMission(lessonDone, vocabDone, quizDone, missionComplete) {
   if (prevLessonDone === null) { // seed on first render without announcing
-    prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+    prevLessonDone = lessonDone; prevVocabDone = vocabDone;
+    prevQuizDone = quizDone; prevMissionDone = missionComplete;
     return;
   }
   let msg = '';
   if (missionComplete && !prevMissionDone) msg = 'Today’s mission completed.';
+  else if (quizDone && !prevQuizDone) msg = 'Today’s Quick Quiz complete.';
   else if (lessonDone && !prevLessonDone) msg = 'Today’s lesson complete.';
   else if (vocabDone && !prevVocabDone) msg = 'Daily vocabulary review complete.';
   if (msg) missionLive.textContent = msg;
-  prevLessonDone = lessonDone; prevVocabDone = vocabDone; prevMissionDone = missionComplete;
+  prevLessonDone = lessonDone; prevVocabDone = vocabDone;
+  prevQuizDone = quizDone; prevMissionDone = missionComplete;
 }
 
 function renderWeeklyGoal() {
@@ -3969,10 +4042,24 @@ function renderWeeklyGoal() {
   }
 }
 
+function dailyQuizCompletion(date) {
+  return state.dailyQuizCompletions.find(record => record.date === date) || null;
+}
+
+function availableQuickQuizCount() {
+  return Math.min(5, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
+}
+
 function renderMission() {
+  const today = dateKey(new Date());
+  if (renderedMissionDate !== today) {
+    renderedMissionDate = today;
+    prevLessonDone = prevVocabDone = prevQuizDone = prevMissionDone = null;
+    missionLive.textContent = '';
+  }
   const cs = currentSetNo();
   const allSetsComplete = cs === null;
-  const studiedToday = Array.isArray(state.studyDates) && state.studyDates.includes(dateKey(new Date()));
+  const studiedToday = Array.isArray(state.studyDates) && state.studyDates.includes(today);
   const lessonDone = allSetsComplete || studiedToday;
 
   // Lesson task
@@ -4018,7 +4105,35 @@ function renderMission() {
     missionVocabNote.hidden = false;
   }
 
-  const missionComplete = lessonDone && !vocabPending;
+  // Quick Quiz task — available from the full vocabulary collection, but unlocked
+  // here only after Today's Words. A global quiz completion still counts today.
+  const quizCount = availableQuickQuizCount();
+  const quizAvailable = quizCount > 0;
+  const quizDone = quizAvailable && dailyQuizCompletion(today) !== null;
+  const canContinueQuiz = quickQuizState.active && quickQuizState.launchDate === today;
+  missionQuizBtn.hidden = true;
+  missionQuizTitle.textContent = 'Today’s Quick Quiz';
+  if (!quizAvailable) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
+    missionQuizNote.textContent = 'Add suitable vocabulary to unlock today’s quiz';
+  } else if (quizDone) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, true, false);
+    missionQuizTitle.textContent = 'Today’s Quick Quiz complete ✓';
+    missionQuizNote.textContent = 'Completed for today · practise again anytime';
+  } else if (!vocabDone) {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
+    missionQuizNote.textContent = 'Complete Today’s Words first';
+  } else {
+    setMissionCheck(missionQuizTask, missionQuizCheck, false, false);
+    missionQuizNote.textContent = quizCount + (quizCount === 1 ? ' question' : ' questions') + ' · active recall';
+    missionQuizBtn.textContent = canContinueQuiz ? 'Continue Quick Quiz' : 'Start Quick Quiz';
+    missionQuizBtn.hidden = false;
+  }
+  missionQuizNote.hidden = false;
+
+  const vocabSatisfied = !rec || rec.wordIds.length === 0 || vocabDone;
+  const quizSatisfied = !quizAvailable || quizDone;
+  const missionComplete = lessonDone && vocabSatisfied && quizSatisfied;
 
   // One primary action, plus the ghost quick-log while a lesson is still pending.
   if (!lessonDone) {
@@ -4035,15 +4150,20 @@ function renderMission() {
       : 'Continue Review · ' + vocabReviewed + '/' + vocabTotal;
     missionDone.hidden = true;
     logBtn.hidden = true;
-  } else {
+  } else if (missionComplete) {
     missionAction = 'done';
     missionBtn.hidden = true;
     missionDone.hidden = false;
     logBtn.hidden = true;
+  } else {
+    missionAction = 'quiz';
+    missionBtn.hidden = true;
+    missionDone.hidden = true;
+    logBtn.hidden = true;
   }
 
   renderWeeklyGoal();
-  announceMission(lessonDone, vocabDone, missionComplete);
+  announceMission(lessonDone, vocabDone, quizDone, missionComplete);
 }
 
 missionBtn.addEventListener('click', () => {
@@ -4051,6 +4171,15 @@ missionBtn.addEventListener('click', () => {
   const cs = currentSetNo();
   if (cs === null) return;
   openSetModal(cs, nextOpenDay(cs)); // open the current set focused on the current day
+});
+
+missionQuizBtn.addEventListener('click', () => {
+  const today = dateKey(new Date());
+  if (quickQuizState.active && quickQuizState.launchDate === today) {
+    resumeQuickRecallQuiz();
+    return;
+  }
+  startQuickRecallQuiz('today-mission');
 });
 
 /* ==========================================================================
@@ -4907,7 +5036,8 @@ const quickQuiz = $('quickQuiz'), quizQuestion = $('quizQuestion'), quizResults 
       quizCorrectAnswer = $('quizCorrectAnswer'), quizContinue = $('quizContinue'),
       quizResultsHeading = $('quizResultsHeading'), quizScore = $('quizScore'),
       quizResultMessage = $('quizResultMessage'), quizMissed = $('quizMissed'),
-      quizMissedList = $('quizMissedList'), quizRetry = $('quizRetry');
+      quizMissedList = $('quizMissedList'), quizRetry = $('quizRetry'),
+      quizAnother = $('quizAnother');
 
 const quickQuizState = {
   active: false,
@@ -4918,7 +5048,9 @@ const quickQuizState = {
   submitted: false,
   answers: [],
   history: [],
-  retryRound: false
+  retryRound: false,
+  launchSource: '',
+  launchDate: ''
 };
 let lastQuickQuizWordIds = [];
 let lastQuickQuizSignature = '';
@@ -5004,6 +5136,8 @@ function resetQuickRecallQuiz(clearPreviousSelection) {
   quickQuizState.answers = [];
   quickQuizState.history = [];
   quickQuizState.retryRound = false;
+  quickQuizState.launchSource = '';
+  quickQuizState.launchDate = '';
   quickQuiz.hidden = true;
   quizQuestion.hidden = false;
   quizResults.hidden = true;
@@ -5016,6 +5150,7 @@ function resetQuickRecallQuiz(clearPreviousSelection) {
   quizMissedList.textContent = '';
   quizMissed.hidden = true;
   quizRetry.hidden = true;
+  quizAnother.hidden = true;
   if (clearPreviousSelection) {
     lastQuickQuizWordIds = [];
     lastQuickQuizSignature = '';
@@ -5291,8 +5426,11 @@ function renderQuickQuizQuestion() {
   quizQuestionHeading.focus();
 }
 
-function startQuickRecallQuiz() {
+function startQuickRecallQuiz(source) {
   stopPronunciation();
+  renderMission(); // re-check the local date before creating a new quiz snapshot
+  const launchSource = source === 'today-mission' ? 'today-mission' : 'tracker-global';
+  const launchDate = dateKey(new Date());
   const pool = eligibleQuickQuizItems(allVocabularyQuizPool());
   const items = selectQuickQuizItems(pool, lastQuickQuizWordIds);
   const generated = createFreshQuickQuizQuestions(items, pool);
@@ -5318,6 +5456,8 @@ function startQuickRecallQuiz() {
   quickQuizState.answers = [];
   quickQuizState.history = [];
   quickQuizState.retryRound = false;
+  quickQuizState.launchSource = launchSource;
+  quickQuizState.launchDate = launchDate;
 
   fcLive.textContent = '';
   fcStage.hidden = true;
@@ -5327,6 +5467,19 @@ function startQuickRecallQuiz() {
   if (section) section.classList.add('quiz-mode');
   switchView('flashcards', { skipFlashcardBuild: true });
   renderQuickQuizQuestion();
+}
+
+function resumeQuickRecallQuiz() {
+  if (!quickQuizState.active) return;
+  stopPronunciation();
+  exitDailyMode();
+  fcStage.hidden = true;
+  fcEmpty.hidden = true;
+  quickQuiz.hidden = false;
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.add('quiz-mode');
+  switchView('flashcards', { skipFlashcardBuild: true });
+  (quizResults.hidden ? quizQuestionHeading : quizResultsHeading).focus();
 }
 
 function normalizeQuizAnswer(value) {
@@ -5406,10 +5559,34 @@ function quickQuizResultMessage(score, total) {
   return 'Good practice. Retry the words that need more attention.';
 }
 
+function recordDailyQuickQuizCompletion(score, total) {
+  if (!cloudReady || !currentUser || !Number.isInteger(total) || total < 1 || total > 5) return false;
+  if (!Number.isInteger(score) || score < 0 || score > total) return false;
+  const today = dateKey(new Date());
+  if (dailyQuizCompletion(today)) {
+    renderMission();
+    return false;
+  }
+  state.dailyQuizCompletions.push({
+    date: today,
+    completedAt: new Date().toISOString(),
+    score,
+    total
+  });
+  state.dailyQuizCompletions.sort((a, b) => a.date.localeCompare(b.date));
+  if (state.dailyQuizCompletions.length > DAILY_HISTORY_LIMIT) {
+    state.dailyQuizCompletions = state.dailyQuizCompletions.slice(-DAILY_HISTORY_LIMIT);
+  }
+  saveState();
+  renderMission();
+  return true;
+}
+
 function renderQuickQuizResults() {
   const answers = quickQuizState.answers.slice();
   const incorrect = answers.filter(answer => !answer.correct);
   const score = answers.length - incorrect.length;
+  if (answers.length) recordDailyQuickQuizCompletion(score, answers.length);
   quickQuizState.submitted = false;
   quizContinue.hidden = true;
   quickQuizState.history.push({
@@ -5442,6 +5619,7 @@ function renderQuickQuizResults() {
   }
   quizMissed.hidden = !incorrect.length;
   quizRetry.hidden = !incorrect.length;
+  quizAnother.hidden = quickQuizState.launchSource !== 'today-mission';
   quizResultsHeading.focus();
 }
 
@@ -5470,14 +5648,20 @@ function retryIncorrectQuizAnswers() {
   renderQuickQuizQuestion();
 }
 
+function takeAnotherQuickQuiz() {
+  const source = quickQuizState.launchSource === 'today-mission' ? 'today-mission' : 'tracker-global';
+  startQuickRecallQuiz(source);
+}
+
 function returnQuickQuizToTracker() {
+  const restoreMissionFocus = quickQuizState.launchSource === 'today-mission';
   stopPronunciation();
   resetQuickRecallQuiz();
   fcStage.hidden = false;
   exitDailyMode();
   switchView('tracker');
   renderGlobalQuickQuizEntry();
-  dashQuickQuiz.focus();
+  (restoreMissionFocus ? missionQuizTask : dashQuickQuiz).focus();
 }
 
 $('quizExit').addEventListener('click', returnQuickQuizToTracker);
@@ -5488,6 +5672,7 @@ quizForm.addEventListener('submit', event => {
 });
 quizContinue.addEventListener('click', continueQuickRecallQuiz);
 quizRetry.addEventListener('click', retryIncorrectQuizAnswers);
+quizAnother.addEventListener('click', takeAnotherQuickQuiz);
 
 function reviewedInQueue(rec) {
   const wordSet = new Set(rec.wordIds);
