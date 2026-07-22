@@ -767,6 +767,18 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   color: var(--text); padding: 11px 13px; font-size: 14px; width: 100%;
 }
 .word-form input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+.pronunciation-settings-form { display: grid; gap: 6px; }
+.pronunciation-settings-form label { margin-top: 8px; color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+.pronunciation-settings-form select {
+  width: 100%; min-width: 0; padding: 11px 13px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text); font-size: 14px;
+}
+.pronunciation-settings-form select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+.pronunciation-settings-copy { margin: 0 0 6px; color: var(--text-2); font-size: 13.5px; line-height: 1.55; }
+.pronunciation-settings-status { min-height: 17px; }
+.pronunciation-settings-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.pronunciation-settings-trigger:disabled { opacity: 0.55; cursor: not-allowed; }
 .word-location {
   align-self: start; margin: 0 0 6px; padding: 5px 12px;
   border: 1px solid rgba(45, 212, 191, 0.3); border-radius: var(--pill);
@@ -866,6 +878,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .grammar-toolbar .btn { flex: 1 1 100%; }
   .nav-btn { font-size: 10px; }
   .modal { padding: 18px; border-radius: var(--r-lg); }
+  .pronunciation-settings-actions { flex-direction: column; }
+  .pronunciation-settings-actions .btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1101,6 +1115,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       <div class="browse-head">
         <h2>Vocabulary</h2>
         <div class="browse-actions">
+          <button class="btn btn-ghost btn-sm pronunciation-settings-trigger" id="pronunciationSettingsBtn" type="button">Voice settings</button>
           <button class="btn btn-ghost btn-sm" id="vocabExportBtn">Export</button>
           <button class="btn btn-primary btn-sm" id="bvAddWord">Add New Word</button>
         </div>
@@ -1349,6 +1364,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       <p class="word-location" id="wmLocation">General Vocabulary</p>
       <label for="wmTerm">Word or phrase <span class="req">*</span></label>
       <input type="text" id="wmTerm" maxlength="120" autocomplete="off" required>
+      <label for="wmSpokenForm">Spoken form <span class="opt">(optional)</span></label>
+      <input type="text" id="wmSpokenForm" maxlength="160" autocomplete="off" placeholder="up sell" aria-describedby="wmSpokenFormHelp">
+      <p class="field-hint" id="wmSpokenFormHelp">Use this only when the default pronunciation sounds incorrect.</p>
       <label for="wmExample">Example sentence <span class="req">*</span></label>
       <input type="text" id="wmExample" maxlength="240" autocomplete="off" required>
       <label for="wmDefinition">Definition <span class="opt">(optional)</span></label>
@@ -1398,6 +1416,36 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       <button class="btn btn-primary" id="exportCsv" type="button">Export as CSV</button>
       <button class="btn btn-ghost" id="exportTxt" type="button">Export as TXT</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ DEVICE PRONUNCIATION SETTINGS ============ -->
+<div class="modal-backdrop" id="pronunciationSettingsBackdrop" hidden>
+  <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="pronunciationSettingsTitle"
+       aria-describedby="pronunciationSettingsCopy" tabindex="-1">
+    <div class="modal-head">
+      <h2 class="modal-title" id="pronunciationSettingsTitle">Pronunciation Settings</h2>
+      <button class="icon-btn" id="pronunciationSettingsClose" type="button" aria-label="Close pronunciation settings">&#10005;</button>
+    </div>
+    <p class="pronunciation-settings-copy" id="pronunciationSettingsCopy">Choose the American-English voice and speed used on this device.</p>
+    <div class="pronunciation-settings-form" id="pronunciationSettingsForm">
+      <label for="pronunciationVoice">Voice</label>
+      <select id="pronunciationVoice"></select>
+      <p class="field-hint pronunciation-settings-status" id="pronunciationVoiceStatus" aria-live="polite"></p>
+      <label for="pronunciationRate">Speed</label>
+      <select id="pronunciationRate">
+        <option value="0.8">0.80&times; &mdash; Slow</option>
+        <option value="0.85">0.85&times; &mdash; Recommended</option>
+        <option value="0.9">0.90&times; &mdash; Clear</option>
+        <option value="1">1.00&times; &mdash; Normal</option>
+      </select>
+      <p class="field-hint">Voice availability depends on your browser and device. Changes are saved on this device only.</p>
+      <div class="pronunciation-settings-actions">
+        <button class="btn btn-ghost" id="pronunciationPreview" type="button" aria-pressed="false">Preview Voice</button>
+        <button class="btn btn-primary" id="pronunciationSettingsDone" type="button">Done</button>
+      </div>
+    </div>
+    <p class="pronunciation-settings-copy" id="pronunciationUnsupported" hidden>Pronunciation is not supported in this browser.</p>
   </div>
 </div>
 
@@ -1481,7 +1529,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 10;
+const STATE_VERSION = 11;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
 
@@ -1517,15 +1565,69 @@ const PRONUNCIATION_SUPPORTED =
   typeof window.speechSynthesis.getVoices === 'function' &&
   typeof window.speechSynthesis.speak === 'function' &&
   typeof window.speechSynthesis.cancel === 'function';
+const PRONUNCIATION_SETTINGS_KEY = 'englishGrowthTracker.pronunciationSettings';
+const PRONUNCIATION_RATES = [0.8, 0.85, 0.9, 1];
+const PRONUNCIATION_PREVIEW_TEXT = 'I\u2019m improving my American English pronunciation every day.';
 let pronunciationVoices = [];
 let activePronunciation = null;
 let pronunciationVoiceListenerAttached = false;
+let pronunciationVoiceSignature = '';
+let pronunciationVoiceOptionMap = new Map();
+
+function pronunciationText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function getPronunciationText(item) {
+  if (!item || typeof item !== 'object') return '';
+  const spokenForm = pronunciationText(item.spokenForm);
+  return spokenForm || pronunciationText(item.term);
+}
+
+function canPronounceText(value) {
+  const text = pronunciationText(value);
+  return Boolean(text && /[A-Za-z\u00C0-\u024F0-9]/.test(text));
+}
+
+function defaultPronunciationSettings() {
+  return { voiceURI: '', voiceName: '', rate: 0.85, useSystemDefault: false };
+}
+
+function normalizePronunciationSettings(value) {
+  const result = defaultPronunciationSettings();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  if (typeof value.voiceURI === 'string') result.voiceURI = value.voiceURI.trim().slice(0, 500);
+  if (typeof value.voiceName === 'string') result.voiceName = value.voiceName.trim().slice(0, 240);
+  if (PRONUNCIATION_RATES.includes(Number(value.rate))) result.rate = Number(value.rate);
+  result.useSystemDefault = value.useSystemDefault === true;
+  if (result.useSystemDefault) { result.voiceURI = ''; result.voiceName = ''; }
+  return result;
+}
+
+function loadPronunciationSettings() {
+  try {
+    const stored = localStorage.getItem(PRONUNCIATION_SETTINGS_KEY);
+    return stored === null ? defaultPronunciationSettings() : normalizePronunciationSettings(JSON.parse(stored));
+  } catch (error) {
+    return defaultPronunciationSettings();
+  }
+}
+
+let pronunciationSettings = loadPronunciationSettings();
+
+function savePronunciationSettings(value) {
+  pronunciationSettings = normalizePronunciationSettings(value);
+  try {
+    localStorage.setItem(PRONUNCIATION_SETTINGS_KEY, JSON.stringify(pronunciationSettings));
+  } catch (error) { /* settings still apply for this browser session */ }
+  return pronunciationSettings;
+}
 
 function refreshPronunciationVoices() {
   if (!PRONUNCIATION_SUPPORTED) return [];
   try {
     const voices = window.speechSynthesis.getVoices();
-    if (Array.isArray(voices) && voices.length) pronunciationVoices = voices;
+    if (Array.isArray(voices)) pronunciationVoices = voices.slice();
   } catch (error) { /* browser default voice remains available */ }
   return pronunciationVoices;
 }
@@ -1534,24 +1636,87 @@ function normaliseVoiceLanguage(voice) {
   return String(voice && voice.lang || '').replace(/_/g, '-').toLowerCase();
 }
 
-function selectAmericanEnglishVoice(voices) {
+function isEnglishVoice(voice) {
+  return normaliseVoiceLanguage(voice).startsWith('en');
+}
+
+function isAmericanEnglishVoice(voice) {
+  const language = normaliseVoiceLanguage(voice);
+  return language.startsWith('en-us') ||
+    (language.startsWith('en') && /american|united states|\bus\b/i.test(String(voice && voice.name || '')));
+}
+
+function voiceQualityScore(voice) {
+  const name = String(voice && voice.name || '');
+  return (/natural|neural|premium|enhanced/i.test(name) ? 4 : 0) +
+    (voice && voice.default ? 1 : 0);
+}
+
+function bestVoice(voices) {
+  if (!voices.length) return null;
+  return voices.slice().sort((a, b) =>
+    voiceQualityScore(b) - voiceQualityScore(a) ||
+    String(a.name || '').localeCompare(String(b.name || ''))
+  )[0];
+}
+
+function exactStoredVoice(settings, voices) {
+  if (!settings || settings.useSystemDefault) return null;
+  if (settings.voiceURI) {
+    const byUri = voices.find(voice =>
+      isEnglishVoice(voice) && String(voice.voiceURI || '') === settings.voiceURI
+    );
+    if (byUri) return byUri;
+  }
+  if (settings.voiceName) {
+    const sameName = voices.filter(voice =>
+      isEnglishVoice(voice) && String(voice.name || '') === settings.voiceName
+    );
+    if (sameName.length) return bestVoice(sameName);
+  }
+  return null;
+}
+
+function resolvePreferredVoice(settings, voices) {
   const available = Array.isArray(voices) ? voices : [];
-  const english = available.filter(voice => normaliseVoiceLanguage(voice).startsWith('en'));
-  return english.find(voice => normaliseVoiceLanguage(voice).startsWith('en-us')) ||
-    english.find(voice => /american|united states|\bus\b/i.test(
-      String(voice && voice.name || '') + ' ' + normaliseVoiceLanguage(voice)
-    )) ||
-    english[0] ||
-    null;
+  const preferred = normalizePronunciationSettings(settings);
+  if (preferred.useSystemDefault) return null;
+  const exact = exactStoredVoice(preferred, available);
+  if (exact) return exact;
+  const usLanguage = available.filter(voice => normaliseVoiceLanguage(voice).startsWith('en-us'));
+  if (usLanguage.length) return bestVoice(usLanguage);
+  const americanNamed = available.filter(voice => isEnglishVoice(voice) && isAmericanEnglishVoice(voice));
+  if (americanNamed.length) return bestVoice(americanNamed);
+  return bestVoice(available.filter(isEnglishVoice));
 }
 
-function pronunciationText(value) {
-  return typeof value === 'string' ? value.trim() : '';
+function selectAmericanEnglishVoice(voices) {
+  return resolvePreferredVoice(defaultPronunciationSettings(), voices);
 }
 
-function canPronounceText(value) {
-  const text = pronunciationText(value);
-  return Boolean(text && /[A-Za-z\u00C0-\u024F0-9]/.test(text));
+function pronunciationSettingsVoices(voices, settings) {
+  const available = Array.isArray(voices) ? voices : [];
+  const american = available.filter(voice => isEnglishVoice(voice) && isAmericanEnglishVoice(voice));
+  const source = american.length ? american.slice() : available.filter(isEnglishVoice);
+  const stored = exactStoredVoice(settings || pronunciationSettings, available);
+  if (stored && !source.includes(stored)) source.push(stored);
+  const seen = new Set();
+  return source.filter((voice, index) => {
+    const key = String(voice.voiceURI || '') ||
+      String(voice.name || '') + '|' + normaliseVoiceLanguage(voice) + '|' + index;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) =>
+    normaliseVoiceLanguage(a).localeCompare(normaliseVoiceLanguage(b)) ||
+    voiceQualityScore(b) - voiceQualityScore(a) ||
+    String(a.name || '').localeCompare(String(b.name || ''))
+  );
+}
+
+function pronunciationVoiceLabel(voice) {
+  const language = String(voice && voice.lang || 'English');
+  return String(voice && voice.name || 'English voice') + ' \u2014 ' + language;
 }
 
 function createSpeakerIcon() {
@@ -1575,20 +1740,101 @@ function createSpeakerIcon() {
   return svg;
 }
 
-function setPronunciationButtonState(button, speaking) {
-  if (!button) return;
-  const text = pronunciationText(button.dataset.pronunciationText);
-  button.setAttribute('aria-pressed', speaking ? 'true' : 'false');
-  button.setAttribute('aria-label', speaking
-    ? 'Stop pronunciation of \u201c' + text + '\u201d'
-    : 'Pronounce \u201c' + text + '\u201d in American English');
+const pronunciationSettingsButton = $('pronunciationSettingsBtn');
+const pronunciationSettingsBackdrop = $('pronunciationSettingsBackdrop');
+const pronunciationSettingsClose = $('pronunciationSettingsClose');
+const pronunciationSettingsDone = $('pronunciationSettingsDone');
+const pronunciationSettingsForm = $('pronunciationSettingsForm');
+const pronunciationUnsupported = $('pronunciationUnsupported');
+const pronunciationVoiceSelect = $('pronunciationVoice');
+const pronunciationRateSelect = $('pronunciationRate');
+const pronunciationVoiceStatus = $('pronunciationVoiceStatus');
+const pronunciationPreview = $('pronunciationPreview');
+
+function voiceOptionValueFor(voice) {
+  for (const [value, candidate] of pronunciationVoiceOptionMap) {
+    if (candidate === voice) return value;
+  }
+  return '';
 }
 
-function updatePronunciationButton(button, value) {
-  const text = pronunciationText(value);
+function populatePronunciationVoiceOptions(force) {
+  if (!PRONUNCIATION_SUPPORTED) return;
+  const voices = pronunciationSettingsVoices(pronunciationVoices, pronunciationSettings);
+  const signature = voices.map((voice, index) =>
+    String(voice.voiceURI || '') + '|' + String(voice.name || '') + '|' + String(voice.lang || '') + '|' + index
+  ).join('\u001f');
+
+  if (force || signature !== pronunciationVoiceSignature || !pronunciationVoiceSelect.options.length) {
+    pronunciationVoiceSelect.textContent = '';
+    pronunciationVoiceOptionMap = new Map();
+    const systemOption = new Option('System Default \u2014 American English', '');
+    pronunciationVoiceSelect.appendChild(systemOption);
+    const labelCounts = new Map();
+    voices.forEach((voice, index) => {
+      const value = String(voice.voiceURI || '')
+        ? 'uri:' + voice.voiceURI
+        : 'voice:' + String(voice.name || '') + '|' + String(voice.lang || '') + '|' + index;
+      const baseLabel = pronunciationVoiceLabel(voice);
+      const count = (labelCounts.get(baseLabel) || 0) + 1;
+      labelCounts.set(baseLabel, count);
+      const label = count > 1 ? baseLabel + ' (' + count + ')' : baseLabel;
+      pronunciationVoiceSelect.appendChild(new Option(label, value));
+      pronunciationVoiceOptionMap.set(value, voice);
+    });
+    pronunciationVoiceSignature = signature;
+  }
+
+  const exact = exactStoredVoice(pronunciationSettings, pronunciationVoices);
+  const resolved = resolvePreferredVoice(pronunciationSettings, pronunciationVoices);
+  if (pronunciationSettings.useSystemDefault) pronunciationVoiceSelect.value = '';
+  else pronunciationVoiceSelect.value = voiceOptionValueFor(exact || resolved);
+
+  let statusMessage = '';
+  if (!pronunciationVoices.length) {
+    statusMessage = 'No installed voices are available yet. System Default will be used.';
+  } else if (!exact && (pronunciationSettings.voiceURI || pronunciationSettings.voiceName) && resolved) {
+    statusMessage = 'The saved voice is unavailable. Using ' + String(resolved.name || 'an English voice') + '.';
+  } else if (!pronunciationSettingsVoices(pronunciationVoices, pronunciationSettings).some(isAmericanEnglishVoice) && resolved) {
+    statusMessage = 'No American voice was found. Using ' + pronunciationVoiceLabel(resolved) + '.';
+  }
+  if (pronunciationVoiceStatus.textContent !== statusMessage) pronunciationVoiceStatus.textContent = statusMessage;
+}
+
+function settingsFromPronunciationControls() {
+  const rate = Number(pronunciationRateSelect.value);
+  const selectedVoice = pronunciationVoiceOptionMap.get(pronunciationVoiceSelect.value) || null;
+  if (!selectedVoice) {
+    return normalizePronunciationSettings({ rate, useSystemDefault: true });
+  }
+  return normalizePronunciationSettings({
+    voiceURI: String(selectedVoice.voiceURI || ''),
+    voiceName: String(selectedVoice.name || ''),
+    rate,
+    useSystemDefault: false
+  });
+}
+
+function setSpeechControlState(button, speaking, labelText, mode) {
+  if (!button) return;
+  button.setAttribute('aria-pressed', speaking ? 'true' : 'false');
+  if (mode === 'preview') {
+    button.textContent = speaking ? 'Stop Preview' : 'Preview Voice';
+    button.setAttribute('aria-label', speaking ? 'Stop voice preview' : 'Preview selected voice');
+    return;
+  }
+  button.setAttribute('aria-label', speaking
+    ? 'Stop pronunciation of \u201c' + labelText + '\u201d'
+    : 'Pronounce \u201c' + labelText + '\u201d in American English');
+}
+
+function updatePronunciationButton(button, item) {
+  const labelText = pronunciationText(item && item.term);
+  const text = getPronunciationText(item);
   const currentUsesButton = activePronunciation && activePronunciation.button === button;
   if (currentUsesButton && activePronunciation.text !== text) stopPronunciation();
   button.dataset.pronunciationText = text;
+  button.dataset.pronunciationLabel = labelText;
   const available = PRONUNCIATION_SUPPORTED && canPronounceText(text);
   button.disabled = !available;
   button.title = available
@@ -1599,26 +1845,26 @@ function updatePronunciationButton(button, value) {
   if (!activePronunciation || activePronunciation.button !== button) {
     button.setAttribute('aria-pressed', 'false');
     button.setAttribute('aria-label', available
-      ? 'Pronounce \u201c' + text + '\u201d in American English'
+      ? 'Pronounce \u201c' + labelText + '\u201d in American English'
       : button.title);
   }
 }
 
-function createPronunciationButton(value) {
+function createPronunciationButton(item) {
   const button = el('button', 'pronounce-btn');
   button.type = 'button';
   button.appendChild(createSpeakerIcon());
-  updatePronunciationButton(button, value);
+  updatePronunciationButton(button, item);
   return button;
 }
 
 function finishPronunciation(utterance) {
   if (!activePronunciation || activePronunciation.utterance !== utterance) return;
-  const button = activePronunciation.button;
+  const current = activePronunciation;
   utterance.onend = null;
   utterance.onerror = null;
   activePronunciation = null;
-  setPronunciationButtonState(button, false);
+  setSpeechControlState(current.button, false, current.labelText, current.mode);
 }
 
 function stopPronunciation() {
@@ -1628,15 +1874,13 @@ function stopPronunciation() {
   if (current) {
     current.utterance.onend = null;
     current.utterance.onerror = null;
-    setPronunciationButtonState(current.button, false);
+    setSpeechControlState(current.button, false, current.labelText, current.mode);
   }
   try { window.speechSynthesis.cancel(); } catch (error) { /* no active speech to stop */ }
 }
 
-function playPronunciation(button) {
-  if (!PRONUNCIATION_SUPPORTED || !button || button.disabled) return;
-  const text = pronunciationText(button.dataset.pronunciationText);
-  if (!canPronounceText(text)) return;
+function speakPronunciation(text, button, labelText, mode, settings) {
+  if (!PRONUNCIATION_SUPPORTED || !button || button.disabled || !canPronounceText(text)) return;
   const wasActive = Boolean(activePronunciation && activePronunciation.button === button);
   stopPronunciation();
   if (wasActive) return;
@@ -1647,16 +1891,17 @@ function playPronunciation(button) {
   } catch (error) {
     return;
   }
+  const appliedSettings = normalizePronunciationSettings(settings || pronunciationSettings);
   utterance.lang = 'en-US';
-  utterance.rate = 0.9;
+  utterance.rate = appliedSettings.rate;
   utterance.pitch = 1;
   utterance.volume = 1;
-  const voice = selectAmericanEnglishVoice(refreshPronunciationVoices());
+  const voice = resolvePreferredVoice(appliedSettings, refreshPronunciationVoices());
   if (voice) utterance.voice = voice;
   utterance.onend = () => finishPronunciation(utterance);
   utterance.onerror = () => finishPronunciation(utterance);
-  activePronunciation = { button, utterance, text };
-  setPronunciationButtonState(button, true);
+  activePronunciation = { button, utterance, text, labelText, mode };
+  setSpeechControlState(button, true, labelText, mode);
   try {
     window.speechSynthesis.speak(utterance);
   } catch (error) {
@@ -1664,17 +1909,75 @@ function playPronunciation(button) {
   }
 }
 
+function playPronunciation(button) {
+  if (!button) return;
+  speakPronunciation(
+    pronunciationText(button.dataset.pronunciationText),
+    button,
+    pronunciationText(button.dataset.pronunciationLabel),
+    'word',
+    pronunciationSettings
+  );
+}
+
+function openPronunciationSettings() {
+  stopPronunciation();
+  if (PRONUNCIATION_SUPPORTED) {
+    refreshPronunciationVoices();
+    populatePronunciationVoiceOptions(false);
+    pronunciationRateSelect.value = String(pronunciationSettings.rate);
+  }
+  pushModal(pronunciationSettingsBackdrop);
+  (PRONUNCIATION_SUPPORTED ? pronunciationVoiceSelect : pronunciationSettingsClose).focus();
+}
+
+pronunciationSettingsButton.disabled = !PRONUNCIATION_SUPPORTED;
+pronunciationSettingsButton.title = PRONUNCIATION_SUPPORTED
+  ? 'Choose pronunciation voice and speed'
+  : 'Pronunciation is not supported in this browser';
+pronunciationSettingsForm.hidden = !PRONUNCIATION_SUPPORTED;
+pronunciationUnsupported.hidden = PRONUNCIATION_SUPPORTED;
+
 if (PRONUNCIATION_SUPPORTED) {
   refreshPronunciationVoices();
+  populatePronunciationVoiceOptions(true);
+  pronunciationRateSelect.value = String(pronunciationSettings.rate);
   if (!pronunciationVoiceListenerAttached) {
+    const handleVoicesChanged = () => {
+      refreshPronunciationVoices();
+      populatePronunciationVoiceOptions(false);
+    };
     if (typeof window.speechSynthesis.addEventListener === 'function') {
-      window.speechSynthesis.addEventListener('voiceschanged', refreshPronunciationVoices);
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
     } else {
-      window.speechSynthesis.onvoiceschanged = refreshPronunciationVoices;
+      window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
     }
     pronunciationVoiceListenerAttached = true;
   }
 }
+
+pronunciationSettingsButton.addEventListener('click', openPronunciationSettings);
+pronunciationSettingsClose.addEventListener('click', () => popModal());
+pronunciationSettingsDone.addEventListener('click', () => popModal());
+pronunciationVoiceSelect.addEventListener('change', () => {
+  stopPronunciation();
+  savePronunciationSettings(settingsFromPronunciationControls());
+  populatePronunciationVoiceOptions(false);
+});
+pronunciationRateSelect.addEventListener('change', () => {
+  stopPronunciation();
+  const next = Object.assign({}, pronunciationSettings, { rate: Number(pronunciationRateSelect.value) });
+  savePronunciationSettings(next);
+});
+pronunciationPreview.addEventListener('click', () => {
+  speakPronunciation(
+    PRONUNCIATION_PREVIEW_TEXT,
+    pronunciationPreview,
+    'selected American-English voice',
+    'preview',
+    settingsFromPronunciationControls()
+  );
+});
 
 document.addEventListener('click', (event) => {
   const button = event.target.closest && event.target.closest('.pronounce-btn');
@@ -1716,6 +2019,7 @@ function fisherYates(arr) {
 
 /* ========================================================================== 
    2. STATE NORMALISATION, CLOUD STORAGE & AUTHENTICATION
+   v11 adds an optional spokenForm to vocabulary records in the existing JSONB document.
    v8 simplifies Grammar rules in the existing Supabase JSONB state document.
    Old browser keys are read only for the explicit one-time cloud migration.
    ========================================================================== */
@@ -1742,6 +2046,7 @@ function defaultState() {
     studyDates: [],
     // v10: persistent "Today's N Words" daily challenge records (one per local date).
     dailyVocabularyReviews: [],
+    // v11: vocabulary records include an optional cloud-synced pronunciation override.
     settings: { browserMigrationHandled: false }
   };
 }
@@ -1791,6 +2096,7 @@ function sanitizeEntry(v, setNumber, id) {
   return {
     id,
     term: term.slice(0, 120),
+    spokenForm: (typeof v.spokenForm === 'string' ? v.spokenForm.trim() : '').slice(0, 160),
     example: (typeof v.example === 'string' ? v.example.trim() : '').slice(0, 240),
     definition: definitionValue.trim().slice(0, 240),
     arabicMeaning: arabicValue.trim().slice(0, 240),
@@ -1836,7 +2142,7 @@ function sanitizeGrammarRule(value, id) {
   };
 }
 
-// Accept v1-v8 shapes and return a complete, trusted v8 state.
+// Accept v1-v11 shapes and return a complete, trusted v11 state.
 function normalizeState(raw) {
   const s = defaultState();
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
@@ -3303,7 +3609,7 @@ document.addEventListener('keydown', (e) => {
 for (const backdrop of [
   $('setModalBackdrop'), $('wordModalBackdrop'), $('confirmBackdrop'),
   $('exportVocabBackdrop'), $('grammarFormBackdrop'), $('grammarDetailsBackdrop'),
-  profilePictureBackdrop
+  $('pronunciationSettingsBackdrop'), profilePictureBackdrop
 ]) {
   backdrop.addEventListener('mousedown', (e) => {
     if (e.target === backdrop) popModal();
@@ -3769,7 +4075,7 @@ function buildVocabItem(v) {
   const main = el('div', 'vocab-main');
   const termLine = el('div', 'vocab-term-line');
   termLine.appendChild(el('p', 'vocab-term', v.term));
-  termLine.appendChild(createPronunciationButton(v.term));
+  termLine.appendChild(createPronunciationButton(v));
   main.appendChild(termLine);
   if (v.example) main.appendChild(el('p', 'vocab-example', '“' + v.example + '”'));
   if (v.definition) main.appendChild(el('p', 'vocab-definition', v.definition));
@@ -3977,7 +4283,7 @@ notesCancel.addEventListener('click', () => {
 const wordModalBackdrop = $('wordModalBackdrop');
 const wordModalTitle = $('wordModalTitle');
 const wordForm = $('wordForm');
-const wmLocation = $('wmLocation'), wmTerm = $('wmTerm'), wmExample = $('wmExample'),
+const wmLocation = $('wmLocation'), wmTerm = $('wmTerm'), wmSpokenForm = $('wmSpokenForm'), wmExample = $('wmExample'),
       wmDefinition = $('wmDefinition'), wmArabic = $('wmArabic');
 const wordFormActions = $('wordFormActions');
 const dupPanel = $('dupPanel'), dupTerm = $('dupTerm'), dupInfo = $('dupInfo'),
@@ -3993,6 +4299,7 @@ function updateWordLocation(isAdding) {
 
 function fillWordForm(v) {
   wmTerm.value = v.term;
+  wmSpokenForm.value = typeof v.spokenForm === 'string' ? v.spokenForm : '';
   wmExample.value = v.example;
   wmDefinition.value = v.definition;
   wmArabic.value = v.arabicMeaning;
@@ -4013,7 +4320,7 @@ function openWordModal(opts) {
     fillWordForm(opts.entry);
   } else {
     wordModalTitle.textContent = 'Add New Word';
-    wmTerm.value = ''; wmExample.value = ''; wmDefinition.value = ''; wmArabic.value = '';
+    wmTerm.value = ''; wmSpokenForm.value = ''; wmExample.value = ''; wmDefinition.value = ''; wmArabic.value = '';
     wm.setNumber = normalizeSetNumber(opts.presetSet);
     updateWordLocation(true);
   }
@@ -4038,6 +4345,7 @@ function doWordSave() {
   const now = new Date().toISOString();
   const fields = {
     term: term.slice(0, 120),
+    spokenForm: wmSpokenForm.value.trim().slice(0, 160),
     example: example.slice(0, 240),
     definition: wmDefinition.value.trim().slice(0, 240),
     arabicMeaning: wmArabic.value.trim().slice(0, 240)
@@ -4363,7 +4671,7 @@ const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer')
       fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
       fcStatusChip = $('fcStatusChip');
 const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
-const fcPronounce = createPronunciationButton('');
+const fcPronounce = createPronunciationButton({ term: '', spokenForm: '' });
 fcPronounce.id = 'fcPronounce';
 $('fcPronounceSlot').appendChild(fcPronounce);
 // Changing a filter leaves the daily-review queue and returns to normal browsing.
@@ -4590,7 +4898,7 @@ function renderFlashcard() {
   const entry = getDeckEntry(fc.deck[fc.index]);
   fcSetLine.textContent = locationLabel(entry.setNumber, false);
   fcTerm.textContent = entry.term;
-  updatePronunciationButton(fcPronounce, entry.term);
+  updatePronunciationButton(fcPronounce, entry);
   // Back information order: Example → Definition → Arabic meaning
   if (entry.example) {
     fcExample.textContent = '“' + entry.example + '”';
