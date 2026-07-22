@@ -733,6 +733,87 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .fc-complete-actions .btn { width: 100%; }
 }
 
+/* Session-only Quick Recall Quiz, shown inside the existing Flashcards area. */
+.flashcards.quiz-mode > .fc-head,
+.flashcards.quiz-mode > .fc-daily-banner,
+.flashcards.quiz-mode > .filter-bar { display: none; }
+.quick-quiz {
+  width: 100%; padding: 30px 28px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm); animation: fade-up 0.22s ease;
+}
+.quiz-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding-bottom: 18px; border-bottom: 1px solid var(--border);
+}
+.quiz-kicker {
+  margin: 0 0 4px; color: var(--accent); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.quiz-head h2 { font-size: 22px; }
+.quiz-head .btn { min-height: 44px; }
+.quiz-question { width: min(620px, 100%); margin: 24px auto 0; }
+.quiz-progress { margin: 0 0 12px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.quiz-question h3 { margin: 0; font-size: 19px; }
+.quiz-clue {
+  margin: 16px 0 0; color: var(--text); font-size: clamp(17px, 3vw, 20px);
+  font-weight: 600; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.quiz-clue.is-term {
+  font-family: "Space Grotesk", sans-serif; font-size: clamp(23px, 5vw, 30px); font-weight: 700;
+}
+.quiz-form { display: grid; gap: 16px; margin-top: 22px; }
+.quiz-answer-field { display: grid; gap: 7px; min-width: 0; }
+.quiz-answer-field label,
+.quiz-options legend { color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+.quiz-answer-field input {
+  width: 100%; min-width: 0; min-height: 46px; padding: 11px 13px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text); font-size: 16px;
+}
+.quiz-answer-field input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
+.quiz-options { min-width: 0; margin: 0; padding: 0; border: 0; }
+.quiz-options-list { display: grid; gap: 9px; margin-top: 8px; }
+.quiz-option {
+  display: flex; align-items: flex-start; gap: 10px; min-width: 0; min-height: 48px;
+  padding: 11px 13px; border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text); cursor: pointer;
+}
+.quiz-option:hover { border-color: var(--primary); }
+.quiz-option:has(input:checked) { border-color: var(--primary); background: var(--primary-tint); }
+.quiz-option input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--primary); }
+.quiz-option span { min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.quiz-form > .btn { justify-self: start; min-height: 44px; }
+.quiz-feedback-wrap { margin-top: 18px; }
+.quiz-feedback { margin: 0; font-size: 16px; font-weight: 700; }
+.quiz-feedback.is-correct { color: var(--success); }
+.quiz-feedback.is-incorrect { color: var(--warning); }
+.quiz-correct-answer { margin: 6px 0 0; color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
+.quiz-continue { margin-top: 16px; min-height: 44px; }
+.quiz-results { width: min(620px, 100%); margin: 28px auto 0; text-align: center; }
+.quiz-results h3 { font-size: 23px; }
+.quiz-score { margin: 10px 0 0; color: var(--text); font-size: 17px; font-weight: 600; }
+.quiz-result-message { margin: 7px 0 0; color: var(--text-2); }
+.quiz-missed { margin-top: 24px; text-align: left; }
+.quiz-missed h4 { margin: 0 0 10px; font-size: 14px; color: var(--text-2); }
+.quiz-missed-list { list-style: none; display: grid; gap: 9px; margin: 0; padding: 0; }
+.quiz-missed-item {
+  min-width: 0; padding: 13px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.quiz-missed-term { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.quiz-missed-detail { margin: 4px 0 0; color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.quiz-result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 24px; }
+.quiz-result-actions .btn { min-height: 44px; }
+@media (max-width: 520px) {
+  .quick-quiz { padding: 22px 16px; }
+  .quiz-head { flex-direction: column; align-items: stretch; }
+  .quiz-head .btn { width: 100%; }
+  .quiz-form > .btn, .quiz-continue { width: 100%; }
+  .quiz-result-actions { flex-direction: column; }
+  .quiz-result-actions .btn { width: 100%; }
+}
+
 /* 14. MODALS -------------------------------------------------------------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(4, 7, 16, 0.72);
@@ -1279,11 +1360,58 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           <p class="fc-complete-note" id="fcCompleteNote" hidden>Fresh words will be ready tomorrow.</p>
           <p class="fc-complete-summary" id="fcCompleteSummary" hidden></p>
           <div class="fc-complete-actions">
+            <button class="btn btn-primary" id="fcQuizStart" type="button" hidden>Take a 5-question quiz</button>
             <button class="btn btn-primary" id="fcReviewAgain" type="button">Review Again &mdash; Shuffled</button>
             <button class="btn btn-ghost" id="fcCompleteSecondary" type="button">Back to Tracker</button>
           </div>
         </div>
       </div>
+
+      <section class="quick-quiz" id="quickQuiz" aria-labelledby="quizHeading" hidden>
+        <div class="quiz-head">
+          <div>
+            <p class="quiz-kicker">Today&rsquo;s Words</p>
+            <h2 id="quizHeading">Quick Recall Quiz</h2>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="quizExit" type="button">Back to review summary</button>
+        </div>
+
+        <div class="quiz-question" id="quizQuestion">
+          <p class="quiz-progress" id="quizProgress">Question 1 of 5</p>
+          <h3 id="quizQuestionHeading" tabindex="-1">Recall the English word</h3>
+          <p class="quiz-clue" id="quizClue" dir="auto"></p>
+          <form class="quiz-form" id="quizForm" novalidate>
+            <div class="quiz-answer-field" id="quizTypedField">
+              <label for="quizAnswer">Type your answer</label>
+              <input id="quizAnswer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="quizClue">
+            </div>
+            <fieldset class="quiz-options" id="quizOptions" aria-describedby="quizClue" hidden>
+              <legend>Choose one answer</legend>
+              <div class="quiz-options-list" id="quizOptionsList"></div>
+            </fieldset>
+            <button class="btn btn-primary" id="quizCheck" type="submit">Check Answer</button>
+          </form>
+          <div class="quiz-feedback-wrap">
+            <p class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite" tabindex="-1" hidden></p>
+            <p class="quiz-correct-answer" id="quizCorrectAnswer" hidden></p>
+          </div>
+          <button class="btn btn-primary quiz-continue" id="quizContinue" type="button" hidden>Continue</button>
+        </div>
+
+        <div class="quiz-results" id="quizResults" hidden>
+          <h3 id="quizResultsHeading" tabindex="-1">Quiz complete &#10003;</h3>
+          <p class="quiz-score" id="quizScore"></p>
+          <p class="quiz-result-message" id="quizResultMessage"></p>
+          <section class="quiz-missed" id="quizMissed" aria-labelledby="quizMissedHeading" hidden>
+            <h4 id="quizMissedHeading">Needs another look</h4>
+            <ul class="quiz-missed-list" id="quizMissedList"></ul>
+          </section>
+          <div class="quiz-result-actions">
+            <button class="btn btn-primary" id="quizRetry" type="button" hidden>Retry Incorrect Answers</button>
+            <button class="btn btn-ghost" id="quizBack" type="button">Back to review summary</button>
+          </div>
+        </div>
+      </section>
       <p class="sr-only" id="fcLive" aria-live="polite"></p>
       <div class="empty-box" id="fcEmpty" hidden>No vocabulary has been added for this selection yet.</div>
     </section>
@@ -2763,6 +2891,7 @@ function clearPrivateSession() {
   fc.completed = false;
   fc.deck = [];
   roundReviewed.clear();
+  resetQuickRecallQuiz();
   prevLessonDone = prevVocabDone = prevMissionDone = null;
   renderProfile(null);
   appShell.hidden = true;
@@ -4754,9 +4883,32 @@ fcDirection.value = flashcardDirectionPreference;
 const fcReview = $('fcReview'), fcComplete = $('fcComplete'),
       fcCompleteHeading = $('fcCompleteHeading'), fcCompleteSub = $('fcCompleteSub'),
       fcCompleteNote = $('fcCompleteNote'), fcCompleteSummary = $('fcCompleteSummary'),
-      fcReviewAgain = $('fcReviewAgain'), fcCompleteSecondary = $('fcCompleteSecondary'),
+      fcQuizStart = $('fcQuizStart'), fcReviewAgain = $('fcReviewAgain'),
+      fcCompleteSecondary = $('fcCompleteSecondary'),
       fcLive = $('fcLive');
 const roundReviewed = new Set(); // ids reviewed (revealed or graded) in the current round
+
+const quickQuiz = $('quickQuiz'), quizQuestion = $('quizQuestion'), quizResults = $('quizResults'),
+      quizProgress = $('quizProgress'), quizQuestionHeading = $('quizQuestionHeading'),
+      quizClue = $('quizClue'), quizForm = $('quizForm'), quizTypedField = $('quizTypedField'),
+      quizAnswer = $('quizAnswer'), quizOptions = $('quizOptions'), quizOptionsList = $('quizOptionsList'),
+      quizCheck = $('quizCheck'), quizFeedback = $('quizFeedback'),
+      quizCorrectAnswer = $('quizCorrectAnswer'), quizContinue = $('quizContinue'),
+      quizResultsHeading = $('quizResultsHeading'), quizScore = $('quizScore'),
+      quizResultMessage = $('quizResultMessage'), quizMissed = $('quizMissed'),
+      quizMissedList = $('quizMissedList'), quizRetry = $('quizRetry');
+
+const quickQuizState = {
+  active: false,
+  items: [],
+  pool: [],
+  questions: [],
+  index: 0,
+  submitted: false,
+  answers: [],
+  history: [],
+  retryRound: false
+};
 
 /* ---- Persistent "Today's N Words" daily challenge (Deliverable 2) ---- */
 let fcDailyMode = false;
@@ -4828,6 +4980,456 @@ function getReverseCardClue(item) {
 function todayReview() {
   return state.dailyVocabularyReviews.find(r => r.date === dateKey(new Date())) || null;
 }
+
+function resetQuickRecallQuiz() {
+  quickQuizState.active = false;
+  quickQuizState.items = [];
+  quickQuizState.pool = [];
+  quickQuizState.questions = [];
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.history = [];
+  quickQuizState.retryRound = false;
+  quickQuiz.hidden = true;
+  quizQuestion.hidden = false;
+  quizResults.hidden = true;
+  quizAnswer.value = '';
+  quizOptionsList.textContent = '';
+  quizFeedback.textContent = '';
+  quizCorrectAnswer.textContent = '';
+  quizScore.textContent = '';
+  quizResultMessage.textContent = '';
+  quizMissedList.textContent = '';
+  quizMissed.hidden = true;
+  quizRetry.hidden = true;
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.remove('quiz-mode');
+}
+
+function snapshotQuizItem(entry) {
+  return {
+    id: entry.id,
+    term: String(entry.term || '').trim(),
+    definition: String(entry.definition || '').trim(),
+    arabicMeaning: String(entry.arabicMeaning || '').trim(),
+    example: String(entry.example || '').trim(),
+    status: STATUSES.includes(entry.status) ? entry.status : 'new'
+  };
+}
+
+function dailyQuizPool() {
+  const rec = todayReview();
+  if (!fcDailyMode || !rec || !rec.completedAt) return [];
+  const seen = new Set();
+  const items = [];
+  for (const id of rec.wordIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const entry = getDeckEntry(id);
+    if (!entry || !String(entry.term || '').trim()) continue;
+    items.push(snapshotQuizItem(entry));
+  }
+  return items;
+}
+
+function quizTextRevealsTerm(value, term) {
+  const source = String(value || '').trim().toLowerCase();
+  const target = String(term || '').trim().toLowerCase();
+  if (!source || !target) return false;
+  if (source.includes(target)) return true;
+  const plainSource = source.replace(/[^\p{L}\p{N}]+/gu, '');
+  const plainTarget = target.replace(/[^\p{L}\p{N}]+/gu, '');
+  return Boolean(plainTarget && plainSource.includes(plainTarget));
+}
+
+function quizExampleBlank(item) {
+  const source = String(item && item.example || '').trim();
+  if (!source) return '';
+  const redacted = safeReverseExample(source, item.term);
+  return redacted && redacted !== source && redacted.includes('_____') ? redacted : '';
+}
+
+function typedQuizClue(item) {
+  if (item.definition && !quizTextRevealsTerm(item.definition, item.term)) {
+    return { text: item.definition, direction: 'auto' };
+  }
+  if (item.arabicMeaning && !quizTextRevealsTerm(item.arabicMeaning, item.term)) {
+    return { text: item.arabicMeaning, direction: 'rtl' };
+  }
+  const example = quizExampleBlank(item);
+  return example ? { text: example, direction: 'auto' } : null;
+}
+
+function eligibleDailyQuizItems(pool) {
+  return pool.filter(item => typedQuizClue(item) !== null);
+}
+
+function selectQuickQuizItems(items) {
+  const groups = { learning: [], new: [], mastered: [] };
+  for (const item of items) groups[item.status].push(item);
+  for (const status of STATUSES) fisherYates(groups[status]);
+  return groups.learning.concat(groups.new, groups.mastered).slice(0, 5);
+}
+
+function quizMeaning(item, kind) {
+  if (kind === 'definition') return String(item.definition || '').trim();
+  return String(item.arabicMeaning || '').trim();
+}
+
+function createMeaningQuizQuestion(item) {
+  const clue = typedQuizClue(item);
+  if (!clue) return null;
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'meaning-to-word',
+    heading: 'Recall the English word',
+    clue: clue.text,
+    clueDirection: clue.direction,
+    correctAnswer: item.term,
+    options: []
+  };
+}
+
+function createExampleQuizQuestion(item) {
+  const clue = quizExampleBlank(item);
+  if (!clue) return null;
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'example-blank',
+    heading: 'Type the missing word or phrase',
+    clue,
+    clueDirection: 'auto',
+    correctAnswer: item.term,
+    options: []
+  };
+}
+
+function normalizeQuizOption(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function createChoiceQuizQuestion(item, pool) {
+  const kind = item.definition ? 'definition' : (item.arabicMeaning ? 'arabic' : '');
+  if (!kind) return null;
+  const correctAnswer = quizMeaning(item, kind);
+  if (!correctAnswer) return null;
+
+  const seen = new Set([normalizeQuizOption(correctAnswer)]);
+  const distractors = [];
+  const candidates = pool.filter(other => other.id !== item.id);
+  fisherYates(candidates);
+  for (const other of candidates) {
+    const meaning = quizMeaning(other, kind);
+    const key = normalizeQuizOption(meaning);
+    if (!meaning || seen.has(key) || quizTextRevealsTerm(meaning, item.term)) continue;
+    seen.add(key);
+    distractors.push(meaning);
+    if (distractors.length >= 3) break;
+  }
+  if (!distractors.length) return null;
+
+  const options = [correctAnswer].concat(distractors);
+  fisherYates(options);
+  return {
+    entryId: item.id,
+    itemTerm: item.term,
+    type: 'word-to-meaning',
+    heading: 'Choose the correct meaning',
+    clue: item.term,
+    clueDirection: 'auto',
+    optionDirection: kind === 'arabic' ? 'rtl' : 'auto',
+    correctAnswer,
+    correctOption: options.indexOf(correctAnswer),
+    options
+  };
+}
+
+function plannedQuizTypes(count) {
+  if (count <= 1) return ['meaning-to-word'];
+  if (count === 2) return ['meaning-to-word', 'example-blank'];
+  if (count === 3) return ['meaning-to-word', 'example-blank', 'word-to-meaning'];
+  if (count === 4) return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'word-to-meaning'];
+  return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'example-blank', 'word-to-meaning'];
+}
+
+function createQuickQuizQuestion(item, preferredType, pool) {
+  const order = preferredType === 'example-blank'
+    ? ['example-blank', 'meaning-to-word', 'word-to-meaning']
+    : preferredType === 'word-to-meaning'
+      ? ['word-to-meaning', 'meaning-to-word', 'example-blank']
+      : ['meaning-to-word', 'example-blank', 'word-to-meaning'];
+  for (const type of order) {
+    const question = type === 'example-blank'
+      ? createExampleQuizQuestion(item)
+      : type === 'word-to-meaning'
+        ? createChoiceQuizQuestion(item, pool)
+        : createMeaningQuizQuestion(item);
+    if (question) return question;
+  }
+  return null;
+}
+
+function createQuickQuizQuestions(items, pool) {
+  const plans = plannedQuizTypes(items.length);
+  fisherYates(plans);
+  const questions = [];
+  items.forEach((item, index) => {
+    const question = createQuickQuizQuestion(item, plans[index], pool);
+    if (question) questions.push(question);
+  });
+  fisherYates(questions);
+  return questions;
+}
+
+function renderQuizEntryAction() {
+  const count = Math.min(5, eligibleDailyQuizItems(dailyQuizPool()).length);
+  const showQuiz = fcDailyMode && count > 0;
+  fcQuizStart.hidden = !showQuiz;
+  fcQuizStart.textContent = showQuiz
+    ? 'Take a ' + count + '-question quiz'
+    : 'Take a 5-question quiz';
+  fcReviewAgain.className = showQuiz ? 'btn btn-ghost' : 'btn btn-primary';
+}
+
+function renderQuickQuizQuestion() {
+  const question = quickQuizState.questions[quickQuizState.index];
+  if (!question) { renderQuickQuizResults(); return; }
+  quickQuizState.submitted = false;
+  quizQuestion.hidden = false;
+  quizResults.hidden = true;
+  quizScore.textContent = '';
+  quizResultMessage.textContent = '';
+  quizMissedList.textContent = '';
+  quizMissed.hidden = true;
+  quizRetry.hidden = true;
+  quizProgress.textContent = 'Question ' + (quickQuizState.index + 1) + ' of ' + quickQuizState.questions.length;
+  quizQuestionHeading.textContent = question.heading;
+  quizClue.textContent = question.clue;
+  quizClue.dir = question.clueDirection;
+  quizClue.className = 'quiz-clue' + (question.type === 'word-to-meaning' ? ' is-term' : '');
+
+  quizAnswer.value = '';
+  quizAnswer.disabled = false;
+  quizTypedField.hidden = question.type === 'word-to-meaning';
+  quizOptions.hidden = question.type !== 'word-to-meaning';
+  quizOptionsList.textContent = '';
+  if (question.type === 'word-to-meaning') {
+    question.options.forEach((option, index) => {
+      const label = el('label', 'quiz-option');
+      const input = el('input');
+      input.type = 'radio';
+      input.name = 'quizOption';
+      input.value = String(index);
+      const text = el('span', '', option);
+      text.dir = question.optionDirection;
+      label.append(input, text);
+      quizOptionsList.appendChild(label);
+    });
+  }
+
+  quizCheck.hidden = false;
+  quizCheck.disabled = false;
+  quizFeedback.textContent = '';
+  quizFeedback.className = 'quiz-feedback';
+  quizFeedback.hidden = true;
+  quizCorrectAnswer.textContent = '';
+  quizCorrectAnswer.hidden = true;
+  quizContinue.hidden = true;
+  quizQuestionHeading.focus();
+}
+
+function startQuickRecallQuiz() {
+  stopPronunciation();
+  const pool = dailyQuizPool();
+  const items = selectQuickQuizItems(eligibleDailyQuizItems(pool));
+  const questions = createQuickQuizQuestions(items, pool);
+  if (!questions.length) {
+    renderCompletion();
+    fcLive.textContent = 'A quiz is not available for today’s words.';
+    return;
+  }
+
+  quickQuizState.active = true;
+  quickQuizState.items = items;
+  quickQuizState.pool = pool;
+  quickQuizState.questions = questions;
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.history = [];
+  quickQuizState.retryRound = false;
+
+  fcStage.hidden = true;
+  fcEmpty.hidden = true;
+  quickQuiz.hidden = false;
+  const section = document.querySelector('.flashcards');
+  if (section) section.classList.add('quiz-mode');
+  renderQuickQuizQuestion();
+}
+
+function normalizeQuizAnswer(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\s+/g, ' ')
+    .replace(/\.+$/, '')
+    .trim();
+}
+
+function quizSelection() {
+  return quizOptionsList.querySelector('input[name="quizOption"]:checked');
+}
+
+function submitQuickQuizAnswer() {
+  if (quickQuizState.submitted) return;
+  const question = quickQuizState.questions[quickQuizState.index];
+  if (!question) return;
+
+  let userAnswer = '';
+  let correct = false;
+  if (question.type === 'word-to-meaning') {
+    const selected = quizSelection();
+    if (!selected) {
+      quizFeedback.textContent = 'Choose an answer before checking.';
+      quizFeedback.className = 'quiz-feedback is-incorrect';
+      quizFeedback.hidden = false;
+      quizFeedback.focus();
+      return;
+    }
+    const selectedIndex = Number(selected.value);
+    userAnswer = question.options[selectedIndex] || '';
+    correct = selectedIndex === question.correctOption;
+    for (const input of quizOptionsList.querySelectorAll('input')) input.disabled = true;
+  } else {
+    userAnswer = quizAnswer.value.trim();
+    if (!normalizeQuizAnswer(userAnswer)) {
+      quizFeedback.textContent = 'Type an answer before checking.';
+      quizFeedback.className = 'quiz-feedback is-incorrect';
+      quizFeedback.hidden = false;
+      quizFeedback.focus();
+      return;
+    }
+    correct = normalizeQuizAnswer(userAnswer) === normalizeQuizAnswer(question.correctAnswer);
+    quizAnswer.disabled = true;
+  }
+
+  quickQuizState.submitted = true;
+  quickQuizState.answers.push({
+    entryId: question.entryId,
+    itemTerm: question.itemTerm,
+    type: question.type,
+    userAnswer,
+    correctAnswer: question.correctAnswer,
+    correct
+  });
+  quizCheck.hidden = true;
+  quizFeedback.textContent = correct ? 'Correct ✓' : 'Not quite';
+  quizFeedback.className = 'quiz-feedback ' + (correct ? 'is-correct' : 'is-incorrect');
+  quizFeedback.hidden = false;
+  quizCorrectAnswer.textContent = correct ? '' : 'Correct answer: ' + question.correctAnswer;
+  quizCorrectAnswer.hidden = correct;
+  quizContinue.textContent = quickQuizState.index + 1 >= quickQuizState.questions.length
+    ? 'See results'
+    : 'Continue';
+  quizContinue.hidden = false;
+  quizFeedback.focus();
+}
+
+function quickQuizResultMessage(score, total) {
+  if (score === total) return 'Excellent recall.';
+  if (score > total / 2) {
+    return 'Good work. Review the missed ' + (total - score === 1 ? 'word' : 'words') + ' once more.';
+  }
+  return 'Good practice. Retry the words that need more attention.';
+}
+
+function renderQuickQuizResults() {
+  const answers = quickQuizState.answers.slice();
+  const incorrect = answers.filter(answer => !answer.correct);
+  const score = answers.length - incorrect.length;
+  quickQuizState.submitted = false;
+  quizContinue.hidden = true;
+  quickQuizState.history.push({
+    retryRound: quickQuizState.retryRound,
+    questions: quickQuizState.questions.map(question =>
+      Object.assign({}, question, { options: question.options.slice() })
+    ),
+    answers
+  });
+
+  quizQuestion.hidden = true;
+  quizResults.hidden = false;
+  if (quickQuizState.retryRound && !incorrect.length) {
+    quizResultsHeading.textContent = 'All corrected ✓';
+    quizScore.textContent = 'You recalled every missed word.';
+    quizResultMessage.textContent = 'Excellent recall.';
+  } else {
+    quizResultsHeading.textContent = 'Quiz complete ✓';
+    quizScore.textContent = 'You got ' + score + ' of ' + answers.length + ' correct.';
+    quizResultMessage.textContent = quickQuizResultMessage(score, answers.length);
+  }
+
+  quizMissedList.textContent = '';
+  for (const answer of incorrect) {
+    const item = el('li', 'quiz-missed-item');
+    item.appendChild(el('strong', 'quiz-missed-term', answer.itemTerm));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Your answer: ' + (answer.userAnswer || 'No answer')));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Correct answer: ' + answer.correctAnswer));
+    quizMissedList.appendChild(item);
+  }
+  quizMissed.hidden = !incorrect.length;
+  quizRetry.hidden = !incorrect.length;
+  quizResultsHeading.focus();
+}
+
+function continueQuickRecallQuiz() {
+  if (!quickQuizState.submitted) return;
+  if (quickQuizState.index + 1 >= quickQuizState.questions.length) {
+    renderQuickQuizResults();
+    return;
+  }
+  quickQuizState.index++;
+  renderQuickQuizQuestion();
+}
+
+function retryIncorrectQuizAnswers() {
+  const incorrectIds = new Set(
+    quickQuizState.answers.filter(answer => !answer.correct).map(answer => answer.entryId)
+  );
+  const items = quickQuizState.items.filter(item => incorrectIds.has(item.id));
+  const questions = createQuickQuizQuestions(items, items);
+  if (!questions.length) return;
+  quickQuizState.questions = questions;
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  quickQuizState.retryRound = true;
+  renderQuickQuizQuestion();
+}
+
+function returnToDailyReviewSummary() {
+  stopPronunciation();
+  resetQuickRecallQuiz();
+  fcStage.hidden = false;
+  fc.completed = true;
+  renderFlashcard();
+  (fcQuizStart.hidden ? fcReviewAgain : fcQuizStart).focus();
+}
+
+$('quizExit').addEventListener('click', returnToDailyReviewSummary);
+$('quizBack').addEventListener('click', returnToDailyReviewSummary);
+fcQuizStart.addEventListener('click', startQuickRecallQuiz);
+quizForm.addEventListener('submit', event => {
+  event.preventDefault();
+  submitQuickQuizAnswer();
+});
+quizContinue.addEventListener('click', continueQuickRecallQuiz);
+quizRetry.addEventListener('click', retryIncorrectQuizAnswers);
+
 function reviewedInQueue(rec) {
   const wordSet = new Set(rec.wordIds);
   return rec.reviewedIds.filter(id => wordSet.has(id)).length;
@@ -4955,6 +5557,7 @@ function startDailyReview() {
 
 function exitDailyMode() {
   if (!fcDailyMode) return;
+  if (quickQuizState.active) resetQuickRecallQuiz();
   fcDailyMode = false;
   fc.dailyReplay = false;
   updateDailyBanner();
@@ -4962,6 +5565,7 @@ function exitDailyMode() {
 
 function buildDeck(shuffle) {
   stopPronunciation();
+  if (quickQuizState.active) resetQuickRecallQuiz();
   if (fcDailyMode) { buildDailyDeck(shuffle); return; }
   const setSelection = flashSetPicker.getSelection();
   const statusF = fcStatusFilter.value;
@@ -5141,6 +5745,7 @@ function renderCompletion() {
   const summary = reviewStatusSummary();
   fcCompleteSummary.textContent = summary;
   fcCompleteSummary.hidden = !summary;
+  renderQuizEntryAction();
 }
 
 function showCompletion() {
@@ -5152,7 +5757,7 @@ function showCompletion() {
   fcLive.textContent = fcDailyMode
     ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
     : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
-  fcReviewAgain.focus(); // move focus to the primary action
+  (fcQuizStart.hidden ? fcReviewAgain : fcQuizStart).focus(); // move focus to the primary action
 }
 
 $('fcPrev').addEventListener('click', () => stepCard(-1));
