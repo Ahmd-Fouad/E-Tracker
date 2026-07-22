@@ -424,8 +424,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .vs-stat.is-new .vs-num { color: var(--primary-light); }
 .vs-stat.is-learning .vs-num { color: var(--warning); }
 .vs-stat.is-mastered .vs-num { color: var(--success); }
-.vs-side { display: flex; align-items: center; gap: 14px; }
+.vs-side { display: flex; align-items: center; justify-content: flex-end; gap: 14px; min-width: 0; flex-wrap: wrap; }
 .vs-breakdown { font-size: 12.5px; color: var(--text-3); }
+.vs-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.vs-actions .btn { min-height: 44px; }
 
 /* 9. TRACKER — SET CARDS -------------------------------------------------- */
 .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -964,6 +966,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .btn-log { width: 100%; }
   .status-head { gap: 14px; }
   .vs-side { width: 100%; justify-content: space-between; }
+  .vs-actions { margin-left: auto; }
   .vs-counts { gap: 18px; width: 100%; justify-content: space-between; }
   .vocab-item { flex-direction: column; }
   .vocab-side { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
@@ -987,6 +990,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .set-filter-panel { width: 100%; position: static; margin-top: 6px; }
   .grammar-toolbar input[type="search"] { flex-basis: 100%; }
   .grammar-toolbar .btn { flex: 1 1 100%; }
+  .vs-side { align-items: stretch; }
+  .vs-actions { width: 100%; margin-left: 0; }
+  .vs-actions .btn { flex: 1 1 120px; }
   .nav-btn { font-size: 10px; }
   .modal { padding: 18px; border-radius: var(--r-lg); }
   .pronunciation-settings-actions { flex-direction: column; }
@@ -1182,7 +1188,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       </div>
     </section>
 
-    <!-- Compact vocabulary summary with a single quick-add action -->
+    <!-- Compact vocabulary summary with quick practice and add actions -->
     <section aria-label="Vocabulary summary">
       <div class="card vocab-summary">
         <div class="vs-counts">
@@ -1193,7 +1199,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         </div>
         <div class="vs-side">
           <p class="vs-breakdown" id="voBreakdown">General: 0 &middot; Set Vocabulary: 0</p>
-          <button class="btn btn-primary btn-sm" id="dashAddWord">Add word</button>
+          <div class="vs-actions">
+            <button class="btn btn-ghost btn-sm" id="dashQuickQuiz" type="button" hidden>Quick Quiz</button>
+            <button class="btn btn-primary btn-sm" id="dashAddWord" type="button">Add word</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1360,7 +1369,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           <p class="fc-complete-note" id="fcCompleteNote" hidden>Fresh words will be ready tomorrow.</p>
           <p class="fc-complete-summary" id="fcCompleteSummary" hidden></p>
           <div class="fc-complete-actions">
-            <button class="btn btn-primary" id="fcQuizStart" type="button" hidden>Take a 5-question quiz</button>
             <button class="btn btn-primary" id="fcReviewAgain" type="button">Review Again &mdash; Shuffled</button>
             <button class="btn btn-ghost" id="fcCompleteSecondary" type="button">Back to Tracker</button>
           </div>
@@ -1370,10 +1378,10 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       <section class="quick-quiz" id="quickQuiz" aria-labelledby="quizHeading" hidden>
         <div class="quiz-head">
           <div>
-            <p class="quiz-kicker">Today&rsquo;s Words</p>
+            <p class="quiz-kicker">Vocabulary Review</p>
             <h2 id="quizHeading">Quick Recall Quiz</h2>
           </div>
-          <button class="btn btn-ghost btn-sm" id="quizExit" type="button">Back to review summary</button>
+          <button class="btn btn-ghost btn-sm" id="quizExit" type="button">Back to Tracker</button>
         </div>
 
         <div class="quiz-question" id="quizQuestion">
@@ -1408,7 +1416,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           </section>
           <div class="quiz-result-actions">
             <button class="btn btn-primary" id="quizRetry" type="button" hidden>Retry Incorrect Answers</button>
-            <button class="btn btn-ghost" id="quizBack" type="button">Back to review summary</button>
+            <button class="btn btn-ghost" id="quizBack" type="button">Back to Tracker</button>
           </div>
         </div>
       </section>
@@ -2891,7 +2899,7 @@ function clearPrivateSession() {
   fc.completed = false;
   fc.deck = [];
   roundReviewed.clear();
-  resetQuickRecallQuiz();
+  resetQuickRecallQuiz(true);
   prevLessonDone = prevVocabDone = prevMissionDone = null;
   renderProfile(null);
   appShell.hidden = true;
@@ -3823,7 +3831,8 @@ const VIEWS = {
   flashcards: { el: $('view-flashcards'), btn: $('nav-flashcards') }
 };
 
-function switchView(name) {
+function switchView(name, options) {
+  options = options || {};
   if (!VIEWS[name]) name = 'tracker';
   stopPronunciation();
   for (const key of Object.keys(VIEWS)) {
@@ -3839,7 +3848,7 @@ function switchView(name) {
   }
   if (name === 'vocab') renderBrowse();
   if (name === 'grammar') renderGrammar();
-  if (name === 'flashcards') buildDeck(false);
+  if (name === 'flashcards' && !options.skipFlashcardBuild) buildDeck(false);
   try { sessionStorage.setItem('ee_tracker_view', name); } catch (e) { /* ignore */ }
 }
 
@@ -3855,7 +3864,7 @@ const overallFill = $('overallFill'), overallPct = $('overallPct'),
       overallText = $('overallText'), overallBar = $('overallBar');
 const statStreak = $('statStreak'), statDays = $('statDays');
 const vTotal = $('vTotal'), vNew = $('vNew'), vLearning = $('vLearning'), vMastered = $('vMastered');
-const voBreakdown = $('voBreakdown');
+const voBreakdown = $('voBreakdown'), dashQuickQuiz = $('dashQuickQuiz');
 const logBtn = $('logBtn');
 
 function renderDashboard() {
@@ -3877,6 +3886,8 @@ function renderDashboard() {
   vLearning.textContent = String(counts.learning);
   vMastered.textContent = String(counts.mastered);
   voBreakdown.textContent = 'General: ' + counts.general + ' · Set Vocabulary: ' + counts.set;
+
+  renderGlobalQuickQuizEntry();
 
   if (cs === null) {
     logBtn.textContent = 'All sets complete \u{1F389}';
@@ -3909,6 +3920,7 @@ logBtn.addEventListener('click', () => {
 
 // Dashboard quick-add (Browse and Flashcards live in the main navigation)
 $('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }));
+dashQuickQuiz.addEventListener('click', startQuickRecallQuiz);
 
 /* ==========================================================================
    7b. TODAY'S MISSION + WEEKLY GOAL
@@ -4883,8 +4895,7 @@ fcDirection.value = flashcardDirectionPreference;
 const fcReview = $('fcReview'), fcComplete = $('fcComplete'),
       fcCompleteHeading = $('fcCompleteHeading'), fcCompleteSub = $('fcCompleteSub'),
       fcCompleteNote = $('fcCompleteNote'), fcCompleteSummary = $('fcCompleteSummary'),
-      fcQuizStart = $('fcQuizStart'), fcReviewAgain = $('fcReviewAgain'),
-      fcCompleteSecondary = $('fcCompleteSecondary'),
+      fcReviewAgain = $('fcReviewAgain'), fcCompleteSecondary = $('fcCompleteSecondary'),
       fcLive = $('fcLive');
 const roundReviewed = new Set(); // ids reviewed (revealed or graded) in the current round
 
@@ -4909,6 +4920,8 @@ const quickQuizState = {
   history: [],
   retryRound: false
 };
+let lastQuickQuizWordIds = [];
+let lastQuickQuizSignature = '';
 
 /* ---- Persistent "Today's N Words" daily challenge (Deliverable 2) ---- */
 let fcDailyMode = false;
@@ -4981,7 +4994,7 @@ function todayReview() {
   return state.dailyVocabularyReviews.find(r => r.date === dateKey(new Date())) || null;
 }
 
-function resetQuickRecallQuiz() {
+function resetQuickRecallQuiz(clearPreviousSelection) {
   quickQuizState.active = false;
   quickQuizState.items = [];
   quickQuizState.pool = [];
@@ -5003,6 +5016,10 @@ function resetQuickRecallQuiz() {
   quizMissedList.textContent = '';
   quizMissed.hidden = true;
   quizRetry.hidden = true;
+  if (clearPreviousSelection) {
+    lastQuickQuizWordIds = [];
+    lastQuickQuizSignature = '';
+  }
   const section = document.querySelector('.flashcards');
   if (section) section.classList.remove('quiz-mode');
 }
@@ -5018,16 +5035,12 @@ function snapshotQuizItem(entry) {
   };
 }
 
-function dailyQuizPool() {
-  const rec = todayReview();
-  if (!fcDailyMode || !rec || !rec.completedAt) return [];
+function allVocabularyQuizPool() {
   const seen = new Set();
   const items = [];
-  for (const id of rec.wordIds) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    const entry = getDeckEntry(id);
-    if (!entry || !String(entry.term || '').trim()) continue;
+  for (const entry of state.vocabulary) {
+    if (!entry || seen.has(entry.id) || !String(entry.term || '').trim()) continue;
+    seen.add(entry.id);
     items.push(snapshotQuizItem(entry));
   }
   return items;
@@ -5061,15 +5074,23 @@ function typedQuizClue(item) {
   return example ? { text: example, direction: 'auto' } : null;
 }
 
-function eligibleDailyQuizItems(pool) {
+function eligibleQuickQuizItems(pool) {
   return pool.filter(item => typedQuizClue(item) !== null);
 }
 
-function selectQuickQuizItems(items) {
+function statusPrioritizedQuizItems(items) {
   const groups = { learning: [], new: [], mastered: [] };
   for (const item of items) groups[item.status].push(item);
   for (const status of STATUSES) fisherYates(groups[status]);
-  return groups.learning.concat(groups.new, groups.mastered).slice(0, 5);
+  return groups.learning.concat(groups.new, groups.mastered);
+}
+
+function selectQuickQuizItems(items, previousIds) {
+  const targetCount = Math.min(5, items.length);
+  const previous = new Set(previousIds || []);
+  const fresh = statusPrioritizedQuizItems(items.filter(item => !previous.has(item.id)));
+  const repeated = statusPrioritizedQuizItems(items.filter(item => previous.has(item.id)));
+  return fresh.concat(repeated).slice(0, targetCount);
 }
 
 function quizMeaning(item, kind) {
@@ -5184,14 +5205,43 @@ function createQuickQuizQuestions(items, pool) {
   return questions;
 }
 
-function renderQuizEntryAction() {
-  const count = Math.min(5, eligibleDailyQuizItems(dailyQuizPool()).length);
-  const showQuiz = fcDailyMode && count > 0;
-  fcQuizStart.hidden = !showQuiz;
-  fcQuizStart.textContent = showQuiz
-    ? 'Take a ' + count + '-question quiz'
-    : 'Take a 5-question quiz';
-  fcReviewAgain.className = showQuiz ? 'btn btn-ghost' : 'btn btn-primary';
+function quickQuizQuestionSignature(questions) {
+  return JSON.stringify(questions.map(question => [
+    question.entryId,
+    question.type,
+    question.options
+  ]));
+}
+
+function createFreshQuickQuizQuestions(items, pool) {
+  let questions = createQuickQuizQuestions(items, pool);
+  let signature = quickQuizQuestionSignature(questions);
+  if (signature !== lastQuickQuizSignature) return { questions, signature };
+
+  if (questions.length > 1) {
+    questions = questions.slice(1).concat(questions[0]);
+    signature = quickQuizQuestionSignature(questions);
+  } else if (questions.length === 1) {
+    const current = questions[0];
+    const alternatives = ['meaning-to-word', 'example-blank', 'word-to-meaning']
+      .filter(type => type !== current.type);
+    fisherYates(alternatives);
+    for (const type of alternatives) {
+      const alternative = createQuickQuizQuestion(items[0], type, pool);
+      if (alternative && alternative.type !== current.type) {
+        questions = [alternative];
+        signature = quickQuizQuestionSignature(questions);
+        break;
+      }
+    }
+  }
+  return { questions, signature };
+}
+
+function renderGlobalQuickQuizEntry() {
+  const available = eligibleQuickQuizItems(allVocabularyQuizPool()).length > 0;
+  dashQuickQuiz.hidden = !available;
+  dashQuickQuiz.disabled = !available;
 }
 
 function renderQuickQuizQuestion() {
@@ -5243,15 +5293,22 @@ function renderQuickQuizQuestion() {
 
 function startQuickRecallQuiz() {
   stopPronunciation();
-  const pool = dailyQuizPool();
-  const items = selectQuickQuizItems(eligibleDailyQuizItems(pool));
-  const questions = createQuickQuizQuestions(items, pool);
+  const pool = eligibleQuickQuizItems(allVocabularyQuizPool());
+  const items = selectQuickQuizItems(pool, lastQuickQuizWordIds);
+  const generated = createFreshQuickQuizQuestions(items, pool);
+  const questions = generated.questions;
   if (!questions.length) {
-    renderCompletion();
-    fcLive.textContent = 'A quiz is not available for today’s words.';
+    renderGlobalQuickQuizEntry();
+    fcLive.textContent = '';
+    toast('Add vocabulary with a safe clue to start a quiz');
+    dashQuickQuiz.focus();
     return;
   }
 
+  resetQuickRecallQuiz();
+  exitDailyMode();
+  lastQuickQuizWordIds = items.map(item => item.id);
+  lastQuickQuizSignature = generated.signature;
   quickQuizState.active = true;
   quickQuizState.items = items;
   quickQuizState.pool = pool;
@@ -5262,11 +5319,13 @@ function startQuickRecallQuiz() {
   quickQuizState.history = [];
   quickQuizState.retryRound = false;
 
+  fcLive.textContent = '';
   fcStage.hidden = true;
   fcEmpty.hidden = true;
   quickQuiz.hidden = false;
   const section = document.querySelector('.flashcards');
   if (section) section.classList.add('quiz-mode');
+  switchView('flashcards', { skipFlashcardBuild: true });
   renderQuickQuizQuestion();
 }
 
@@ -5411,18 +5470,18 @@ function retryIncorrectQuizAnswers() {
   renderQuickQuizQuestion();
 }
 
-function returnToDailyReviewSummary() {
+function returnQuickQuizToTracker() {
   stopPronunciation();
   resetQuickRecallQuiz();
   fcStage.hidden = false;
-  fc.completed = true;
-  renderFlashcard();
-  (fcQuizStart.hidden ? fcReviewAgain : fcQuizStart).focus();
+  exitDailyMode();
+  switchView('tracker');
+  renderGlobalQuickQuizEntry();
+  dashQuickQuiz.focus();
 }
 
-$('quizExit').addEventListener('click', returnToDailyReviewSummary);
-$('quizBack').addEventListener('click', returnToDailyReviewSummary);
-fcQuizStart.addEventListener('click', startQuickRecallQuiz);
+$('quizExit').addEventListener('click', returnQuickQuizToTracker);
+$('quizBack').addEventListener('click', returnQuickQuizToTracker);
 quizForm.addEventListener('submit', event => {
   event.preventDefault();
   submitQuickQuizAnswer();
@@ -5745,7 +5804,6 @@ function renderCompletion() {
   const summary = reviewStatusSummary();
   fcCompleteSummary.textContent = summary;
   fcCompleteSummary.hidden = !summary;
-  renderQuizEntryAction();
 }
 
 function showCompletion() {
@@ -5757,7 +5815,7 @@ function showCompletion() {
   fcLive.textContent = fcDailyMode
     ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
     : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
-  (fcQuizStart.hidden ? fcReviewAgain : fcQuizStart).focus(); // move focus to the primary action
+  fcReviewAgain.focus(); // move focus to the primary completion action
 }
 
 $('fcPrev').addEventListener('click', () => stepCard(-1));
