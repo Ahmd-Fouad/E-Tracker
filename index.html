@@ -359,12 +359,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 /* 7b. DAILY GUIDANCE — Today's Mission + Weekly Goal ---------------------- */
 .mission-section { display: flex; flex-direction: column; gap: 14px; }
 .guidance-card { display: flex; flex-direction: column; gap: 16px; }
-.guidance-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.mission-badge {
-  font-size: 12px; font-weight: 600; color: var(--success);
-  background: var(--success-tint); border: 1px solid rgba(52, 211, 153, 0.3);
-  padding: 3px 11px; border-radius: var(--pill);
-}
 
 .mission-tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .mission-task { display: flex; align-items: flex-start; gap: 12px; }
@@ -595,7 +589,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .fc-example { color: var(--text); font-style: italic; font-size: 16px; line-height: 1.5; margin: 0 0 9px; overflow-wrap: anywhere; }
 .fc-definition { color: var(--text-2); font-size: 15px; line-height: 1.55; margin: 0 0 9px; overflow-wrap: anywhere; }
 .fc-arabic { color: var(--text-2); font-size: 13.5px; line-height: 1.7; margin: 0 0 8px; overflow-wrap: anywhere; }
-.fc-location { color: var(--accent); font-size: 12.5px; margin: 0 0 10px; overflow-wrap: anywhere; }
 .fc-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 16px; }
 .fc-grade { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .grade-learning:hover { border-color: var(--warning); color: var(--warning); }
@@ -911,10 +904,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
     <!-- Daily guidance: what to study now, today's short review, this week's goal -->
     <section class="mission-section" aria-labelledby="missionHeading">
       <div class="card guidance-card">
-        <div class="guidance-head">
-          <h2 class="eyebrow" id="missionHeading" tabindex="-1">Today&rsquo;s Mission</h2>
-          <span class="mission-badge" id="missionBadge" hidden>Completed &#10003;</span>
-        </div>
+        <h2 class="eyebrow" id="missionHeading" tabindex="-1">Today&rsquo;s Mission</h2>
 
         <ul class="mission-tasks">
           <li class="mission-task" id="missionLessonTask">
@@ -1095,7 +1085,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
               <p class="fc-example" id="fcExample" dir="auto"></p>
               <p class="fc-definition" id="fcDefinition" dir="auto"></p>
               <p class="fc-arabic" id="fcArabic" dir="auto"></p>
-              <p class="fc-location" id="fcBackLocation"></p>
               <span class="status-chip s-new" id="fcStatusChip">New</span>
             </div>
           </div>
@@ -3146,7 +3135,7 @@ $('dashAddWord').addEventListener('click', () => openWordModal({ mode: 'add' }))
 /* ==========================================================================
    7b. TODAY'S MISSION + WEEKLY GOAL
    ========================================================================== */
-const missionBtn = $('missionBtn'), missionBadge = $('missionBadge'), missionDone = $('missionDone');
+const missionBtn = $('missionBtn'), missionDone = $('missionDone');
 const missionLessonTask = $('missionLessonTask'), missionLessonCheck = $('missionLessonCheck'),
       missionLessonTitle = $('missionLessonTitle'), missionLessonNote = $('missionLessonNote');
 const missionVocabTask = $('missionVocabTask'), missionVocabCheck = $('missionVocabCheck'),
@@ -3262,7 +3251,6 @@ function renderMission() {
     missionDone.hidden = false;
     logBtn.hidden = true;
   }
-  missionBadge.hidden = !missionComplete;
 
   renderWeeklyGoal();
   announceMission(lessonDone, vocabDone, missionComplete);
@@ -3936,7 +3924,7 @@ const fcStatusFilter = $('fcStatusFilter');
 const fcStage = $('fcStage'), fcEmpty = $('fcEmpty');
 const fcSetLine = $('fcSetLine'), fcTerm = $('fcTerm'), fcAnswer = $('fcAnswer'),
       fcDefinition = $('fcDefinition'), fcArabic = $('fcArabic'), fcExample = $('fcExample'),
-      fcBackLocation = $('fcBackLocation'), fcStatusChip = $('fcStatusChip');
+      fcStatusChip = $('fcStatusChip');
 const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter');
 // Changing a filter leaves the daily-review queue and returns to normal browsing.
 const flashSetPicker = createScopeFilter($('fcSetFilter'), () => { exitDailyMode(); buildDeck(false); });
@@ -4179,7 +4167,6 @@ function renderFlashcard() {
   } else {
     fcArabic.hidden = true;
   }
-  fcBackLocation.textContent = locationLabel(entry.setNumber, false);
   fcStatusChip.textContent = STATUS_LABEL[entry.status];
   fcStatusChip.className = 'status-chip s-' + entry.status;
 
