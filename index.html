@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>English Growth Tracker</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b1020">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -403,7 +407,9 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   margin-bottom: 14px; padding: 10px 14px;
   background: var(--primary-tint); border: 1px solid rgba(124, 108, 242, 0.3); border-radius: var(--r-md);
 }
+.fc-daily-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .fc-daily-label { font-size: 13.5px; font-weight: 600; color: var(--primary-light); }
+.fc-daily-progress { font-size: 12px; color: var(--text-2); }
 .flashcards.daily-mode #fcSetFilter,
 .flashcards.daily-mode #fcStatusFilter,
 .flashcards.daily-mode .filter-bar > label[for="fcStatusFilter"] { display: none; }
@@ -585,15 +591,39 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .fc-set { color: var(--accent); font-size: 13px; margin: 0; font-weight: 600; }
 .fc-term { font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5vw, 30px); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
 .fc-answer { margin-top: 6px; padding-top: 16px; border-top: 1px dashed var(--border-strong); width: 100%; max-width: 460px; animation: fade-up 0.22s ease; }
-.fc-definition { font-size: 16px; margin: 0 0 7px; overflow-wrap: anywhere; }
-.fc-arabic { color: var(--text); font-size: 17px; margin: 0 0 8px; overflow-wrap: anywhere; }
-.fc-example { color: var(--text-2); font-style: italic; font-size: 14px; margin: 0 0 8px; overflow-wrap: anywhere; }
+/* Back information hierarchy: Example (first, prominent) → Definition → Arabic (secondary, smaller) */
+.fc-example { color: var(--text); font-style: italic; font-size: 16px; line-height: 1.5; margin: 0 0 9px; overflow-wrap: anywhere; }
+.fc-definition { color: var(--text-2); font-size: 15px; line-height: 1.55; margin: 0 0 9px; overflow-wrap: anywhere; }
+.fc-arabic { color: var(--text-2); font-size: 13.5px; line-height: 1.7; margin: 0 0 8px; overflow-wrap: anywhere; }
 .fc-location { color: var(--accent); font-size: 12.5px; margin: 0 0 10px; overflow-wrap: anywhere; }
 .fc-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 16px; }
 .fc-grade { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .grade-learning:hover { border-color: var(--warning); color: var(--warning); }
 .grade-mastered:hover { border-color: var(--success); color: var(--success); }
 .fc-counter { text-align: center; color: var(--text-2); font-size: 13px; margin: 14px 0 0; }
+
+/* End-of-round completion state (sits in the flashcard content area) */
+.fc-complete {
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-xl);
+  padding: 40px 26px; min-height: 220px; text-align: center;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px;
+  box-shadow: var(--shadow-sm); animation: fade-up 0.24s ease;
+}
+.fc-complete-mark {
+  width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%;
+  font-size: 24px; color: var(--success);
+  background: var(--success-tint); border: 1px solid rgba(52, 211, 153, 0.4);
+}
+.fc-complete-heading { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; margin: 4px 0 0; }
+.fc-complete-sub { color: var(--text-2); font-size: 14.5px; margin: 0; overflow-wrap: anywhere; }
+.fc-complete-note { color: var(--text-3); font-size: 13px; margin: 0; overflow-wrap: anywhere; }
+.fc-complete-summary { color: var(--text); font-size: 13.5px; font-weight: 600; margin: 2px 0 0; overflow-wrap: anywhere; }
+.fc-complete-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 12px; width: 100%; }
+.fc-complete-actions .btn { min-height: 44px; }
+@media (max-width: 460px) {
+  .fc-complete-actions { flex-direction: column; }
+  .fc-complete-actions .btn { width: 100%; }
+}
 
 /* 14. MODALS -------------------------------------------------------------- */
 .modal-backdrop {
@@ -882,7 +912,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
     <section class="mission-section" aria-labelledby="missionHeading">
       <div class="card guidance-card">
         <div class="guidance-head">
-          <h2 class="eyebrow" id="missionHeading">Today&rsquo;s Mission</h2>
+          <h2 class="eyebrow" id="missionHeading" tabindex="-1">Today&rsquo;s Mission</h2>
           <span class="mission-badge" id="missionBadge" hidden>Completed &#10003;</span>
         </div>
 
@@ -897,7 +927,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           <li class="mission-task" id="missionVocabTask">
             <span class="mission-check" id="missionVocabCheck" aria-hidden="true">&#9675;</span>
             <span class="mission-task-body">
-              <span class="mission-task-title" id="missionVocabTitle">Review vocabulary</span>
+              <span class="mission-task-title" id="missionVocabTitle">Today&rsquo;s 10 Words</span>
+              <span class="mission-task-note" id="missionVocabNote"></span>
             </span>
           </li>
         </ul>
@@ -1035,8 +1066,11 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       </div>
 
       <div class="fc-daily-banner" id="fcDailyBanner" hidden>
-        <span class="fc-daily-label" id="fcDailyLabel">Daily review</span>
-        <button class="btn btn-ghost btn-sm" id="fcExitDaily" type="button">Review all words</button>
+        <span class="fc-daily-text">
+          <span class="fc-daily-label" id="fcDailyLabel">Today&rsquo;s 10 Words</span>
+          <span class="fc-daily-progress" id="fcDailyProgress">0 of 10 reviewed</span>
+        </span>
+        <button class="btn btn-ghost btn-sm" id="fcExitDaily" type="button">Exit daily review</button>
       </div>
 
       <div class="filter-bar">
@@ -1053,28 +1087,44 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       </div>
 
       <div id="fcStage">
-        <div class="fc-card">
-          <p class="fc-set" id="fcSetLine">General Vocabulary</p>
-          <p class="fc-term" id="fcTerm"></p>
-          <div class="fc-answer" id="fcAnswer" hidden>
-            <p class="fc-definition" id="fcDefinition"></p>
-            <p class="fc-arabic" id="fcArabic" dir="auto"></p>
-            <p class="fc-example" id="fcExample"></p>
-            <p class="fc-location" id="fcBackLocation"></p>
-            <span class="status-chip s-new" id="fcStatusChip">New</span>
+        <div id="fcReview">
+          <div class="fc-card">
+            <p class="fc-set" id="fcSetLine">General Vocabulary</p>
+            <p class="fc-term" id="fcTerm"></p>
+            <div class="fc-answer" id="fcAnswer" hidden>
+              <p class="fc-example" id="fcExample" dir="auto"></p>
+              <p class="fc-definition" id="fcDefinition" dir="auto"></p>
+              <p class="fc-arabic" id="fcArabic" dir="auto"></p>
+              <p class="fc-location" id="fcBackLocation"></p>
+              <span class="status-chip s-new" id="fcStatusChip">New</span>
+            </div>
+          </div>
+          <div class="fc-controls">
+            <button class="btn btn-ghost" id="fcPrev">Previous</button>
+            <button class="btn btn-primary" id="fcReveal">Show answer</button>
+            <div class="fc-grade" id="fcGrade" hidden>
+              <button class="btn btn-ghost grade-learning" data-status="learning">Learning</button>
+              <button class="btn btn-ghost grade-mastered" data-status="mastered">Mastered</button>
+            </div>
+            <button class="btn btn-ghost" id="fcNext">Next</button>
+          </div>
+          <p class="fc-counter" id="fcCounter">Card 1 of 1</p>
+        </div>
+
+        <!-- Calm end-of-round state; replaces the silent loop back to card one -->
+        <div class="fc-complete" id="fcComplete" role="group" aria-labelledby="fcCompleteHeading" hidden>
+          <div class="fc-complete-mark" aria-hidden="true">&#10003;</div>
+          <h3 class="fc-complete-heading" id="fcCompleteHeading">Review complete</h3>
+          <p class="fc-complete-sub" id="fcCompleteSub">You reviewed all words.</p>
+          <p class="fc-complete-note" id="fcCompleteNote" hidden>Fresh words will be ready tomorrow.</p>
+          <p class="fc-complete-summary" id="fcCompleteSummary" hidden></p>
+          <div class="fc-complete-actions">
+            <button class="btn btn-primary" id="fcReviewAgain" type="button">Review Again &mdash; Shuffled</button>
+            <button class="btn btn-ghost" id="fcCompleteSecondary" type="button">Back to Tracker</button>
           </div>
         </div>
-        <div class="fc-controls">
-          <button class="btn btn-ghost" id="fcPrev">Previous</button>
-          <button class="btn btn-primary" id="fcReveal">Show answer</button>
-          <div class="fc-grade" id="fcGrade" hidden>
-            <button class="btn btn-ghost grade-learning" data-status="learning">Learning</button>
-            <button class="btn btn-ghost grade-mastered" data-status="mastered">Mastered</button>
-          </div>
-          <button class="btn btn-ghost" id="fcNext">Next</button>
-        </div>
-        <p class="fc-counter" id="fcCounter">Card 1 of 1</p>
       </div>
+      <p class="sr-only" id="fcLive" aria-live="polite"></p>
       <div class="empty-box" id="fcEmpty" hidden>No vocabulary has been added for this selection yet.</div>
     </section>
   </div>
@@ -1331,7 +1381,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 9;
+const STATE_VERSION = 10;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
 
@@ -1344,7 +1394,9 @@ const DAY_PURPOSE = {
   5: 'Speak or write a summary'
 };
 const DAY5_HELPER = 'Retell the lesson for one minute or write a short summary.';
-const DAILY_QUEUE_SIZE = 5;
+const DAILY_QUEUE_SIZE = 10;   // "Today's 10 Words" — capped, fewer when little vocabulary exists
+const DAILY_HISTORY_LIMIT = 30; // recent daily-challenge records retained in state
+const DAILY_AVOID_RECENT = 3;   // avoid words used in the previous N daily challenges where possible
 const WEEKLY_GOAL = 5;
 // Kept lightweight and bounded; retains far more than the current and recent weeks.
 const STUDY_HISTORY_LIMIT = 180;
@@ -1411,6 +1463,8 @@ function defaultState() {
     grammarRules: [],
     // v9: unique local "YYYY-MM-DD" dates on which a study day was completed.
     studyDates: [],
+    // v10: persistent "Today's N Words" daily challenge records (one per local date).
+    dailyVocabularyReviews: [],
     settings: { browserMigrationHandled: false }
   };
 }
@@ -1624,6 +1678,41 @@ function normalizeState(raw) {
   collectDates(raw.studyDates);
   for (const key of Object.keys(s.log)) studyDateSet.add(key);
   s.studyDates = [...studyDateSet].sort().slice(-STUDY_HISTORY_LIMIT);
+
+  // v10 persistent daily-challenge records. Idempotent: word IDs are validated against
+  // the surviving vocabulary, reviewed IDs are kept only within the queue, completion is
+  // kept consistent, records are deduplicated by date, sorted, and bounded.
+  const vocabIdSet = new Set(s.vocabulary.map(v => v.id));
+  const seenReviewDates = new Set();
+  const dailyRecords = [];
+  if (Array.isArray(raw.dailyVocabularyReviews)) {
+    for (const rec of raw.dailyVocabularyReviews) {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec)) continue;
+      const date = typeof rec.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rec.date) ? rec.date : null;
+      if (!date || seenReviewDates.has(date)) continue;
+      const wordIds = [];
+      const wordSeen = new Set();
+      if (Array.isArray(rec.wordIds)) {
+        for (const id of rec.wordIds) {
+          if (typeof id === 'string' && vocabIdSet.has(id) && !wordSeen.has(id)) { wordSeen.add(id); wordIds.push(id); }
+        }
+      }
+      if (!wordIds.length) continue; // drop records whose words no longer exist
+      const reviewedIds = [];
+      const revSeen = new Set();
+      if (Array.isArray(rec.reviewedIds)) {
+        for (const id of rec.reviewedIds) {
+          if (typeof id === 'string' && wordSeen.has(id) && !revSeen.has(id)) { revSeen.add(id); reviewedIds.push(id); }
+        }
+      }
+      let completedAt = typeof rec.completedAt === 'string' && rec.completedAt.trim() ? rec.completedAt : null;
+      if (completedAt && reviewedIds.length < wordIds.length) completedAt = null; // keep completion consistent
+      seenReviewDates.add(date);
+      dailyRecords.push({ date, wordIds, reviewedIds, completedAt });
+    }
+  }
+  dailyRecords.sort((a, b) => a.date.localeCompare(b.date));
+  s.dailyVocabularyReviews = dailyRecords.slice(-DAILY_HISTORY_LIMIT);
 
   return s;
 }
@@ -2043,8 +2132,9 @@ function clearPrivateSession() {
   conflictPending = false;
   // Reset per-session daily-guidance state so nothing carries across accounts.
   fcDailyMode = false;
-  dailyQueue = null;
-  dailyReviewed.clear();
+  fc.completed = false;
+  fc.deck = [];
+  roundReviewed.clear();
   prevLessonDone = prevVocabDone = prevMissionDone = null;
   renderProfile(null);
   appShell.hidden = true;
@@ -2659,7 +2749,11 @@ window.addEventListener('online', () => {
   else setSyncState('saved', 'Saved', false);
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && cloudReady && stateRevision !== lastSavedRevision) flushCloudSave(false);
+  if (document.visibilityState === 'hidden') {
+    if (cloudReady && stateRevision !== lastSavedRevision) flushCloudSave(false);
+  } else if (document.visibilityState === 'visible' && cloudReady) {
+    renderMission(); // re-check the local date after returning (e.g. left open overnight)
+  }
 });
 
 /* ==========================================================================
@@ -2975,6 +3069,7 @@ function switchView(name) {
     if (active) VIEWS[key].btn.setAttribute('aria-current', 'page');
     else VIEWS[key].btn.removeAttribute('aria-current');
   }
+  if (name === 'tracker') renderMission(); // re-check the local date and today's challenge
   if (name === 'vocab') renderBrowse();
   if (name === 'grammar') renderGrammar();
   if (name === 'flashcards') buildDeck(false);
@@ -3055,7 +3150,7 @@ const missionBtn = $('missionBtn'), missionBadge = $('missionBadge'), missionDon
 const missionLessonTask = $('missionLessonTask'), missionLessonCheck = $('missionLessonCheck'),
       missionLessonTitle = $('missionLessonTitle'), missionLessonNote = $('missionLessonNote');
 const missionVocabTask = $('missionVocabTask'), missionVocabCheck = $('missionVocabCheck'),
-      missionVocabTitle = $('missionVocabTitle');
+      missionVocabTitle = $('missionVocabTitle'), missionVocabNote = $('missionVocabNote');
 const weeklyLabel = $('weeklyLabel'), weeklyDots = $('weeklyDots'), missionLive = $('missionLive');
 
 let missionAction = 'start'; // 'start' opens the current set, 'review' opens the daily queue
@@ -3118,21 +3213,32 @@ function renderMission() {
     missionLessonNote.hidden = false;
   }
 
-  // Vocabulary task
-  const vocabCount = dailyQueueCount();
-  const vocabDone = dailyQueueComplete();
-  if (vocabCount === 0) {
+  // Vocabulary task — persistent "Today's N Words" challenge
+  const rec = ensureTodayReview();
+  const hasVocab = state.vocabulary.length > 0;
+  let vocabDone = false, vocabPending = false, vocabReviewed = 0, vocabTotal = 0;
+  if (!rec || rec.wordIds.length === 0) {
     setMissionCheck(missionVocabTask, missionVocabCheck, false, true);
-    missionVocabTitle.textContent = 'No vocabulary review needed today';
-  } else if (vocabDone) {
-    setMissionCheck(missionVocabTask, missionVocabCheck, true, false);
-    missionVocabTitle.textContent = vocabCount + (vocabCount === 1 ? ' word reviewed' : ' words reviewed');
+    missionVocabTitle.textContent = hasVocab ? 'Today’s words' : 'Today’s vocabulary review';
+    missionVocabNote.textContent = hasVocab ? 'Preparing your words…' : 'Add vocabulary to begin your daily review';
+    missionVocabNote.hidden = false;
   } else {
-    setMissionCheck(missionVocabTask, missionVocabCheck, false, false);
-    missionVocabTitle.textContent = 'Review ' + vocabCount + (vocabCount === 1 ? ' vocabulary word' : ' vocabulary words');
+    vocabTotal = rec.wordIds.length;
+    vocabReviewed = reviewedInQueue(rec);
+    const complete = !!rec.completedAt || vocabReviewed >= vocabTotal;
+    missionVocabTitle.textContent = 'Today’s ' + vocabTotal + (vocabTotal === 1 ? ' Word' : ' Words');
+    if (complete) {
+      vocabDone = true;
+      setMissionCheck(missionVocabTask, missionVocabCheck, true, false);
+      missionVocabNote.textContent = 'Reviewed · fresh words tomorrow';
+    } else {
+      vocabPending = true;
+      setMissionCheck(missionVocabTask, missionVocabCheck, false, false);
+      missionVocabNote.textContent = vocabReviewed + ' of ' + vocabTotal + ' reviewed';
+    }
+    missionVocabNote.hidden = false;
   }
 
-  const vocabPending = vocabCount > 0 && !vocabDone;
   const missionComplete = lessonDone && !vocabPending;
 
   // One primary action, plus the ghost quick-log while a lesson is still pending.
@@ -3145,7 +3251,9 @@ function renderMission() {
   } else if (vocabPending) {
     missionAction = 'review';
     missionBtn.hidden = false;
-    missionBtn.textContent = 'Review Today’s Words';
+    missionBtn.textContent = vocabReviewed === 0
+      ? 'Start Today’s Review'
+      : 'Continue Review · ' + vocabReviewed + '/' + vocabTotal;
     missionDone.hidden = true;
     logBtn.hidden = true;
   } else {
@@ -3834,70 +3942,150 @@ const fcReveal = $('fcReveal'), fcGrade = $('fcGrade'), fcCounter = $('fcCounter
 const flashSetPicker = createScopeFilter($('fcSetFilter'), () => { exitDailyMode(); buildDeck(false); });
 
 // The deck stores entry ids so edits always show live data
-const fc = { deck: [], index: 0, revealed: false };
+const fc = { deck: [], index: 0, revealed: false, completed: false, lastCardId: null };
 
-/* ---- Daily vocabulary review queue (Feature 3) ---- */
+// Completion-state elements + per-round review tracking (session only)
+const fcReview = $('fcReview'), fcComplete = $('fcComplete'),
+      fcCompleteHeading = $('fcCompleteHeading'), fcCompleteSub = $('fcCompleteSub'),
+      fcCompleteNote = $('fcCompleteNote'), fcCompleteSummary = $('fcCompleteSummary'),
+      fcReviewAgain = $('fcReviewAgain'), fcCompleteSecondary = $('fcCompleteSecondary'),
+      fcLive = $('fcLive');
+const roundReviewed = new Set(); // ids reviewed (revealed or graded) in the current round
+
+/* ---- Persistent "Today's N Words" daily challenge (Deliverable 2) ---- */
 let fcDailyMode = false;
-let dailyQueue = null;             // { dateKey, ids: [] } — stable snapshot for the local day
-const dailyReviewed = new Set();   // ids revealed or graded this session
-const fcDailyBanner = $('fcDailyBanner'), fcDailyLabel = $('fcDailyLabel');
+const fcDailyBanner = $('fcDailyBanner'), fcDailyLabel = $('fcDailyLabel'), fcDailyProgress = $('fcDailyProgress');
 
 function getDeckEntry(id) {
   return state.vocabulary.find(v => v.id === id) || null;
 }
 
-// Deterministic: Learning first, then New (Mastered excluded), oldest first, capped at five.
-function computeDailyQueue() {
-  const weight = s => (s === 'learning' ? 0 : (s === 'new' ? 1 : 2));
-  return state.vocabulary
-    .filter(v => v.status !== 'mastered')
-    .slice()
-    .sort((a, b) => weight(a.status) - weight(b.status)
-      || (a.createdAt || '').localeCompare(b.createdAt || '')
-      || String(a.id).localeCompare(String(b.id)))
-    .slice(0, DAILY_QUEUE_SIZE)
-    .map(v => v.id);
+function todayReview() {
+  return state.dailyVocabularyReviews.find(r => r.date === dateKey(new Date())) || null;
+}
+function reviewedInQueue(rec) {
+  const wordSet = new Set(rec.wordIds);
+  return rec.reviewedIds.filter(id => wordSet.has(id)).length;
 }
 
-// One snapshot per local day, so re-renders do not reshuffle the queue. Recomputed
-// on a new day or when the snapshot has drained (e.g. its words were deleted).
-function ensureDailyQueue() {
+// Selection: Learning → New → Mastered priority; randomised within each group; prefer words
+// not used in the previous few daily challenges; capped at DAILY_QUEUE_SIZE unique ids.
+function selectDailyQueue() {
   const today = dateKey(new Date());
-  if (dailyQueue) dailyQueue.ids = dailyQueue.ids.filter(id => getDeckEntry(id) !== null);
-  if (!dailyQueue || dailyQueue.dateKey !== today || dailyQueue.ids.length === 0) {
-    dailyQueue = { dateKey: today, ids: computeDailyQueue() };
-    dailyReviewed.clear();
+  const recentIds = new Set();
+  state.dailyVocabularyReviews
+    .filter(r => r.date < today)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, DAILY_AVOID_RECENT)
+    .forEach(r => r.wordIds.forEach(id => recentIds.add(id)));
+
+  const groups = { learning: [], new: [], mastered: [] };
+  for (const v of state.vocabulary) if (groups[v.status]) groups[v.status].push(v.id);
+
+  const orderGroup = ids => {
+    const fresh = ids.filter(id => !recentIds.has(id));
+    const recent = ids.filter(id => recentIds.has(id));
+    fisherYates(fresh); fisherYates(recent);
+    return fresh.concat(recent); // prefer non-recent, keep recent only as fallback
+  };
+  const ordered = orderGroup(groups.learning)
+    .concat(orderGroup(groups.new))
+    .concat(orderGroup(groups.mastered)); // mastered only reached when non-mastered < target
+
+  const picked = [];
+  const seen = new Set();
+  for (const id of ordered) {
+    if (picked.length >= DAILY_QUEUE_SIZE) break;
+    if (!seen.has(id)) { seen.add(id); picked.push(id); }
   }
-  return dailyQueue;
+  return picked;
 }
 
-function dailyQueueCount() { return ensureDailyQueue().ids.length; }
-function dailyQueueComplete() {
-  const ids = ensureDailyQueue().ids;
-  return ids.length > 0 && ids.every(id => dailyReviewed.has(id));
+// Drop deleted words from a record and keep completion consistent. Returns true if changed.
+function cleanReviewRecord(rec) {
+  let changed = false;
+  const beforeW = rec.wordIds.length;
+  rec.wordIds = rec.wordIds.filter(id => getDeckEntry(id) !== null);
+  if (rec.wordIds.length !== beforeW) changed = true;
+  const wordSet = new Set(rec.wordIds);
+  const beforeR = rec.reviewedIds.length;
+  rec.reviewedIds = rec.reviewedIds.filter(id => wordSet.has(id));
+  if (rec.reviewedIds.length !== beforeR) changed = true;
+  if (rec.wordIds.length && rec.reviewedIds.length >= rec.wordIds.length && !rec.completedAt) {
+    rec.completedAt = new Date().toISOString(); changed = true;
+  }
+  return changed;
 }
-function markDailyReviewed(id) {
-  if (!fcDailyMode || !id || dailyReviewed.has(id)) return;
-  dailyReviewed.add(id);
-  renderMission();
+
+// Ensure today's challenge exists. Generated once per local day, only after cloud load, and
+// persisted through the existing debounced save. Never regenerates on a plain re-render.
+function ensureTodayReview() {
+  if (!cloudReady) return todayReview(); // never generate/persist before cloud data has loaded
+  const today = dateKey(new Date());
+  let rec = state.dailyVocabularyReviews.find(r => r.date === today);
+  if (rec) {
+    let changed = cleanReviewRecord(rec);
+    if (rec.wordIds.length === 0) { // every queued word was deleted → regenerate from what remains
+      const ids = selectDailyQueue();
+      if (ids.length) { rec.wordIds = ids; rec.reviewedIds = []; rec.completedAt = null; changed = true; }
+    }
+    if (changed) saveState();
+    return rec.wordIds.length ? rec : null;
+  }
+  const wordIds = selectDailyQueue();
+  if (!wordIds.length) return null; // no vocabulary yet — no challenge today
+  rec = { date: today, wordIds, reviewedIds: [], completedAt: null };
+  state.dailyVocabularyReviews.push(rec);
+  state.dailyVocabularyReviews.sort((a, b) => a.date.localeCompare(b.date));
+  if (state.dailyVocabularyReviews.length > DAILY_HISTORY_LIMIT) {
+    state.dailyVocabularyReviews = state.dailyVocabularyReviews.slice(-DAILY_HISTORY_LIMIT);
+  }
+  saveState();
+  return rec;
+}
+
+// Persist that a queued word was reviewed today (revealed or graded).
+function persistDailyReviewed(id) {
+  const rec = todayReview();
+  if (!rec || !rec.wordIds.includes(id)) return;
+  let changed = false;
+  if (!rec.reviewedIds.includes(id)) { rec.reviewedIds.push(id); changed = true; }
+  if (rec.reviewedIds.length >= rec.wordIds.length && !rec.completedAt) {
+    rec.completedAt = new Date().toISOString(); changed = true;
+  }
+  if (changed) { saveState(); updateDailyBanner(); renderMission(); }
+}
+
+// A card counts as reviewed once its answer is revealed or it is graded.
+function markReviewed(id) {
+  if (!id) return;
+  roundReviewed.add(id);
+  if (fcDailyMode) persistDailyReviewed(id);
+}
+
+// A round ends only after every unique card in the active queue has been reviewed.
+function roundComplete() {
+  return fc.deck.length > 0 && fc.deck.every(id => roundReviewed.has(id));
 }
 
 function updateDailyBanner() {
   const section = document.querySelector('.flashcards');
   if (section) section.classList.toggle('daily-mode', fcDailyMode);
   fcDailyBanner.hidden = !fcDailyMode;
-  if (fcDailyMode) {
-    const n = ensureDailyQueue().ids.length;
-    fcDailyLabel.textContent = 'Daily review · ' + n + (n === 1 ? ' word' : ' words');
-  }
+  if (!fcDailyMode) return;
+  const rec = todayReview();
+  const n = rec ? rec.wordIds.length : 0;
+  const reviewed = rec ? reviewedInQueue(rec) : 0;
+  fcDailyLabel.textContent = 'Today’s ' + n + (n === 1 ? ' Word' : ' Words');
+  fcDailyProgress.textContent = reviewed + ' of ' + n + ' reviewed';
 }
 
 function startDailyReview() {
-  ensureDailyQueue();
-  if (!dailyQueue.ids.length) { toast('No vocabulary to review today'); return; }
+  const rec = ensureTodayReview();
+  if (!rec || !rec.wordIds.length) { toast('Add vocabulary to begin your daily review'); return; }
   fcDailyMode = true;
   updateDailyBanner();
-  switchView('flashcards'); // switchView builds the deck, which honours daily mode
+  switchView('flashcards'); // builds the daily deck, resuming persisted progress
 }
 
 function exitDailyMode() {
@@ -3907,23 +4095,42 @@ function exitDailyMode() {
 }
 
 function buildDeck(shuffle) {
-  let deck;
-  if (fcDailyMode) {
-    deck = ensureDailyQueue().ids.slice();
-  } else {
-    const setSelection = flashSetPicker.getSelection();
-    const statusF = fcStatusFilter.value;
-    deck = [];
-    for (const v of state.vocabulary) {
-      if (!matchesSetSelection(v, setSelection)) continue;
-      if (statusF !== 'all' && v.status !== statusF) continue;
-      deck.push(v.id);
-    }
+  if (fcDailyMode) { buildDailyDeck(shuffle); return; }
+  const setSelection = flashSetPicker.getSelection();
+  const statusF = fcStatusFilter.value;
+  const deck = [];
+  for (const v of state.vocabulary) {
+    if (!matchesSetSelection(v, setSelection)) continue;
+    if (statusF !== 'all' && v.status !== statusF) continue;
+    deck.push(v.id);
   }
   if (shuffle) fisherYates(deck);
   fc.deck = deck;
   fc.index = 0;
   fc.revealed = false;
+  fc.completed = false;
+  roundReviewed.clear();
+  fcLive.textContent = '';
+  renderFlashcard();
+}
+
+// Daily deck comes from today's persisted queue; a resume seeds the round from saved progress
+// so the completion state only appears once all of today's words have been reviewed.
+function buildDailyDeck(shuffle) {
+  const rec = ensureTodayReview();
+  const deck = rec ? rec.wordIds.filter(id => getDeckEntry(id) !== null) : [];
+  if (shuffle) fisherYates(deck);
+  fc.deck = deck;
+  fc.revealed = false;
+  fc.completed = false;
+  fcLive.textContent = '';
+  updateDailyBanner();
+  roundReviewed.clear();
+  const reviewedSet = new Set(rec ? rec.reviewedIds : []);
+  for (const id of deck) if (reviewedSet.has(id)) roundReviewed.add(id);
+  const firstUnreviewed = deck.findIndex(id => !roundReviewed.has(id));
+  fc.index = firstUnreviewed >= 0 ? firstUnreviewed : 0;
+  if (deck.length && roundComplete()) { showCompletion(); return; }
   renderFlashcard();
 }
 
@@ -3932,17 +4139,34 @@ $('fcExitDaily').addEventListener('click', () => { exitDailyMode(); buildDeck(fa
 function renderFlashcard() {
   fc.deck = fc.deck.filter(id => getDeckEntry(id) !== null);
   if (!fc.deck.length) {
+    fc.completed = false;
     fcStage.hidden = true;
     fcEmpty.hidden = false;
     return;
   }
   fcStage.hidden = false;
   fcEmpty.hidden = true;
+
+  if (fc.completed) {
+    fcReview.hidden = true;
+    fcComplete.hidden = false;
+    renderCompletion();
+    return;
+  }
+  fcReview.hidden = false;
+  fcComplete.hidden = true;
   if (fc.index >= fc.deck.length) fc.index = 0;
 
   const entry = getDeckEntry(fc.deck[fc.index]);
   fcSetLine.textContent = locationLabel(entry.setNumber, false);
   fcTerm.textContent = entry.term;
+  // Back information order: Example → Definition → Arabic meaning
+  if (entry.example) {
+    fcExample.textContent = '“' + entry.example + '”';
+    fcExample.hidden = false;
+  } else {
+    fcExample.hidden = true;
+  }
   if (entry.definition) {
     fcDefinition.textContent = entry.definition;
     fcDefinition.hidden = false;
@@ -3954,12 +4178,6 @@ function renderFlashcard() {
     fcArabic.hidden = false;
   } else {
     fcArabic.hidden = true;
-  }
-  if (entry.example) {
-    fcExample.textContent = '“' + entry.example + '”';
-    fcExample.hidden = false;
-  } else {
-    fcExample.hidden = true;
   }
   fcBackLocation.textContent = locationLabel(entry.setNumber, false);
   fcStatusChip.textContent = STATUS_LABEL[entry.status];
@@ -3978,28 +4196,112 @@ function stepCard(delta) {
   renderFlashcard();
 }
 
+// Status counts among the reviewed queue, e.g. "2 New · 3 Learning · 5 Mastered". Only >0 shown.
+function reviewStatusSummary() {
+  const counts = { new: 0, learning: 0, mastered: 0 };
+  for (const id of fc.deck) { const e = getDeckEntry(id); if (e) counts[e.status]++; }
+  const parts = [];
+  if (counts.new) parts.push(counts.new + ' New');
+  if (counts.learning) parts.push(counts.learning + ' Learning');
+  if (counts.mastered) parts.push(counts.mastered + ' Mastered');
+  return parts.join(' · ');
+}
+
+function renderCompletion() {
+  const n = fc.deck.length;
+  if (fcDailyMode) {
+    fcCompleteHeading.textContent = 'Daily review complete';
+    fcCompleteSub.textContent = n === 1
+      ? 'You reviewed 1 word for today.'
+      : 'You reviewed all ' + n + ' words for today.';
+    fcCompleteNote.hidden = false;
+    fcCompleteSecondary.textContent = 'Back to Tracker';
+  } else {
+    fcCompleteHeading.textContent = 'Review complete';
+    fcCompleteSub.textContent = n === 1
+      ? 'You reviewed 1 selected word.'
+      : 'You reviewed all ' + n + ' selected words.';
+    fcCompleteNote.hidden = true;
+    fcCompleteSecondary.textContent = 'Change Review Selection';
+  }
+  const summary = reviewStatusSummary();
+  fcCompleteSummary.textContent = summary;
+  fcCompleteSummary.hidden = !summary;
+}
+
+function showCompletion() {
+  fc.lastCardId = fc.deck.length ? fc.deck[fc.index] : null; // avoid repeating this card first next round
+  fc.completed = true;
+  renderFlashcard();
+  const n = fc.deck.length;
+  fcLive.textContent = fcDailyMode
+    ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
+    : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
+  fcReviewAgain.focus(); // move focus to the primary action
+}
+
 $('fcPrev').addEventListener('click', () => stepCard(-1));
-$('fcNext').addEventListener('click', () => stepCard(1));
+$('fcNext').addEventListener('click', () => {
+  if (roundComplete()) { showCompletion(); return; } // finish rather than loop back to card one
+  stepCard(1);
+});
 fcReveal.addEventListener('click', () => {
   fc.revealed = true;
-  if (fc.deck.length) markDailyReviewed(fc.deck[fc.index]);
+  if (fc.deck.length) markReviewed(fc.deck[fc.index]); // reveal counts as reviewed; card stays visible
   renderFlashcard();
 });
 
-// Grade buttons update the status and then advance to the next card.
+// Grade buttons update the status, then either finish the round or advance.
 for (const btn of fcGrade.querySelectorAll('[data-status]')) {
   btn.addEventListener('click', () => {
     const entry = fc.deck.length ? getDeckEntry(fc.deck[fc.index]) : null;
     if (!entry) return;
     entry.status = btn.dataset.status;
     entry.updatedAt = new Date().toISOString();
-    markDailyReviewed(entry.id);
+    markReviewed(entry.id);
     saveState();
     renderDashboard();
     toast('Marked as ' + STATUS_LABEL[entry.status]);
-    stepCard(1);
+    if (roundComplete()) showCompletion();
+    else stepCard(1);
   });
 }
+
+// Review Again — same queue, shuffled, fresh round. The daily challenge stays completed.
+fcReviewAgain.addEventListener('click', () => {
+  let ids = fc.deck.filter(id => getDeckEntry(id) !== null);
+  if (!ids.length) { buildDeck(false); return; } // queue no longer valid
+  const avoid = ids.length > 1 ? fc.lastCardId : null;
+  fisherYates(ids);
+  if (avoid != null && ids[0] === avoid) {
+    const j = 1 + Math.floor(Math.random() * (ids.length - 1));
+    [ids[0], ids[j]] = [ids[j], ids[0]];
+  }
+  fc.deck = ids;
+  fc.index = 0;
+  fc.revealed = false;
+  fc.completed = false;
+  roundReviewed.clear(); // reset only the temporary round tracking; persisted progress is untouched
+  fcLive.textContent = '';
+  renderFlashcard();
+  fcReveal.focus();
+});
+
+// Secondary action depends on the mode the completed round ran in.
+fcCompleteSecondary.addEventListener('click', () => {
+  if (fcDailyMode) {
+    // Today's challenge stays complete for the day; return to the Tracker.
+    switchView('tracker');
+    renderMission();
+    const heading = $('missionHeading');
+    if (heading) heading.focus();
+  } else {
+    // Let the user choose a different scope/status without auto-restarting the queue.
+    const scopeSummary = document.querySelector('#fcSetFilter summary');
+    if (scopeSummary) scopeSummary.focus();
+    else fcStatusFilter.focus();
+  }
+});
 
 $('fcShuffle').addEventListener('click', () => { buildDeck(true); toast('Cards shuffled'); });
 $('fcRestart').addEventListener('click', () => { buildDeck(false); toast('Review restarted'); });

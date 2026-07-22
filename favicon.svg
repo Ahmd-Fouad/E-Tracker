@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="English Growth Tracker">
+  <defs>
+    <linearGradient id="egt-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#151F37"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+    <linearGradient id="egt-e" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#948AF8"/>
+      <stop offset="1" stop-color="#6E5FE8"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="24" fill="url(#egt-bg)"/>
+  <!-- Bold stylised E for English -->
+  <g fill="url(#egt-e)">
+    <rect x="22" y="28" width="13" height="44" rx="4"/>
+    <rect x="22" y="28" width="31" height="13" rx="4"/>
+    <rect x="22" y="45" width="26" height="12" rx="4"/>
+    <rect x="22" y="59" width="33" height="13" rx="4"/>
+  </g>
+  <!-- Teal progress check -->
+  <path d="M58 54 L66 63 L83 41" fill="none" stroke="#2DD4BF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
