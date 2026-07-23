@@ -4268,9 +4268,9 @@ function renderMission() {
     setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
     missionQuizNote.textContent = 'Add suitable vocabulary to unlock today’s quiz';
   } else if (quizDone) {
+    // The check icon already signals completion, so the row keeps its plain title.
     setMissionCheck(missionQuizTask, missionQuizCheck, true, false);
-    missionQuizTitle.textContent = 'Today’s Quick Quiz complete ✓';
-    missionQuizNote.textContent = 'Completed for today · practise again anytime';
+    missionQuizNote.textContent = 'Practise again anytime';
   } else if (!vocabDone) {
     setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
     missionQuizNote.textContent = 'Complete Today’s Words first';
