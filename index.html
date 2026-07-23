@@ -604,6 +604,12 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .vocab-status.s-new      { color: var(--primary-light); border-color: rgba(124,108,242,0.4); }
 .vocab-status.s-learning { color: var(--warning); border-color: rgba(245,180,75,0.4); }
 .vocab-status.s-mastered { color: var(--success); border-color: rgba(52,211,153,0.4); }
+/* Quiet mastery readiness hint — a suggestion, never a warning or required action. */
+.vocab-mastery-hint {
+  margin: -2px 0 0; max-width: 160px; text-align: right;
+  color: var(--success); font-size: 11.5px; font-weight: 600; line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .vocab-actions { display: flex; gap: 4px; }
 
 .pronounce-btn {
@@ -757,6 +763,8 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .quiz-head .btn { min-height: 44px; }
 .quiz-question { width: min(620px, 100%); margin: 24px auto 0; }
 .quiz-progress { margin: 0 0 12px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.quiz-retry-note { margin: -6px 0 12px; color: var(--text-3); font-size: 13px; overflow-wrap: anywhere; }
+.quiz-retry-summary { margin: 6px 0 0; color: var(--text-2); font-size: 13.5px; overflow-wrap: anywhere; }
 .quiz-question h3 { margin: 0; font-size: 19px; }
 .quiz-clue {
   margin: 16px 0 0; color: var(--text); font-size: clamp(17px, 3vw, 20px);
@@ -1374,7 +1382,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <!-- Calm end-of-round state; replaces the silent loop back to card one -->
         <div class="fc-complete" id="fcComplete" role="group" aria-labelledby="fcCompleteHeading" hidden>
           <div class="fc-complete-mark" aria-hidden="true">&#10003;</div>
-          <h3 class="fc-complete-heading" id="fcCompleteHeading">Review complete</h3>
+          <h3 class="fc-complete-heading" id="fcCompleteHeading" tabindex="-1">Review complete</h3>
           <p class="fc-complete-sub" id="fcCompleteSub">You reviewed all words.</p>
           <p class="fc-complete-note" id="fcCompleteNote" hidden>Fresh words will be ready tomorrow.</p>
           <p class="fc-complete-summary" id="fcCompleteSummary" hidden></p>
@@ -1396,6 +1404,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 
         <div class="quiz-question" id="quizQuestion">
           <p class="quiz-progress" id="quizProgress">Question 1 of 5</p>
+          <p class="quiz-retry-note" id="quizRetryNote" hidden>Try this word again in a different way.</p>
           <h3 id="quizQuestionHeading" tabindex="-1">Recall the English word</h3>
           <p class="quiz-clue" id="quizClue" dir="auto"></p>
           <form class="quiz-form" id="quizForm" novalidate>
@@ -1419,6 +1428,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <div class="quiz-results" id="quizResults" hidden>
           <h3 id="quizResultsHeading" tabindex="-1">Quiz complete &#10003;</h3>
           <p class="quiz-score" id="quizScore"></p>
+          <p class="quiz-retry-summary" id="quizRetrySummary" hidden></p>
           <p class="quiz-result-message" id="quizResultMessage"></p>
           <section class="quiz-missed" id="quizMissed" aria-labelledby="quizMissedHeading" hidden>
             <h4 id="quizMissedHeading">Needs another look</h4>
@@ -1556,9 +1566,6 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
       <p class="word-location" id="wmLocation">General Vocabulary</p>
       <label for="wmTerm">Word or phrase <span class="req">*</span></label>
       <input type="text" id="wmTerm" maxlength="120" autocomplete="off" required>
-      <label for="wmSpokenForm">Spoken form <span class="opt">(optional)</span></label>
-      <input type="text" id="wmSpokenForm" maxlength="160" autocomplete="off" placeholder="up sell" aria-describedby="wmSpokenFormHelp">
-      <p class="field-hint" id="wmSpokenFormHelp">Use this only when the default pronunciation sounds incorrect.</p>
       <label for="wmExample">Example sentence <span class="req">*</span></label>
       <input type="text" id="wmExample" maxlength="240" autocomplete="off" required>
       <label for="wmDefinition">Definition <span class="opt">(optional)</span></label>
@@ -1721,7 +1728,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 const TOTAL_SETS = 30;
 const DAYS_PER_SET = 5;
 const TOTAL_DAYS = TOTAL_SETS * DAYS_PER_SET; // 150
-const STATE_VERSION = 12;
+const STATE_VERSION = 13;
 const STATUSES = ['new', 'learning', 'mastered'];
 const STATUS_LABEL = { new: 'New', learning: 'Learning', mastered: 'Mastered' };
 
@@ -1740,6 +1747,27 @@ const DAILY_AVOID_RECENT = 3;   // avoid words used in the previous N daily chal
 const WEEKLY_GOAL = 5;
 // Kept lightweight and bounded; retains far more than the current and recent weeks.
 const STUDY_HISTORY_LIMIT = 180;
+
+// v13 recall statistics. Only original Quick Quiz attempts are persisted; quick and
+// manual retries stay in memory. Typed types count as active recall.
+const RECALL_QUESTION_TYPES = ['meaning-to-word', 'example-blank', 'word-to-meaning'];
+const RECALL_ACTIVE_TYPES = ['meaning-to-word', 'example-blank'];
+const RECALL_ATTEMPT_LIMIT = 30;      // original attempts retained per vocabulary item
+const RECALL_MAX_AGE_DAYS = 90;       // attempts older than this are dropped on normalisation
+const RECALL_MISS_WINDOW_DAYS = 7;    // unresolved misses considered "recent" for the daily queue
+const RECALL_MISS_QUEUE_SHARE = 0.4;  // at most ~40% of a daily queue may be recent misses
+const MASTERY_READY_DATES = 3;        // distinct dates of correct active recall required
+
+// Quick Quiz selection. Rotation, recency and question-type history are all derived from
+// the recall attempts above, so no additional persisted state is required.
+const QUIZ_SIZE = 5;                   // questions in one Quick Quiz
+const QUIZ_AVOID_DAYS = 3;             // avoid words tested today or the previous two local dates
+const QUIZ_MAX_MISSES = 2;             // unresolved misses may never fill the whole quiz
+const QUIZ_TARGET_LEARNING = 2;        // approximate Learning share of one quiz
+const QUIZ_MIN_OTHER = 1;              // at least one New/Mastered/overdue/under-tested word
+const QUIZ_MASTERED_SPACING_DAYS = 14; // a Mastered word becomes due for a re-test after this gap
+const QUIZ_UNDER_TESTED_ATTEMPTS = 2;  // fewer original attempts than this counts as under-tested
+const QUIZ_SCORE_JITTER = 10;          // random component so equal candidates do not fix an order
 
 const $ = (id) => document.getElementById(id);
 
@@ -2211,6 +2239,16 @@ function isValidDateKey(value) {
     date.getMonth() === parts[1] - 1 && date.getDate() === parts[2];
 }
 
+// Whole local days from one "YYYY-MM-DD" key to another; null when either key is unusable.
+function daysBetweenDateKeys(fromKey, toKey) {
+  if (!isValidDateKey(fromKey) || !isValidDateKey(toKey)) return null;
+  const localTime = key => {
+    const parts = key.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+  };
+  return Math.round((localTime(toKey) - localTime(fromKey)) / 86400000);
+}
+
 function normalizeIsoTimestamp(value) {
   if (typeof value !== 'string' || !value.includes('T')) return null;
   const time = Date.parse(value);
@@ -2256,6 +2294,8 @@ function defaultState() {
     dailyVocabularyReviews: [],
     // v12: one completed Quick Quiz record per local calendar date.
     dailyQuizCompletions: [],
+    // v13: original Quick Quiz recall attempts, keyed by vocabulary id.
+    vocabularyRecallStats: {},
     // v11: vocabulary records include an optional cloud-synced pronunciation override.
     settings: { browserMigrationHandled: false }
   };
@@ -2540,6 +2580,40 @@ function normalizeState(raw) {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-DAILY_HISTORY_LIMIT);
 
+  // v13 recall statistics for original Quick Quiz attempts. Statistics for deleted
+  // vocabulary are dropped, malformed attempts are ignored, booleans are normalised,
+  // exact duplicates are removed, and history is sorted, aged out and capped so that
+  // repeated normalisation is stable.
+  const recallCutoff = Date.now() - RECALL_MAX_AGE_DAYS * 86400000;
+  if (raw.vocabularyRecallStats && typeof raw.vocabularyRecallStats === 'object' &&
+      !Array.isArray(raw.vocabularyRecallStats)) {
+    for (const [id, record] of Object.entries(raw.vocabularyRecallStats)) {
+      if (!vocabIdSet.has(id)) continue; // ignore statistics for deleted vocabulary
+      if (!record || typeof record !== 'object' || Array.isArray(record)) continue;
+      if (!Array.isArray(record.attempts)) continue;
+      const seenAttempts = new Set();
+      const attempts = [];
+      for (const attempt of record.attempts) {
+        if (!attempt || typeof attempt !== 'object' || Array.isArray(attempt)) continue;
+        if (!isValidDateKey(attempt.date)) continue;
+        const answeredAt = normalizeIsoTimestamp(attempt.answeredAt);
+        if (!answeredAt) continue;
+        if (!RECALL_QUESTION_TYPES.includes(attempt.questionType)) continue;
+        const answeredMs = Date.parse(answeredAt);
+        if (Number.isFinite(answeredMs) && answeredMs < recallCutoff) continue;
+        const correct = attempt.correct === true;
+        const key = attempt.date + '|' + answeredAt + '|' + attempt.questionType + '|' + correct;
+        if (seenAttempts.has(key)) continue;
+        seenAttempts.add(key);
+        attempts.push({ date: attempt.date, answeredAt, questionType: attempt.questionType, correct });
+      }
+      if (!attempts.length) continue;
+      attempts.sort((a, b) => a.answeredAt.localeCompare(b.answeredAt) ||
+        a.questionType.localeCompare(b.questionType));
+      s.vocabularyRecallStats[id] = { attempts: attempts.slice(-RECALL_ATTEMPT_LIMIT) };
+    }
+  }
+
   return s;
 }
 
@@ -2555,6 +2629,9 @@ function isStateLike(raw) {
   if (raw.vocabulary !== undefined && !validVocabulary(raw.vocabulary)) return false;
   if (raw.grammarRules !== undefined && !Array.isArray(raw.grammarRules)) return false;
   if (raw.dailyQuizCompletions !== undefined && !Array.isArray(raw.dailyQuizCompletions)) return false;
+  if (raw.vocabularyRecallStats !== undefined &&
+      (!raw.vocabularyRecallStats || typeof raw.vocabularyRecallStats !== 'object' ||
+        Array.isArray(raw.vocabularyRecallStats))) return false;
   for (const key of ['titles', 'done', 'log']) {
     if (raw[key] !== undefined && (!raw[key] || typeof raw[key] !== 'object' || Array.isArray(raw[key]))) return false;
   }
@@ -3657,6 +3734,80 @@ function weeklyStudyCount() {
   return count;
 }
 
+/* ---- v13 recall statistics (original Quick Quiz attempts only) ---- */
+
+function recallAttemptsFor(id) {
+  const record = state.vocabularyRecallStats && state.vocabularyRecallStats[id];
+  return record && Array.isArray(record.attempts) ? record.attempts : [];
+}
+
+// Called once when an original quiz answer is submitted. Quick and manual retries
+// never reach this function, so they are not persisted.
+function recordRecallAttempt(entryId, questionType, correct) {
+  if (!cloudReady || !currentUser) return false; // never write before cloud state is ready
+  if (!entryId || !RECALL_QUESTION_TYPES.includes(questionType)) return false;
+  if (!state.vocabulary.some(v => v.id === entryId)) return false;
+  const now = new Date();
+  if (!state.vocabularyRecallStats[entryId]) state.vocabularyRecallStats[entryId] = { attempts: [] };
+  const record = state.vocabularyRecallStats[entryId];
+  record.attempts.push({
+    date: dateKey(now),
+    answeredAt: now.toISOString(),
+    questionType,
+    correct: correct === true
+  });
+  if (record.attempts.length > RECALL_ATTEMPT_LIMIT) {
+    record.attempts = record.attempts.slice(-RECALL_ATTEMPT_LIMIT);
+  }
+  saveState(); // existing debounced, conflict-protected cloud save
+  return true;
+}
+
+function latestRecallAttempt(id) {
+  const attempts = recallAttemptsFor(id);
+  return attempts.length ? attempts[attempts.length - 1] : null;
+}
+
+// An unresolved miss: the latest incorrect original attempt is not yet followed by a
+// correct active-recall (typed) attempt. A correct multiple-choice answer alone is
+// recognition practice and does not clear the priority.
+function unresolvedMissInfo(id) {
+  const attempts = recallAttemptsFor(id);
+  if (!attempts.length) return null;
+  let lastIncorrect = null;
+  let lastActiveCorrect = null;
+  let missCount = 0;
+  for (const attempt of attempts) {
+    if (!attempt.correct) {
+      missCount++;
+      if (!lastIncorrect || attempt.answeredAt > lastIncorrect.answeredAt) lastIncorrect = attempt;
+    } else if (RECALL_ACTIVE_TYPES.includes(attempt.questionType)) {
+      if (!lastActiveCorrect || attempt.answeredAt > lastActiveCorrect.answeredAt) lastActiveCorrect = attempt;
+    }
+  }
+  if (!lastIncorrect) return null;
+  if (lastActiveCorrect && lastActiveCorrect.answeredAt > lastIncorrect.answeredAt) return null;
+  return { date: lastIncorrect.date, answeredAt: lastIncorrect.answeredAt, missCount };
+}
+
+// Quiet readiness signal. Never changes status automatically.
+function isMasteryReady(entry) {
+  if (!entry || entry.status === 'mastered') return false;
+  const attempts = recallAttemptsFor(entry.id);
+  if (!attempts.length) return false;
+  const latest = attempts[attempts.length - 1];
+  if (!latest.correct) return false; // a later mistake hides the suggestion
+  const dates = new Set();
+  const types = new Set();
+  for (const attempt of attempts) {
+    if (!attempt.correct || !RECALL_ACTIVE_TYPES.includes(attempt.questionType)) continue;
+    dates.add(attempt.date);
+    types.add(attempt.questionType);
+  }
+  return dates.size >= MASTERY_READY_DATES &&
+    types.has('meaning-to-word') && types.has('example-blank');
+}
+
 function vocabCounts() {
   const c = { total: 0, new: 0, learning: 0, mastered: 0, set: 0, general: 0 };
   for (const v of state.vocabulary) {
@@ -4047,7 +4198,7 @@ function dailyQuizCompletion(date) {
 }
 
 function availableQuickQuizCount() {
-  return Math.min(5, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
+  return Math.min(QUIZ_SIZE, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
 }
 
 function renderMission() {
@@ -4403,6 +4554,10 @@ function buildVocabItem(v) {
   li.appendChild(main);
 
   const side = el('div', 'vocab-side');
+  // Quiet readiness signal derived from recall history. Status is never changed for the user.
+  const masteryHint = el('p', 'vocab-mastery-hint', 'Ready to mark as Mastered');
+  masteryHint.hidden = !isMasteryReady(v);
+
   const sel = el('select', 'vocab-status s-' + v.status);
   sel.setAttribute('aria-label', 'Status for ' + v.term);
   for (const st of STATUSES) {
@@ -4412,11 +4567,13 @@ function buildVocabItem(v) {
     v.status = sel.value;
     v.updatedAt = new Date().toISOString();
     sel.className = 'vocab-status s-' + v.status;
+    masteryHint.hidden = !isMasteryReady(v); // hidden once marked Mastered, re-derived if changed back
     saveState();
     renderDashboard();
     toast('Status updated');
   });
   side.appendChild(sel);
+  side.appendChild(masteryHint);
 
   const actions = el('div', 'vocab-actions');
   const editBtn = el('button', 'link-btn', 'Edit');
@@ -4598,7 +4755,7 @@ notesCancel.addEventListener('click', () => {
 const wordModalBackdrop = $('wordModalBackdrop');
 const wordModalTitle = $('wordModalTitle');
 const wordForm = $('wordForm');
-const wmLocation = $('wmLocation'), wmTerm = $('wmTerm'), wmSpokenForm = $('wmSpokenForm'), wmExample = $('wmExample'),
+const wmLocation = $('wmLocation'), wmTerm = $('wmTerm'), wmExample = $('wmExample'),
       wmDefinition = $('wmDefinition'), wmArabic = $('wmArabic');
 const wordFormActions = $('wordFormActions');
 const dupPanel = $('dupPanel'), dupTerm = $('dupTerm'), dupInfo = $('dupInfo'),
@@ -4614,7 +4771,6 @@ function updateWordLocation(isAdding) {
 
 function fillWordForm(v) {
   wmTerm.value = v.term;
-  wmSpokenForm.value = typeof v.spokenForm === 'string' ? v.spokenForm : '';
   wmExample.value = v.example;
   wmDefinition.value = v.definition;
   wmArabic.value = v.arabicMeaning;
@@ -4635,7 +4791,7 @@ function openWordModal(opts) {
     fillWordForm(opts.entry);
   } else {
     wordModalTitle.textContent = 'Add New Word';
-    wmTerm.value = ''; wmSpokenForm.value = ''; wmExample.value = ''; wmDefinition.value = ''; wmArabic.value = '';
+    wmTerm.value = ''; wmExample.value = ''; wmDefinition.value = ''; wmArabic.value = '';
     wm.setNumber = normalizeSetNumber(opts.presetSet);
     updateWordLocation(true);
   }
@@ -4658,9 +4814,10 @@ function doWordSave() {
     if (dup) { showDupPanel(dup); return; }
   }
   const now = new Date().toISOString();
+  // spokenForm is no longer edited in the form: existing legacy values are left untouched
+  // on edit, and new records use the normalized empty default.
   const fields = {
     term: term.slice(0, 120),
-    spokenForm: wmSpokenForm.value.trim().slice(0, 160),
     example: example.slice(0, 240),
     definition: wmDefinition.value.trim().slice(0, 240),
     arabicMeaning: wmArabic.value.trim().slice(0, 240)
@@ -4671,7 +4828,7 @@ function doWordSave() {
     toast('Word updated');
   } else {
     state.vocabulary.push(Object.assign({
-      id: uid(), status: 'new', setNumber: wm.setNumber, createdAt: now, updatedAt: now
+      id: uid(), status: 'new', setNumber: wm.setNumber, spokenForm: '', createdAt: now, updatedAt: now
     }, fields));
     toast('Word added');
   }
@@ -5037,7 +5194,8 @@ const quickQuiz = $('quickQuiz'), quizQuestion = $('quizQuestion'), quizResults 
       quizResultsHeading = $('quizResultsHeading'), quizScore = $('quizScore'),
       quizResultMessage = $('quizResultMessage'), quizMissed = $('quizMissed'),
       quizMissedList = $('quizMissedList'), quizRetry = $('quizRetry'),
-      quizAnother = $('quizAnother');
+      quizAnother = $('quizAnother'), quizRetryNote = $('quizRetryNote'),
+      quizRetrySummary = $('quizRetrySummary');
 
 const quickQuizState = {
   active: false,
@@ -5050,7 +5208,17 @@ const quickQuizState = {
   history: [],
   retryRound: false,
   launchSource: '',
-  launchDate: ''
+  launchDate: '',
+  // Same-quiz reinforcement: 'original' → 'quick-retry' → results. 'manual' is the
+  // existing Retry Incorrect Answers round, which never creates new Quick retries.
+  phase: 'original',
+  originalAnswers: [],
+  originalQuestions: [],
+  originalScore: 0,
+  originalTotal: 0,
+  missedOriginal: [],
+  quickRetryCorrected: 0,
+  quickRetryTotal: 0
 };
 let lastQuickQuizWordIds = [];
 let lastQuickQuizSignature = '';
@@ -5138,6 +5306,14 @@ function resetQuickRecallQuiz(clearPreviousSelection) {
   quickQuizState.retryRound = false;
   quickQuizState.launchSource = '';
   quickQuizState.launchDate = '';
+  quickQuizState.phase = 'original';
+  quickQuizState.originalAnswers = [];
+  quickQuizState.originalQuestions = [];
+  quickQuizState.originalScore = 0;
+  quickQuizState.originalTotal = 0;
+  quickQuizState.missedOriginal = [];
+  quickQuizState.quickRetryCorrected = 0;
+  quickQuizState.quickRetryTotal = 0;
   quickQuiz.hidden = true;
   quizQuestion.hidden = false;
   quizResults.hidden = true;
@@ -5148,6 +5324,9 @@ function resetQuickRecallQuiz(clearPreviousSelection) {
   quizScore.textContent = '';
   quizResultMessage.textContent = '';
   quizMissedList.textContent = '';
+  quizRetryNote.hidden = true;
+  quizRetrySummary.hidden = true;
+  quizRetrySummary.textContent = '';
   quizMissed.hidden = true;
   quizRetry.hidden = true;
   quizAnother.hidden = true;
@@ -5213,19 +5392,187 @@ function eligibleQuickQuizItems(pool) {
   return pool.filter(item => typedQuizClue(item) !== null);
 }
 
-function statusPrioritizedQuizItems(items) {
-  const groups = { learning: [], new: [], mastered: [] };
-  for (const item of items) groups[item.status].push(item);
-  for (const status of STATUSES) fisherYates(groups[status]);
-  return groups.learning.concat(groups.new, groups.mastered);
+/* ---- Shared Quick Quiz selection ----------------------------------------------------
+   Used by both entry points: Today's Mission and the permanent Quick Quiz button. Every
+   signal comes from the existing v13 recall attempts, so nothing new is persisted.
+
+   Words are scored rather than ranked by status: unresolved mistakes, weak recall, never
+   tested and long-overdue words are pulled forward, words tested in the last few local
+   dates are pushed back, and a small random component keeps equally suitable words from
+   settling into a fixed order. Group caps then guarantee that no single status — and no
+   run of recent mistakes — can occupy a whole quiz. */
+
+// Recall and recency metadata for one candidate, from the persisted original attempts.
+function quizRecallProfile(id, todayKey) {
+  const attempts = recallAttemptsFor(id);
+  const typeCounts = {};
+  for (const type of RECALL_QUESTION_TYPES) typeCounts[type] = 0;
+  let lastDate = '';
+  for (const attempt of attempts) {
+    if (typeCounts[attempt.questionType] !== undefined) typeCounts[attempt.questionType]++;
+    if (attempt.date > lastDate) lastDate = attempt.date;
+  }
+  const miss = unresolvedMissInfo(id);
+  const elapsed = lastDate ? daysBetweenDateKeys(lastDate, todayKey) : null;
+  return {
+    attemptCount: attempts.length,
+    typeCounts,
+    recentTypes: attempts.slice(-2).map(attempt => attempt.questionType),
+    lastDate,
+    daysSince: Number.isFinite(elapsed) ? Math.max(0, elapsed) : null,
+    missCount: miss ? miss.missCount : 0,
+    unresolvedMiss: Boolean(miss)
+  };
+}
+
+function quizCandidateScore(item, profile, previous) {
+  let score = 0;
+  // Positive: what still needs deliberate review.
+  if (profile.unresolvedMiss) score += 45 + Math.min(profile.missCount, 3) * 6;
+  if (item.status === 'learning') score += 18;
+  else if (item.status === 'new') score += 12;
+  else score += 4;
+  if (!profile.attemptCount) score += 30;                                   // never tested
+  else if (profile.attemptCount < QUIZ_UNDER_TESTED_ATTEMPTS) score += 8;   // under-tested
+  if (profile.daysSince !== null) score += Math.min(profile.daysSince, 30) * 1.4;
+  if (item.status === 'mastered' && profile.daysSince !== null &&
+      profile.daysSince >= QUIZ_MASTERED_SPACING_DAYS) score += 14;         // spaced re-test
+
+  // Negative: what was just seen. Penalties are strong but never absolute, so no word is
+  // permanently excluded — they only lose when better alternatives exist.
+  if (profile.daysSince === 0) score -= 60;
+  else if (profile.daysSince === 1) score -= 40;
+  else if (profile.daysSince !== null && profile.daysSince < QUIZ_AVOID_DAYS) score -= 24;
+  if (previous.has(item.id)) score -= 55;                                   // the quiz just taken
+  return score + Math.random() * QUIZ_SCORE_JITTER;
+}
+
+// Exponential weighting keeps every candidate reachable while preserving the score order,
+// so even inside a fully penalised pool the least-recently-used words win most often.
+function quizCandidateWeight(score) {
+  return Math.exp(Math.max(-6, Math.min(6, score / 20)));
+}
+
+function buildQuizCandidates(items, previous, todayKey) {
+  const seen = new Set();
+  const candidates = [];
+  for (const item of items) {
+    if (!item || typeof item.id !== 'string' || seen.has(item.id)) continue; // unique ids only
+    if (!state.vocabulary.some(entry => entry.id === item.id)) continue;     // ignore deleted words
+    seen.add(item.id);
+    const profile = quizRecallProfile(item.id, todayKey);
+    const score = quizCandidateScore(item, profile, previous);
+    candidates.push({
+      id: item.id,
+      item,
+      profile,
+      score,
+      weight: quizCandidateWeight(score),
+      recentlyTested: profile.daysSince !== null && profile.daysSince < QUIZ_AVOID_DAYS
+    });
+  }
+  return candidates;
+}
+
+function weightedQuizPick(pool) {
+  if (!pool.length) return null;
+  let total = 0;
+  for (const candidate of pool) total += candidate.weight;
+  if (!(total > 0)) return pool[Math.floor(Math.random() * pool.length)];
+  let roll = Math.random() * total;
+  for (const candidate of pool) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate;
+  }
+  return pool[pool.length - 1];
+}
+
+// Adds up to `limit` further matching words, chosen by weighted random draw.
+function takeQuizCandidates(pool, used, picked, match, limit, targetCount) {
+  let taken = 0;
+  while (picked.length < targetCount && taken < limit) {
+    const available = pool.filter(candidate => !used.has(candidate.id) && match(candidate));
+    const chosen = weightedQuizPick(available);
+    if (!chosen) break;
+    used.add(chosen.id);
+    picked.push(chosen);
+    taken++;
+  }
+}
+
+// Balanced groups rather than one strict status order. Each cap is a target: when a group
+// is too small the next group simply takes the remaining places. The miss cap is the one
+// hard ceiling — it holds across every stage and both passes, so a run of recent mistakes
+// can never fill a quiz; the final stage lifts it only to avoid returning a short quiz.
+function assembleQuizSelection(pool, targetCount, used, picked) {
+  const isMiss = candidate => candidate.profile.unresolvedMiss;
+  const isLearning = candidate => candidate.item.status === 'learning';
+  const missesLeft = () => QUIZ_MAX_MISSES - picked.filter(isMiss).length;
+  const withinMissCap = candidate => !isMiss(candidate) || missesLeft() > 0;
+
+  takeQuizCandidates(pool, used, picked, isMiss, Math.max(0, missesLeft()), targetCount);
+  takeQuizCandidates(pool, used, picked, c => isLearning(c) && withinMissCap(c),
+    QUIZ_TARGET_LEARNING, targetCount);
+  takeQuizCandidates(pool, used, picked, c => !isLearning(c) && withinMissCap(c),
+    Math.max(QUIZ_MIN_OTHER, targetCount - picked.length), targetCount);
+  takeQuizCandidates(pool, used, picked, withinMissCap, targetCount, targetCount);
+  takeQuizCandidates(pool, used, picked, () => true, targetCount, targetCount);
+}
+
+function quizSetSignature(ids) {
+  return [...new Set(ids)].sort().join('|');
+}
+
+// Best safe approximation of "the previous quiz": every word with an original attempt on
+// the most recent local date that recorded one. Two quizzes on one date merge into a
+// single set — deliberate, because reconstructing sessions from timestamps is fragile.
+function latestQuizDateIds(todayKey) {
+  let latestDate = '';
+  for (const entry of state.vocabulary) {
+    for (const attempt of recallAttemptsFor(entry.id)) {
+      if (attempt.date <= todayKey && attempt.date > latestDate) latestDate = attempt.date;
+    }
+  }
+  if (!latestDate) return [];
+  return state.vocabulary
+    .filter(entry => recallAttemptsFor(entry.id).some(attempt => attempt.date === latestDate))
+    .map(entry => entry.id);
+}
+
+// Order alone does not make a different quiz, so an identical set is broken up whenever
+// another suitable word exists.
+function avoidRepeatedQuizSet(picked, pool, previous, todayKey) {
+  if (picked.length < 2) return picked;
+  const current = quizSetSignature(picked.map(candidate => candidate.id));
+  const repeats = [quizSetSignature([...previous]), quizSetSignature(latestQuizDateIds(todayKey))];
+  if (!repeats.includes(current)) return picked;
+
+  const chosen = new Set(picked.map(candidate => candidate.id));
+  const alternatives = pool.filter(candidate => !chosen.has(candidate.id));
+  const replacement = weightedQuizPick(alternatives);
+  if (!replacement) return picked; // not enough alternatives — a repeat beats a short quiz
+  let weakest = 0;
+  for (let i = 1; i < picked.length; i++) if (picked[i].score < picked[weakest].score) weakest = i;
+  picked[weakest] = replacement;
+  return picked;
 }
 
 function selectQuickQuizItems(items, previousIds) {
-  const targetCount = Math.min(5, items.length);
+  const todayKey = dateKey(new Date());
   const previous = new Set(previousIds || []);
-  const fresh = statusPrioritizedQuizItems(items.filter(item => !previous.has(item.id)));
-  const repeated = statusPrioritizedQuizItems(items.filter(item => previous.has(item.id)));
-  return fresh.concat(repeated).slice(0, targetCount);
+  const pool = buildQuizCandidates(items, previous, todayKey);
+  const targetCount = Math.min(QUIZ_SIZE, pool.length);
+  if (!targetCount) return [];
+
+  const used = new Set();
+  const picked = [];
+  // Prefer words untouched by the last few local dates…
+  assembleQuizSelection(pool.filter(candidate => !candidate.recentlyTested), targetCount, used, picked);
+  // …and relax that avoidance only when there are not enough alternatives. A quiz is never
+  // shortened to enforce it; the weights keep the least-recently-used words in front.
+  if (picked.length < targetCount) assembleQuizSelection(pool, targetCount, used, picked);
+
+  return avoidRepeatedQuizSet(picked, pool, previous, todayKey).map(candidate => candidate.item);
 }
 
 function quizMeaning(item, kind) {
@@ -5303,21 +5650,41 @@ function createChoiceQuizQuestion(item, pool) {
   };
 }
 
-function plannedQuizTypes(count) {
-  if (count <= 1) return ['meaning-to-word'];
-  if (count === 2) return ['meaning-to-word', 'example-blank'];
-  if (count === 3) return ['meaning-to-word', 'example-blank', 'word-to-meaning'];
-  if (count === 4) return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'word-to-meaning'];
-  return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'example-blank', 'word-to-meaning'];
+// Lower rank is tried first: a type this word has had often — or had just now — falls
+// behind, typed active recall stays ahead of multiple choice, and types already used in
+// this quiz are spread out. Nothing here forces a type; unusable ones are skipped below.
+function quizTypeRank(type, profile, usedTypes) {
+  let rank = profile ? profile.typeCounts[type] * 1.6 : 0;
+  if (profile && profile.recentTypes.includes(type)) rank += 3;
+  if (!RECALL_ACTIVE_TYPES.includes(type)) rank += 2.2;
+  rank += (usedTypes[type] || 0) * 1.8;
+  return rank + Math.random() * 0.9;
 }
 
-function createQuickQuizQuestion(item, preferredType, pool) {
-  const order = preferredType === 'example-blank'
-    ? ['example-blank', 'meaning-to-word', 'word-to-meaning']
-    : preferredType === 'word-to-meaning'
-      ? ['word-to-meaning', 'meaning-to-word', 'example-blank']
-      : ['meaning-to-word', 'example-blank', 'word-to-meaning'];
-  for (const type of order) {
+function preferredQuizTypeOrder(item, todayKey, usedTypes) {
+  const profile = quizRecallProfile(item.id, todayKey);
+  return RECALL_QUESTION_TYPES
+    .map(type => ({ type, rank: quizTypeRank(type, profile, usedTypes) }))
+    .sort((a, b) => a.rank - b.rank)
+    .map(entry => entry.type);
+}
+
+// A preference plus the existing safe fallbacks, always covering every valid type once.
+function quizTypeOrder(preferred) {
+  const order = [];
+  const add = type => {
+    if (RECALL_QUESTION_TYPES.includes(type) && !order.includes(type)) order.push(type);
+  };
+  if (Array.isArray(preferred)) preferred.forEach(add);
+  else add(preferred);
+  add('meaning-to-word');
+  add('example-blank');
+  add('word-to-meaning');
+  return order;
+}
+
+function createQuickQuizQuestion(item, preferred, pool) {
+  for (const type of quizTypeOrder(preferred)) {
     const question = type === 'example-blank'
       ? createExampleQuizQuestion(item)
       : type === 'word-to-meaning'
@@ -5329,14 +5696,17 @@ function createQuickQuizQuestion(item, preferredType, pool) {
 }
 
 function createQuickQuizQuestions(items, pool) {
-  const plans = plannedQuizTypes(items.length);
-  fisherYates(plans);
+  const todayKey = dateKey(new Date());
+  const usedTypes = {};
+  for (const type of RECALL_QUESTION_TYPES) usedTypes[type] = 0;
   const questions = [];
-  items.forEach((item, index) => {
-    const question = createQuickQuizQuestion(item, plans[index], pool);
-    if (question) questions.push(question);
-  });
-  fisherYates(questions);
+  for (const item of items) {
+    const question = createQuickQuizQuestion(item, preferredQuizTypeOrder(item, todayKey, usedTypes), pool);
+    if (!question) continue;
+    usedTypes[question.type]++;
+    questions.push(question);
+  }
+  fisherYates(questions); // question order stays shuffled
   return questions;
 }
 
@@ -5390,7 +5760,10 @@ function renderQuickQuizQuestion() {
   quizMissedList.textContent = '';
   quizMissed.hidden = true;
   quizRetry.hidden = true;
-  quizProgress.textContent = 'Question ' + (quickQuizState.index + 1) + ' of ' + quickQuizState.questions.length;
+  const isQuickRetry = quickQuizState.phase === 'quick-retry';
+  quizProgress.textContent = (isQuickRetry ? 'Quick retry ' : 'Question ') +
+    (quickQuizState.index + 1) + ' of ' + quickQuizState.questions.length;
+  quizRetryNote.hidden = !isQuickRetry;
   quizQuestionHeading.textContent = question.heading;
   quizClue.textContent = question.clue;
   quizClue.dir = question.clueDirection;
@@ -5458,6 +5831,12 @@ function startQuickRecallQuiz(source) {
   quickQuizState.retryRound = false;
   quickQuizState.launchSource = launchSource;
   quickQuizState.launchDate = launchDate;
+  quickQuizState.phase = 'original';
+  quickQuizState.originalQuestions = questions.slice();
+  quickQuizState.originalAnswers = [];
+  quickQuizState.missedOriginal = [];
+  quickQuizState.quickRetryCorrected = 0;
+  quickQuizState.quickRetryTotal = 0;
 
   fcLive.textContent = '';
   fcStage.hidden = true;
@@ -5538,15 +5917,34 @@ function submitQuickQuizAnswer() {
     correctAnswer: question.correctAnswer,
     correct
   });
+
+  const isQuickRetry = quickQuizState.phase === 'quick-retry';
+  // Only original attempts are persisted; quick and manual retries stay in memory.
+  if (quickQuizState.phase === 'original') {
+    recordRecallAttempt(question.entryId, question.type, correct);
+  } else if (isQuickRetry) {
+    const missed = quickQuizState.missedOriginal.find(entry => entry.entryId === question.entryId);
+    if (missed && !missed.resolved && correct) {
+      missed.resolved = true;
+      quickQuizState.quickRetryCorrected++;
+    }
+  }
+
   quizCheck.hidden = true;
-  quizFeedback.textContent = correct ? 'Correct ✓' : 'Not quite';
+  if (isQuickRetry) {
+    quizFeedback.textContent = correct ? 'Correct this time ✓' : 'Needs another review';
+  } else {
+    quizFeedback.textContent = correct ? 'Correct ✓' : 'Not quite';
+  }
   quizFeedback.className = 'quiz-feedback ' + (correct ? 'is-correct' : 'is-incorrect');
   quizFeedback.hidden = false;
   quizCorrectAnswer.textContent = correct ? '' : 'Correct answer: ' + question.correctAnswer;
   quizCorrectAnswer.hidden = correct;
-  quizContinue.textContent = quickQuizState.index + 1 >= quickQuizState.questions.length
-    ? 'See results'
-    : 'Continue';
+
+  const lastInRound = quickQuizState.index + 1 >= quickQuizState.questions.length;
+  const mayStartQuickRetry = quickQuizState.phase === 'original' &&
+    quickQuizState.answers.some(answer => !answer.correct);
+  quizContinue.textContent = lastInRound && !mayStartQuickRetry ? 'See results' : 'Continue';
   quizContinue.hidden = false;
   quizFeedback.focus();
 }
@@ -5582,11 +5980,76 @@ function recordDailyQuickQuizCompletion(score, total) {
   return true;
 }
 
-function renderQuickQuizResults() {
+// One Quick retry per missed word, always a different question type — and a different
+// clue — from the original. Typed active recall is preferred; multiple choice is the
+// last resort. Returns null when no safe alternative exists, so the retry is skipped.
+function createQuickRetryQuestion(item, originalQuestion, pool) {
+  if (!item || !originalQuestion) return null;
+  const originalType = originalQuestion.type;
+  const originalClue = normalizeQuizOption(originalQuestion.clue);
+  const order = ['example-blank', 'meaning-to-word', 'word-to-meaning']
+    .filter(type => type !== originalType);
+  for (const type of order) {
+    const question = type === 'example-blank'
+      ? createExampleQuizQuestion(item)
+      : type === 'word-to-meaning'
+        ? createChoiceQuizQuestion(item, pool)
+        : createMeaningQuizQuestion(item);
+    if (!question || question.type === originalType) continue;
+    if (normalizeQuizOption(question.clue) === originalClue) continue; // never repeat the same clue
+    return question;
+  }
+  return null;
+}
+
+// Runs once the original round finishes: the daily mission completes here using the
+// original score, then any missed words are queued for a single Quick retry each.
+function beginQuickRetryPhase() {
   const answers = quickQuizState.answers.slice();
-  const incorrect = answers.filter(answer => !answer.correct);
-  const score = answers.length - incorrect.length;
-  if (answers.length) recordDailyQuickQuizCompletion(score, answers.length);
+  quickQuizState.originalAnswers = answers;
+  quickQuizState.originalTotal = answers.length;
+  quickQuizState.originalScore = answers.filter(answer => answer.correct).length;
+  if (answers.length) {
+    recordDailyQuickQuizCompletion(quickQuizState.originalScore, quickQuizState.originalTotal);
+  }
+
+  const missed = [];
+  const seen = new Set();
+  for (const answer of answers) {
+    if (answer.correct || seen.has(answer.entryId)) continue;
+    seen.add(answer.entryId);
+    missed.push({
+      entryId: answer.entryId,
+      itemTerm: answer.itemTerm,
+      correctAnswer: answer.correctAnswer,
+      userAnswer: answer.userAnswer,
+      resolved: false
+    });
+  }
+  quickQuizState.missedOriginal = missed;
+
+  const retryQuestions = [];
+  for (const entry of missed) {
+    const item = quickQuizState.items.find(candidate => candidate.id === entry.entryId);
+    const original = quickQuizState.originalQuestions.find(q => q.entryId === entry.entryId);
+    const question = createQuickRetryQuestion(item, original, quickQuizState.pool);
+    if (question) retryQuestions.push(question); // otherwise the word stays in the missed list
+  }
+
+  if (!retryQuestions.length) { renderQuickQuizResults(); return; }
+  quickQuizState.phase = 'quick-retry';
+  quickQuizState.questions = retryQuestions;
+  quickQuizState.quickRetryTotal = retryQuestions.length;
+  quickQuizState.quickRetryCorrected = 0;
+  quickQuizState.index = 0;
+  quickQuizState.submitted = false;
+  quickQuizState.answers = [];
+  renderQuickQuizQuestion(); // focuses the Quick retry question heading
+}
+
+function renderQuickQuizResults() {
+  const manualRound = quickQuizState.phase === 'manual';
+  const roundAnswers = quickQuizState.answers.slice();
   quickQuizState.submitted = false;
   quizContinue.hidden = true;
   quickQuizState.history.push({
@@ -5594,57 +6057,94 @@ function renderQuickQuizResults() {
     questions: quickQuizState.questions.map(question =>
       Object.assign({}, question, { options: question.options.slice() })
     ),
-    answers
+    answers: roundAnswers
   });
 
   quizQuestion.hidden = true;
+  quizRetryNote.hidden = true;
   quizResults.hidden = false;
-  if (quickQuizState.retryRound && !incorrect.length) {
-    quizResultsHeading.textContent = 'All corrected ✓';
-    quizScore.textContent = 'You recalled every missed word.';
-    quizResultMessage.textContent = 'Excellent recall.';
+
+  let unresolved = [];
+  if (manualRound) {
+    unresolved = roundAnswers.filter(answer => !answer.correct).map(answer => ({
+      entryId: answer.entryId,
+      itemTerm: answer.itemTerm,
+      correctAnswer: answer.correctAnswer,
+      userAnswer: answer.userAnswer
+    }));
+    const corrected = roundAnswers.length - unresolved.length;
+    quizRetrySummary.hidden = true;
+    quizRetrySummary.textContent = '';
+    if (!unresolved.length) {
+      quizResultsHeading.textContent = 'All corrected ✓';
+      quizScore.textContent = 'You recalled every missed word.';
+      quizResultMessage.textContent = 'Excellent recall.';
+    } else {
+      quizResultsHeading.textContent = 'Retry complete ✓';
+      quizScore.textContent = 'You got ' + corrected + ' of ' + roundAnswers.length + ' correct.';
+      quizResultMessage.textContent = quickQuizResultMessage(corrected, roundAnswers.length);
+    }
   } else {
+    // The original score always reflects first attempts only.
+    const total = quickQuizState.originalTotal;
+    const score = quickQuizState.originalScore;
+    unresolved = quickQuizState.missedOriginal.filter(entry => !entry.resolved);
     quizResultsHeading.textContent = 'Quiz complete ✓';
-    quizScore.textContent = 'You got ' + score + ' of ' + answers.length + ' correct.';
-    quizResultMessage.textContent = quickQuizResultMessage(score, answers.length);
+    quizScore.textContent = 'You got ' + score + ' of ' + total + ' correct.';
+    quizResultMessage.textContent = quickQuizResultMessage(score, total);
+    if (quickQuizState.quickRetryTotal > 0) {
+      quizRetrySummary.textContent = 'Quick retries: ' + quickQuizState.quickRetryCorrected +
+        ' of ' + quickQuizState.quickRetryTotal + ' corrected';
+      quizRetrySummary.hidden = false;
+      if (!unresolved.length) quizResultMessage.textContent = 'All missed words corrected ✓';
+    } else {
+      quizRetrySummary.hidden = true;
+      quizRetrySummary.textContent = '';
+    }
   }
 
   quizMissedList.textContent = '';
-  for (const answer of incorrect) {
+  for (const entry of unresolved) {
     const item = el('li', 'quiz-missed-item');
-    item.appendChild(el('strong', 'quiz-missed-term', answer.itemTerm));
-    item.appendChild(el('p', 'quiz-missed-detail', 'Your answer: ' + (answer.userAnswer || 'No answer')));
-    item.appendChild(el('p', 'quiz-missed-detail', 'Correct answer: ' + answer.correctAnswer));
+    item.appendChild(el('strong', 'quiz-missed-term', entry.itemTerm));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Your answer: ' + (entry.userAnswer || 'No answer')));
+    item.appendChild(el('p', 'quiz-missed-detail', 'Correct answer: ' + entry.correctAnswer));
     quizMissedList.appendChild(item);
   }
-  quizMissed.hidden = !incorrect.length;
-  quizRetry.hidden = !incorrect.length;
+  quizMissed.hidden = !unresolved.length;
+  quizRetry.hidden = !unresolved.length; // only words still incorrect after Quick retry
   quizAnother.hidden = quickQuizState.launchSource !== 'today-mission';
   quizResultsHeading.focus();
 }
 
 function continueQuickRecallQuiz() {
   if (!quickQuizState.submitted) return;
-  if (quickQuizState.index + 1 >= quickQuizState.questions.length) {
-    renderQuickQuizResults();
+  if (quickQuizState.index + 1 < quickQuizState.questions.length) {
+    quickQuizState.index++;
+    renderQuickQuizQuestion();
     return;
   }
-  quickQuizState.index++;
-  renderQuickQuizQuestion();
+  // The original round rolls into Quick retry (when mistakes remain); every other
+  // round — including the manual retry — goes straight to the results.
+  if (quickQuizState.phase === 'original') { beginQuickRetryPhase(); return; }
+  renderQuickQuizResults();
 }
 
 function retryIncorrectQuizAnswers() {
-  const incorrectIds = new Set(
-    quickQuizState.answers.filter(answer => !answer.correct).map(answer => answer.entryId)
-  );
-  const items = quickQuizState.items.filter(item => incorrectIds.has(item.id));
+  // Only words still incorrect after Quick retry, including skipped retries.
+  const unresolvedIds = quickQuizState.phase === 'manual'
+    ? new Set(quickQuizState.answers.filter(answer => !answer.correct).map(answer => answer.entryId))
+    : new Set(quickQuizState.missedOriginal.filter(entry => !entry.resolved).map(entry => entry.entryId));
+  const items = quickQuizState.items.filter(item => unresolvedIds.has(item.id));
   const questions = createQuickQuizQuestions(items, items);
   if (!questions.length) return;
+  quickQuizState.phase = 'manual'; // manual rounds never generate further Quick retries
   quickQuizState.questions = questions;
   quickQuizState.index = 0;
   quickQuizState.submitted = false;
   quickQuizState.answers = [];
   quickQuizState.retryRound = true;
+  quizRetryNote.hidden = true;
   renderQuickQuizQuestion();
 }
 
@@ -5705,11 +6205,52 @@ function selectDailyQueue() {
 
   const picked = [];
   const seen = new Set();
+
+  // Recent unresolved misses get a bounded head start. They deliberately bypass the
+  // recent-word avoidance above, because repeating a mistake is the point. Status is
+  // irrelevant here and is never changed.
+  const targetSize = Math.min(DAILY_QUEUE_SIZE, state.vocabulary.length);
+  const maxMisses = Math.floor(targetSize * RECALL_MISS_QUEUE_SHARE);
+  const missCandidates = recentMissCandidates(today);
+  const missIds = new Set(missCandidates.map(candidate => candidate.id));
+  if (maxMisses > 0) {
+    for (const candidate of missCandidates) {
+      if (picked.length >= maxMisses) break;
+      if (seen.has(candidate.id)) continue;
+      seen.add(candidate.id);
+      picked.push(candidate.id);
+    }
+  }
+
+  // Remaining slots keep the existing Learning → New → Mastered behaviour. Fresh
+  // vocabulary is taken first so mistakes cannot dominate the queue; the misses are
+  // only reused as a fallback when there is not enough other vocabulary.
+  for (const id of ordered) {
+    if (picked.length >= DAILY_QUEUE_SIZE) break;
+    if (!seen.has(id) && !missIds.has(id)) { seen.add(id); picked.push(id); }
+  }
   for (const id of ordered) {
     if (picked.length >= DAILY_QUEUE_SIZE) break;
     if (!seen.has(id)) { seen.add(id); picked.push(id); }
   }
   return picked;
+}
+
+// Unresolved misses from the recent local window, most recent first, then most-missed.
+// Ties are shuffled so the same words do not repeat in a fixed order.
+function recentMissCandidates(today) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - RECALL_MISS_WINDOW_DAYS);
+  const cutoffKey = dateKey(cutoff);
+  const candidates = [];
+  for (const entry of state.vocabulary) {
+    const miss = unresolvedMissInfo(entry.id);
+    if (!miss || miss.date < cutoffKey || miss.date > today) continue;
+    candidates.push({ id: entry.id, date: miss.date, missCount: miss.missCount });
+  }
+  fisherYates(candidates); // shuffle first so equal keys stay shuffled after the stable sort
+  candidates.sort((a, b) => b.date.localeCompare(a.date) || b.missCount - a.missCount);
+  return candidates;
 }
 
 // Drop deleted words from a record and keep completion consistent. Returns true if changed.
@@ -5755,7 +6296,8 @@ function ensureTodayReview() {
   return rec;
 }
 
-// Persist that a queued word was reviewed today (revealed or graded).
+// Persist that a queued word was reviewed today. Idempotent: a repeated call for the same
+// word adds no duplicate id, triggers no further save and never rewrites completedAt.
 function persistDailyReviewed(id) {
   const rec = todayReview();
   if (!rec || !rec.wordIds.includes(id)) return;
@@ -5767,11 +6309,13 @@ function persistDailyReviewed(id) {
   if (changed) { saveState(); updateDailyBanner(); renderMission(); }
 }
 
-// A card counts as reviewed once its answer is revealed or it is graded.
+// A card counts as reviewed once the user deliberately moves forward from it. Merely
+// rendering, revealing, refreshing or stepping backwards never credits a card.
 function markReviewed(id) {
   if (!id) return;
   roundReviewed.add(id);
-  if (fcDailyMode) persistDailyReviewed(id);
+  // Voluntary "Review Again" rounds are practice only: they never touch today's record.
+  if (fcDailyMode && !fc.dailyReplay) persistDailyReviewed(id);
 }
 
 // A round ends only after every unique card in the active queue has been reviewed.
@@ -5972,7 +6516,7 @@ function reviewStatusSummary() {
 function renderCompletion() {
   const n = fc.deck.length;
   if (fcDailyMode) {
-    fcCompleteHeading.textContent = 'Daily review complete';
+    fcCompleteHeading.textContent = 'Today’s Words complete ✓';
     fcCompleteSub.textContent = n === 1
       ? 'You reviewed 1 word for today.'
       : 'You reviewed all ' + n + ' words for today.';
@@ -5991,42 +6535,55 @@ function renderCompletion() {
   fcCompleteSummary.hidden = !summary;
 }
 
+// Announced and focused exactly once per completed round; a repeated call only re-renders.
 function showCompletion() {
+  if (fc.completed) { renderFlashcard(); return; }
   stopPronunciation();
   fc.lastCardId = fc.deck.length ? fc.deck[fc.index] : null; // avoid repeating this card first next round
   fc.completed = true;
   renderFlashcard();
   const n = fc.deck.length;
-  fcLive.textContent = fcDailyMode
-    ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
-    : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
-  fcReviewAgain.focus(); // move focus to the primary completion action
+  if (fcDailyMode) {
+    // The heading itself announces "Today's Words complete"; the live region adds the
+    // detail rather than repeating it, so the completion is announced once.
+    fcLive.textContent = 'You reviewed ' + (n === 1 ? '1 word' : 'all ' + n + ' words') +
+      ' for today. Fresh words will be ready tomorrow.';
+    fcCompleteHeading.focus();
+  } else {
+    fcLive.textContent = 'Review complete. You reviewed ' + n +
+      (n === 1 ? ' selected word' : ' selected words') + '.';
+    fcReviewAgain.focus(); // move focus to the primary completion action
+  }
 }
 
-$('fcPrev').addEventListener('click', () => stepCard(-1));
-$('fcNext').addEventListener('click', () => {
+// The single deliberate forward action: credit the current card, then finish the round or
+// advance. Guarded so a duplicate event (a rapid double click) cannot double-count.
+function advanceCurrentCard() {
+  if (fc.completed || !fc.deck.length) return;
+  markReviewed(fc.deck[fc.index]);
   if (roundComplete()) { showCompletion(); return; } // finish rather than loop back to card one
   stepCard(1);
-});
+}
+
+$('fcPrev').addEventListener('click', () => stepCard(-1)); // stepping back never credits a card
+$('fcNext').addEventListener('click', advanceCurrentCard);
 fcReveal.addEventListener('click', () => {
-  fc.revealed = true;
-  if (fc.deck.length) markReviewed(fc.deck[fc.index]); // reveal counts as reviewed; card stays visible
+  fc.revealed = true; // revealing is not a forward action, so it does not credit the card
   renderFlashcard();
 });
 
-// Grade buttons update the status, then either finish the round or advance.
+// Grade buttons update the status, then move forward like Next.
 for (const btn of fcGrade.querySelectorAll('[data-status]')) {
   btn.addEventListener('click', () => {
+    if (fc.completed) return;
     const entry = fc.deck.length ? getDeckEntry(fc.deck[fc.index]) : null;
     if (!entry) return;
     entry.status = btn.dataset.status;
     entry.updatedAt = new Date().toISOString();
-    markReviewed(entry.id);
     saveState();
     renderDashboard();
     toast('Marked as ' + STATUS_LABEL[entry.status]);
-    if (roundComplete()) showCompletion();
-    else stepCard(1);
+    advanceCurrentCard();
   });
 }
 
