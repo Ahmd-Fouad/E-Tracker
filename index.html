@@ -1382,7 +1382,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
         <!-- Calm end-of-round state; replaces the silent loop back to card one -->
         <div class="fc-complete" id="fcComplete" role="group" aria-labelledby="fcCompleteHeading" hidden>
           <div class="fc-complete-mark" aria-hidden="true">&#10003;</div>
-          <h3 class="fc-complete-heading" id="fcCompleteHeading">Review complete</h3>
+          <h3 class="fc-complete-heading" id="fcCompleteHeading" tabindex="-1">Review complete</h3>
           <p class="fc-complete-sub" id="fcCompleteSub">You reviewed all words.</p>
           <p class="fc-complete-note" id="fcCompleteNote" hidden>Fresh words will be ready tomorrow.</p>
           <p class="fc-complete-summary" id="fcCompleteSummary" hidden></p>
@@ -1757,6 +1757,17 @@ const RECALL_MAX_AGE_DAYS = 90;       // attempts older than this are dropped on
 const RECALL_MISS_WINDOW_DAYS = 7;    // unresolved misses considered "recent" for the daily queue
 const RECALL_MISS_QUEUE_SHARE = 0.4;  // at most ~40% of a daily queue may be recent misses
 const MASTERY_READY_DATES = 3;        // distinct dates of correct active recall required
+
+// Quick Quiz selection. Rotation, recency and question-type history are all derived from
+// the recall attempts above, so no additional persisted state is required.
+const QUIZ_SIZE = 5;                   // questions in one Quick Quiz
+const QUIZ_AVOID_DAYS = 3;             // avoid words tested today or the previous two local dates
+const QUIZ_MAX_MISSES = 2;             // unresolved misses may never fill the whole quiz
+const QUIZ_TARGET_LEARNING = 2;        // approximate Learning share of one quiz
+const QUIZ_MIN_OTHER = 1;              // at least one New/Mastered/overdue/under-tested word
+const QUIZ_MASTERED_SPACING_DAYS = 14; // a Mastered word becomes due for a re-test after this gap
+const QUIZ_UNDER_TESTED_ATTEMPTS = 2;  // fewer original attempts than this counts as under-tested
+const QUIZ_SCORE_JITTER = 10;          // random component so equal candidates do not fix an order
 
 const $ = (id) => document.getElementById(id);
 
@@ -2226,6 +2237,16 @@ function isValidDateKey(value) {
   const date = new Date(parts[0], parts[1] - 1, parts[2]);
   return date.getFullYear() === parts[0] &&
     date.getMonth() === parts[1] - 1 && date.getDate() === parts[2];
+}
+
+// Whole local days from one "YYYY-MM-DD" key to another; null when either key is unusable.
+function daysBetweenDateKeys(fromKey, toKey) {
+  if (!isValidDateKey(fromKey) || !isValidDateKey(toKey)) return null;
+  const localTime = key => {
+    const parts = key.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+  };
+  return Math.round((localTime(toKey) - localTime(fromKey)) / 86400000);
 }
 
 function normalizeIsoTimestamp(value) {
@@ -4177,7 +4198,7 @@ function dailyQuizCompletion(date) {
 }
 
 function availableQuickQuizCount() {
-  return Math.min(5, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
+  return Math.min(QUIZ_SIZE, eligibleQuickQuizItems(allVocabularyQuizPool()).length);
 }
 
 function renderMission() {
@@ -5371,19 +5392,187 @@ function eligibleQuickQuizItems(pool) {
   return pool.filter(item => typedQuizClue(item) !== null);
 }
 
-function statusPrioritizedQuizItems(items) {
-  const groups = { learning: [], new: [], mastered: [] };
-  for (const item of items) groups[item.status].push(item);
-  for (const status of STATUSES) fisherYates(groups[status]);
-  return groups.learning.concat(groups.new, groups.mastered);
+/* ---- Shared Quick Quiz selection ----------------------------------------------------
+   Used by both entry points: Today's Mission and the permanent Quick Quiz button. Every
+   signal comes from the existing v13 recall attempts, so nothing new is persisted.
+
+   Words are scored rather than ranked by status: unresolved mistakes, weak recall, never
+   tested and long-overdue words are pulled forward, words tested in the last few local
+   dates are pushed back, and a small random component keeps equally suitable words from
+   settling into a fixed order. Group caps then guarantee that no single status — and no
+   run of recent mistakes — can occupy a whole quiz. */
+
+// Recall and recency metadata for one candidate, from the persisted original attempts.
+function quizRecallProfile(id, todayKey) {
+  const attempts = recallAttemptsFor(id);
+  const typeCounts = {};
+  for (const type of RECALL_QUESTION_TYPES) typeCounts[type] = 0;
+  let lastDate = '';
+  for (const attempt of attempts) {
+    if (typeCounts[attempt.questionType] !== undefined) typeCounts[attempt.questionType]++;
+    if (attempt.date > lastDate) lastDate = attempt.date;
+  }
+  const miss = unresolvedMissInfo(id);
+  const elapsed = lastDate ? daysBetweenDateKeys(lastDate, todayKey) : null;
+  return {
+    attemptCount: attempts.length,
+    typeCounts,
+    recentTypes: attempts.slice(-2).map(attempt => attempt.questionType),
+    lastDate,
+    daysSince: Number.isFinite(elapsed) ? Math.max(0, elapsed) : null,
+    missCount: miss ? miss.missCount : 0,
+    unresolvedMiss: Boolean(miss)
+  };
+}
+
+function quizCandidateScore(item, profile, previous) {
+  let score = 0;
+  // Positive: what still needs deliberate review.
+  if (profile.unresolvedMiss) score += 45 + Math.min(profile.missCount, 3) * 6;
+  if (item.status === 'learning') score += 18;
+  else if (item.status === 'new') score += 12;
+  else score += 4;
+  if (!profile.attemptCount) score += 30;                                   // never tested
+  else if (profile.attemptCount < QUIZ_UNDER_TESTED_ATTEMPTS) score += 8;   // under-tested
+  if (profile.daysSince !== null) score += Math.min(profile.daysSince, 30) * 1.4;
+  if (item.status === 'mastered' && profile.daysSince !== null &&
+      profile.daysSince >= QUIZ_MASTERED_SPACING_DAYS) score += 14;         // spaced re-test
+
+  // Negative: what was just seen. Penalties are strong but never absolute, so no word is
+  // permanently excluded — they only lose when better alternatives exist.
+  if (profile.daysSince === 0) score -= 60;
+  else if (profile.daysSince === 1) score -= 40;
+  else if (profile.daysSince !== null && profile.daysSince < QUIZ_AVOID_DAYS) score -= 24;
+  if (previous.has(item.id)) score -= 55;                                   // the quiz just taken
+  return score + Math.random() * QUIZ_SCORE_JITTER;
+}
+
+// Exponential weighting keeps every candidate reachable while preserving the score order,
+// so even inside a fully penalised pool the least-recently-used words win most often.
+function quizCandidateWeight(score) {
+  return Math.exp(Math.max(-6, Math.min(6, score / 20)));
+}
+
+function buildQuizCandidates(items, previous, todayKey) {
+  const seen = new Set();
+  const candidates = [];
+  for (const item of items) {
+    if (!item || typeof item.id !== 'string' || seen.has(item.id)) continue; // unique ids only
+    if (!state.vocabulary.some(entry => entry.id === item.id)) continue;     // ignore deleted words
+    seen.add(item.id);
+    const profile = quizRecallProfile(item.id, todayKey);
+    const score = quizCandidateScore(item, profile, previous);
+    candidates.push({
+      id: item.id,
+      item,
+      profile,
+      score,
+      weight: quizCandidateWeight(score),
+      recentlyTested: profile.daysSince !== null && profile.daysSince < QUIZ_AVOID_DAYS
+    });
+  }
+  return candidates;
+}
+
+function weightedQuizPick(pool) {
+  if (!pool.length) return null;
+  let total = 0;
+  for (const candidate of pool) total += candidate.weight;
+  if (!(total > 0)) return pool[Math.floor(Math.random() * pool.length)];
+  let roll = Math.random() * total;
+  for (const candidate of pool) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate;
+  }
+  return pool[pool.length - 1];
+}
+
+// Adds up to `limit` further matching words, chosen by weighted random draw.
+function takeQuizCandidates(pool, used, picked, match, limit, targetCount) {
+  let taken = 0;
+  while (picked.length < targetCount && taken < limit) {
+    const available = pool.filter(candidate => !used.has(candidate.id) && match(candidate));
+    const chosen = weightedQuizPick(available);
+    if (!chosen) break;
+    used.add(chosen.id);
+    picked.push(chosen);
+    taken++;
+  }
+}
+
+// Balanced groups rather than one strict status order. Each cap is a target: when a group
+// is too small the next group simply takes the remaining places. The miss cap is the one
+// hard ceiling — it holds across every stage and both passes, so a run of recent mistakes
+// can never fill a quiz; the final stage lifts it only to avoid returning a short quiz.
+function assembleQuizSelection(pool, targetCount, used, picked) {
+  const isMiss = candidate => candidate.profile.unresolvedMiss;
+  const isLearning = candidate => candidate.item.status === 'learning';
+  const missesLeft = () => QUIZ_MAX_MISSES - picked.filter(isMiss).length;
+  const withinMissCap = candidate => !isMiss(candidate) || missesLeft() > 0;
+
+  takeQuizCandidates(pool, used, picked, isMiss, Math.max(0, missesLeft()), targetCount);
+  takeQuizCandidates(pool, used, picked, c => isLearning(c) && withinMissCap(c),
+    QUIZ_TARGET_LEARNING, targetCount);
+  takeQuizCandidates(pool, used, picked, c => !isLearning(c) && withinMissCap(c),
+    Math.max(QUIZ_MIN_OTHER, targetCount - picked.length), targetCount);
+  takeQuizCandidates(pool, used, picked, withinMissCap, targetCount, targetCount);
+  takeQuizCandidates(pool, used, picked, () => true, targetCount, targetCount);
+}
+
+function quizSetSignature(ids) {
+  return [...new Set(ids)].sort().join('|');
+}
+
+// Best safe approximation of "the previous quiz": every word with an original attempt on
+// the most recent local date that recorded one. Two quizzes on one date merge into a
+// single set — deliberate, because reconstructing sessions from timestamps is fragile.
+function latestQuizDateIds(todayKey) {
+  let latestDate = '';
+  for (const entry of state.vocabulary) {
+    for (const attempt of recallAttemptsFor(entry.id)) {
+      if (attempt.date <= todayKey && attempt.date > latestDate) latestDate = attempt.date;
+    }
+  }
+  if (!latestDate) return [];
+  return state.vocabulary
+    .filter(entry => recallAttemptsFor(entry.id).some(attempt => attempt.date === latestDate))
+    .map(entry => entry.id);
+}
+
+// Order alone does not make a different quiz, so an identical set is broken up whenever
+// another suitable word exists.
+function avoidRepeatedQuizSet(picked, pool, previous, todayKey) {
+  if (picked.length < 2) return picked;
+  const current = quizSetSignature(picked.map(candidate => candidate.id));
+  const repeats = [quizSetSignature([...previous]), quizSetSignature(latestQuizDateIds(todayKey))];
+  if (!repeats.includes(current)) return picked;
+
+  const chosen = new Set(picked.map(candidate => candidate.id));
+  const alternatives = pool.filter(candidate => !chosen.has(candidate.id));
+  const replacement = weightedQuizPick(alternatives);
+  if (!replacement) return picked; // not enough alternatives — a repeat beats a short quiz
+  let weakest = 0;
+  for (let i = 1; i < picked.length; i++) if (picked[i].score < picked[weakest].score) weakest = i;
+  picked[weakest] = replacement;
+  return picked;
 }
 
 function selectQuickQuizItems(items, previousIds) {
-  const targetCount = Math.min(5, items.length);
+  const todayKey = dateKey(new Date());
   const previous = new Set(previousIds || []);
-  const fresh = statusPrioritizedQuizItems(items.filter(item => !previous.has(item.id)));
-  const repeated = statusPrioritizedQuizItems(items.filter(item => previous.has(item.id)));
-  return fresh.concat(repeated).slice(0, targetCount);
+  const pool = buildQuizCandidates(items, previous, todayKey);
+  const targetCount = Math.min(QUIZ_SIZE, pool.length);
+  if (!targetCount) return [];
+
+  const used = new Set();
+  const picked = [];
+  // Prefer words untouched by the last few local dates…
+  assembleQuizSelection(pool.filter(candidate => !candidate.recentlyTested), targetCount, used, picked);
+  // …and relax that avoidance only when there are not enough alternatives. A quiz is never
+  // shortened to enforce it; the weights keep the least-recently-used words in front.
+  if (picked.length < targetCount) assembleQuizSelection(pool, targetCount, used, picked);
+
+  return avoidRepeatedQuizSet(picked, pool, previous, todayKey).map(candidate => candidate.item);
 }
 
 function quizMeaning(item, kind) {
@@ -5461,21 +5650,41 @@ function createChoiceQuizQuestion(item, pool) {
   };
 }
 
-function plannedQuizTypes(count) {
-  if (count <= 1) return ['meaning-to-word'];
-  if (count === 2) return ['meaning-to-word', 'example-blank'];
-  if (count === 3) return ['meaning-to-word', 'example-blank', 'word-to-meaning'];
-  if (count === 4) return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'word-to-meaning'];
-  return ['meaning-to-word', 'example-blank', 'meaning-to-word', 'example-blank', 'word-to-meaning'];
+// Lower rank is tried first: a type this word has had often — or had just now — falls
+// behind, typed active recall stays ahead of multiple choice, and types already used in
+// this quiz are spread out. Nothing here forces a type; unusable ones are skipped below.
+function quizTypeRank(type, profile, usedTypes) {
+  let rank = profile ? profile.typeCounts[type] * 1.6 : 0;
+  if (profile && profile.recentTypes.includes(type)) rank += 3;
+  if (!RECALL_ACTIVE_TYPES.includes(type)) rank += 2.2;
+  rank += (usedTypes[type] || 0) * 1.8;
+  return rank + Math.random() * 0.9;
 }
 
-function createQuickQuizQuestion(item, preferredType, pool) {
-  const order = preferredType === 'example-blank'
-    ? ['example-blank', 'meaning-to-word', 'word-to-meaning']
-    : preferredType === 'word-to-meaning'
-      ? ['word-to-meaning', 'meaning-to-word', 'example-blank']
-      : ['meaning-to-word', 'example-blank', 'word-to-meaning'];
-  for (const type of order) {
+function preferredQuizTypeOrder(item, todayKey, usedTypes) {
+  const profile = quizRecallProfile(item.id, todayKey);
+  return RECALL_QUESTION_TYPES
+    .map(type => ({ type, rank: quizTypeRank(type, profile, usedTypes) }))
+    .sort((a, b) => a.rank - b.rank)
+    .map(entry => entry.type);
+}
+
+// A preference plus the existing safe fallbacks, always covering every valid type once.
+function quizTypeOrder(preferred) {
+  const order = [];
+  const add = type => {
+    if (RECALL_QUESTION_TYPES.includes(type) && !order.includes(type)) order.push(type);
+  };
+  if (Array.isArray(preferred)) preferred.forEach(add);
+  else add(preferred);
+  add('meaning-to-word');
+  add('example-blank');
+  add('word-to-meaning');
+  return order;
+}
+
+function createQuickQuizQuestion(item, preferred, pool) {
+  for (const type of quizTypeOrder(preferred)) {
     const question = type === 'example-blank'
       ? createExampleQuizQuestion(item)
       : type === 'word-to-meaning'
@@ -5487,14 +5696,17 @@ function createQuickQuizQuestion(item, preferredType, pool) {
 }
 
 function createQuickQuizQuestions(items, pool) {
-  const plans = plannedQuizTypes(items.length);
-  fisherYates(plans);
+  const todayKey = dateKey(new Date());
+  const usedTypes = {};
+  for (const type of RECALL_QUESTION_TYPES) usedTypes[type] = 0;
   const questions = [];
-  items.forEach((item, index) => {
-    const question = createQuickQuizQuestion(item, plans[index], pool);
-    if (question) questions.push(question);
-  });
-  fisherYates(questions);
+  for (const item of items) {
+    const question = createQuickQuizQuestion(item, preferredQuizTypeOrder(item, todayKey, usedTypes), pool);
+    if (!question) continue;
+    usedTypes[question.type]++;
+    questions.push(question);
+  }
+  fisherYates(questions); // question order stays shuffled
   return questions;
 }
 
@@ -6084,7 +6296,8 @@ function ensureTodayReview() {
   return rec;
 }
 
-// Persist that a queued word was reviewed today (revealed or graded).
+// Persist that a queued word was reviewed today. Idempotent: a repeated call for the same
+// word adds no duplicate id, triggers no further save and never rewrites completedAt.
 function persistDailyReviewed(id) {
   const rec = todayReview();
   if (!rec || !rec.wordIds.includes(id)) return;
@@ -6096,11 +6309,13 @@ function persistDailyReviewed(id) {
   if (changed) { saveState(); updateDailyBanner(); renderMission(); }
 }
 
-// A card counts as reviewed once its answer is revealed or it is graded.
+// A card counts as reviewed once the user deliberately moves forward from it. Merely
+// rendering, revealing, refreshing or stepping backwards never credits a card.
 function markReviewed(id) {
   if (!id) return;
   roundReviewed.add(id);
-  if (fcDailyMode) persistDailyReviewed(id);
+  // Voluntary "Review Again" rounds are practice only: they never touch today's record.
+  if (fcDailyMode && !fc.dailyReplay) persistDailyReviewed(id);
 }
 
 // A round ends only after every unique card in the active queue has been reviewed.
@@ -6301,7 +6516,7 @@ function reviewStatusSummary() {
 function renderCompletion() {
   const n = fc.deck.length;
   if (fcDailyMode) {
-    fcCompleteHeading.textContent = 'Daily review complete';
+    fcCompleteHeading.textContent = 'Today’s Words complete ✓';
     fcCompleteSub.textContent = n === 1
       ? 'You reviewed 1 word for today.'
       : 'You reviewed all ' + n + ' words for today.';
@@ -6320,42 +6535,55 @@ function renderCompletion() {
   fcCompleteSummary.hidden = !summary;
 }
 
+// Announced and focused exactly once per completed round; a repeated call only re-renders.
 function showCompletion() {
+  if (fc.completed) { renderFlashcard(); return; }
   stopPronunciation();
   fc.lastCardId = fc.deck.length ? fc.deck[fc.index] : null; // avoid repeating this card first next round
   fc.completed = true;
   renderFlashcard();
   const n = fc.deck.length;
-  fcLive.textContent = fcDailyMode
-    ? 'Daily review complete. You reviewed ' + n + (n === 1 ? ' word' : ' words') + ' today.'
-    : 'Review complete. You reviewed ' + n + (n === 1 ? ' selected word' : ' selected words') + '.';
-  fcReviewAgain.focus(); // move focus to the primary completion action
+  if (fcDailyMode) {
+    // The heading itself announces "Today's Words complete"; the live region adds the
+    // detail rather than repeating it, so the completion is announced once.
+    fcLive.textContent = 'You reviewed ' + (n === 1 ? '1 word' : 'all ' + n + ' words') +
+      ' for today. Fresh words will be ready tomorrow.';
+    fcCompleteHeading.focus();
+  } else {
+    fcLive.textContent = 'Review complete. You reviewed ' + n +
+      (n === 1 ? ' selected word' : ' selected words') + '.';
+    fcReviewAgain.focus(); // move focus to the primary completion action
+  }
 }
 
-$('fcPrev').addEventListener('click', () => stepCard(-1));
-$('fcNext').addEventListener('click', () => {
+// The single deliberate forward action: credit the current card, then finish the round or
+// advance. Guarded so a duplicate event (a rapid double click) cannot double-count.
+function advanceCurrentCard() {
+  if (fc.completed || !fc.deck.length) return;
+  markReviewed(fc.deck[fc.index]);
   if (roundComplete()) { showCompletion(); return; } // finish rather than loop back to card one
   stepCard(1);
-});
+}
+
+$('fcPrev').addEventListener('click', () => stepCard(-1)); // stepping back never credits a card
+$('fcNext').addEventListener('click', advanceCurrentCard);
 fcReveal.addEventListener('click', () => {
-  fc.revealed = true;
-  if (fc.deck.length) markReviewed(fc.deck[fc.index]); // reveal counts as reviewed; card stays visible
+  fc.revealed = true; // revealing is not a forward action, so it does not credit the card
   renderFlashcard();
 });
 
-// Grade buttons update the status, then either finish the round or advance.
+// Grade buttons update the status, then move forward like Next.
 for (const btn of fcGrade.querySelectorAll('[data-status]')) {
   btn.addEventListener('click', () => {
+    if (fc.completed) return;
     const entry = fc.deck.length ? getDeckEntry(fc.deck[fc.index]) : null;
     if (!entry) return;
     entry.status = btn.dataset.status;
     entry.updatedAt = new Date().toISOString();
-    markReviewed(entry.id);
     saveState();
     renderDashboard();
     toast('Marked as ' + STATUS_LABEL[entry.status]);
-    if (roundComplete()) showCompletion();
-    else stepCard(1);
+    advanceCurrentCard();
   });
 }
 
