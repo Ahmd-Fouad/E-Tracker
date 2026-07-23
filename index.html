@@ -1160,7 +1160,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
           <li class="mission-task" id="missionQuizTask" tabindex="-1">
             <span class="mission-check" id="missionQuizCheck" aria-hidden="true">&#9675;</span>
             <span class="mission-task-body">
-              <span class="mission-task-title" id="missionQuizTitle">Today&rsquo;s Quick Quiz</span>
+              <span class="mission-task-title" id="missionQuizTitle">Today&rsquo;s Quick</span>
               <span class="mission-task-note" id="missionQuizNote">Complete Today&rsquo;s Words first</span>
               <button class="btn btn-ghost btn-sm mission-task-action" id="missionQuizBtn" type="button" hidden>Start Quick Quiz</button>
             </span>
@@ -4220,7 +4220,7 @@ function renderMission() {
     missionLessonNote.hidden = true;
   } else if (lessonDone) {
     setMissionCheck(missionLessonTask, missionLessonCheck, true, false);
-    missionLessonTitle.textContent = 'Today’s lesson complete';
+    missionLessonTitle.textContent = 'Today’s lesson';
     missionLessonNote.hidden = true;
   } else {
     setMissionCheck(missionLessonTask, missionLessonCheck, false, false);
@@ -4263,7 +4263,7 @@ function renderMission() {
   const quizDone = quizAvailable && dailyQuizCompletion(today) !== null;
   const canContinueQuiz = quickQuizState.active && quickQuizState.launchDate === today;
   missionQuizBtn.hidden = true;
-  missionQuizTitle.textContent = 'Today’s Quick Quiz';
+  missionQuizTitle.textContent = 'Today’s Quick';
   if (!quizAvailable) {
     setMissionCheck(missionQuizTask, missionQuizCheck, false, true);
     missionQuizNote.textContent = 'Add suitable vocabulary to unlock today’s quiz';
