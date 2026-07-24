@@ -1010,37 +1010,42 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
   .flashcards .set-filter-details > summary,
   #fcShuffle,
   #fcRestart { min-height: 44px; }
+  /* Vocabulary and Flashcards each use an explicit grid below this block so
+     their rows are deterministic and full-width; see those blocks. */
+}
 
-  /* Vocabulary Scope + Status always share one row, split evenly, at every tier
-     below desktop — the row's own width always equals the search input / card
-     width, so an even flex split here always reaches the right edge.
-     (Flashcards uses an explicit grid instead; see its block below.) */
-  #bvSetFilter, #bvStatus { flex: 1 1 0; min-width: 0; }
+@media (max-width: 480px) {
+  /* Vocabulary — narrow mobile: three deterministic full-width rows so nothing
+     is squeezed onto a shared line (rows break by grid placement, not flex):
+       Row 1  [ Scope | Status ]  two equal columns
+       Row 2  [ Sort ]            full width
+       Row 3  [ Search ]          full width
+     The grid fills the browse card, so every row lines up with the vocabulary
+     cards below. */
+  .browse .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: center;
+  }
+  .browse .filter-bar > * { min-width: 0; }
+  .browse .filter-bar #bvSort,
+  .browse .filter-bar #bvSearch { grid-column: 1 / -1; }
 }
 
 @media (min-width: 481px) and (max-width: 859px) {
   /* Vocabulary — wide mobile / tablet: Scope, Status and Sort share one row;
-     Search spans the full row underneath. Scope gets a larger share (its
-     "General + N sets" / "N sets selected" summaries run longer than the
-     Status/Sort option text) rather than a strict equal third. */
-  #bvSetFilter { flex: 3 1 0; min-width: 0; }
-  #bvStatus,
-  #bvSort { flex: 2 1 0; min-width: 0; }
-  #bvSearch { flex: 1 1 100%; min-width: 0; }
-}
-
-@media (min-width: 361px) and (max-width: 480px) {
-  /* Vocabulary — narrow mobile: Sort and Search share one row. Sort takes the
-     smaller share (with a readable floor), Search takes the larger share. */
-  #bvSort { flex: 3 1 0; min-width: 120px; }
-  #bvSearch { flex: 7 1 0; min-width: 0; }
-}
-
-@media (max-width: 360px) {
-  /* Vocabulary — very narrow mobile: the combined Sort + Search row above
-     would compress Search too much, so each takes its own full-width row. */
-  #bvSort { flex-basis: 100%; }
-  #bvSearch { flex-basis: 100%; }
+     Search spans the full row underneath. Scope gets the larger track because
+     its "General + N sets" / "N sets selected" summary runs longer than the
+     Status/Sort option text. */
+  .browse .filter-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .browse .filter-bar > * { min-width: 0; }
+  .browse .filter-bar #bvSearch { grid-column: 1 / -1; }
 }
 
 @media (max-width: 859px) {
