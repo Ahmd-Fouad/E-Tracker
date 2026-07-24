@@ -1011,11 +1011,11 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
   #fcShuffle,
   #fcRestart { min-height: 44px; }
 
-  /* Scope + Status always share one row, split evenly, at every tier below
-     desktop — the row's own width always equals the search input / card width,
-     so an even flex split here always reaches the right edge. */
-  #bvSetFilter, #bvStatus,
-  #fcSetFilter, #fcStatusFilter { flex: 1 1 0; min-width: 0; }
+  /* Vocabulary Scope + Status always share one row, split evenly, at every tier
+     below desktop — the row's own width always equals the search input / card
+     width, so an even flex split here always reaches the right edge.
+     (Flashcards uses an explicit grid instead; see its block below.) */
+  #bvSetFilter, #bvStatus { flex: 1 1 0; min-width: 0; }
 }
 
 @media (min-width: 481px) and (max-width: 859px) {
@@ -1043,22 +1043,22 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
   #bvSearch { flex-basis: 100%; }
 }
 
-@media (max-width: 600px) {
-  /* Flashcards — narrow + medium mobile: Review direction spans its own full
-     row; Shuffle and Restart review share the row beneath it evenly. */
-  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
-  #fcShuffle,
-  #fcRestart { flex: 1 1 0; min-width: 0; }
-}
-
-@media (min-width: 601px) and (max-width: 859px) {
-  /* Flashcards — tablet: direction, Shuffle and Restart review share one row.
-     Shuffle/Restart size to their label (never wrap alone); the direction
-     field absorbs all remaining space so its select gets the largest share
-     and the row still ends flush with the right edge. */
-  .fc-direction-field { flex: 1 1 auto; min-width: 0; }
-  #fcShuffle,
-  #fcRestart { flex: 0 0 auto; }
+@media (max-width: 859px) {
+  /* Flashcards — one explicit three-row grid for every width below the desktop
+     toolbar, so each row spans the full flashcard-card width, no label is
+     truncated, and rows break deliberately instead of by flex wrapping:
+       Row 1  [ Scope | Status ]      two equal columns
+       Row 2  [ Review direction … ]  label + selector, spans the full width
+       Row 3  [ Shuffle | Restart ]   two equal columns
+     In daily-review mode Scope and Status are hidden, so the direction row
+     rises to Row 1 and Shuffle/Restart to Row 2 — every row still full width. */
+  .flashcards .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: center;
+  }
+  .flashcards .filter-bar .fc-direction-field { grid-column: 1 / -1; }
 }
 
 /* ------------------------------------------------------------------------
