@@ -984,6 +984,89 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
 }
 
 /* ------------------------------------------------------------------------
+   FILTER-ROW ALIGNMENT (Vocabulary + Flashcards)
+   Deliberate per-tier row layouts so every control row fills the exact same
+   left/right boundaries as the search input, the flashcard card, and the
+   surrounding section — no leftover space on the right, no wrapping left to
+   chance. Grammar's filter bar (.grammar-toolbar) is untouched; it keeps its
+   existing stacked layout from the block below.
+   ------------------------------------------------------------------------ */
+@media (max-width: 859px) {
+  /* Neutralize fixed/capped sizing so controls can size to their row instead
+     of hugging old desktop-oriented widths. */
+  .browse .set-filter-details,
+  .flashcards .set-filter-details { min-width: 0; }
+  #bvSetFilter .set-filter-details,
+  #fcSetFilter .set-filter-details { width: 100%; }
+  .browse .filter-bar select,
+  .flashcards .filter-bar select { max-width: none; }
+  .fc-direction-field { min-width: 0; }
+
+  /* Comfortable 44px touch height for every filter control in this range */
+  .browse .filter-bar select,
+  .browse .filter-bar input[type="search"],
+  .browse .set-filter-details > summary,
+  .flashcards .filter-bar select,
+  .flashcards .set-filter-details > summary,
+  #fcShuffle,
+  #fcRestart { min-height: 44px; }
+  /* Vocabulary and Flashcards each use an explicit grid below this block so
+     their rows are deterministic and full-width; see those blocks. */
+}
+
+@media (max-width: 480px) {
+  /* Vocabulary — narrow mobile: three deterministic full-width rows so nothing
+     is squeezed onto a shared line (rows break by grid placement, not flex):
+       Row 1  [ Scope | Status ]  two equal columns
+       Row 2  [ Sort ]            full width
+       Row 3  [ Search ]          full width
+     The grid fills the browse card, so every row lines up with the vocabulary
+     cards below. */
+  .browse .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: center;
+  }
+  .browse .filter-bar > * { min-width: 0; }
+  .browse .filter-bar #bvSort,
+  .browse .filter-bar #bvSearch { grid-column: 1 / -1; }
+}
+
+@media (min-width: 481px) and (max-width: 859px) {
+  /* Vocabulary — wide mobile / tablet: Scope, Status and Sort share one row;
+     Search spans the full row underneath. Scope gets the larger track because
+     its "General + N sets" / "N sets selected" summary runs longer than the
+     Status/Sort option text. */
+  .browse .filter-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .browse .filter-bar > * { min-width: 0; }
+  .browse .filter-bar #bvSearch { grid-column: 1 / -1; }
+}
+
+@media (max-width: 859px) {
+  /* Flashcards — one explicit three-row grid for every width below the desktop
+     toolbar, so each row spans the full flashcard-card width, no label is
+     truncated, and rows break deliberately instead of by flex wrapping:
+       Row 1  [ Scope | Status ]      two equal columns
+       Row 2  [ Review direction … ]  label + selector, spans the full width
+       Row 3  [ Shuffle | Restart ]   two equal columns
+     In daily-review mode Scope and Status are hidden, so the direction row
+     rises to Row 1 and Shuffle/Restart to Row 2 — every row still full width. */
+  .flashcards .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: center;
+  }
+  .flashcards .filter-bar .fc-direction-field { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------------------------
    NARROW MOBILE (max-width: 480px)
    Compact, touch-friendly phone layout. Primary focus: Vocabulary,
    Flashcards, the Quick Recall Quiz and the Add/Edit Word modal. Tablet
@@ -1007,26 +1090,12 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
   .vs-actions { width: 100%; margin-left: 0; }
   .vs-actions .btn { flex: 1 1 140px; }
 
-  /* Filter controls: comfortable 44px touch height */
+  /* Filter controls: comfortable 44px touch height. Vocabulary and Flashcards
+     get deliberate per-tier row layouts in the FILTER-ROW ALIGNMENT section
+     above; this generic rule also keeps Grammar's search input touch-friendly. */
   .filter-bar select,
   .filter-bar input[type="search"],
   .set-filter-details > summary { min-height: 44px; }
-  /* Let the scope picker fill its wrapper so it can size to half a row */
-  #bvSetFilter .set-filter-details,
-  #fcSetFilter .set-filter-details { width: 100%; min-width: 0; }
-
-  /* Vocabulary filters: [scope | status], then sort and search full-width */
-  #bvSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  #bvStatus { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
-  #bvSort { flex: 1 1 100%; max-width: none; }
-  #bvSearch { flex: 1 1 100%; min-width: 0; }
-
-  /* Flashcard filters: [scope | status], direction full-width, [shuffle | restart] */
-  #fcSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  #fcStatusFilter { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
-  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
-  #fcShuffle,
-  #fcRestart { flex: 1 1 calc(50% - 4px); min-height: 44px; }
 
   /* Grammar toolbar keeps its existing stacked layout */
   .grammar-toolbar input[type="search"] { flex-basis: 100%; }
