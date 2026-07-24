@@ -259,7 +259,8 @@ p { margin: 0; }
 .nav-signout:hover { color: #FF97AC; background: var(--danger-tint); }
 
 /* 5. MAIN LAYOUT ----------------------------------------------------------- */
-main { padding: 4px 0 calc(var(--nav-h) + 24px); }
+/* Bottom padding clears the fixed mobile nav plus any device safe-area inset */
+main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px)); }
 #view-tracker:not([hidden]) { display: block; }
 .tracker-dashboard { display: flex; flex-direction: column; gap: 22px; }
 
@@ -737,10 +738,7 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
 .fc-complete-summary { color: var(--text); font-size: 13.5px; font-weight: 600; margin: 2px 0 0; overflow-wrap: anywhere; }
 .fc-complete-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 12px; width: 100%; }
 .fc-complete-actions .btn { min-height: 44px; }
-@media (max-width: 460px) {
-  .fc-complete-actions { flex-direction: column; }
-  .fc-complete-actions .btn { width: 100%; }
-}
+/* Narrow-mobile stacking for the completion actions lives in the <=480px block. */
 
 /* Session-only Quick Recall Quiz, shown inside the existing Flashcards area. */
 .flashcards.quiz-mode > .fc-head,
@@ -985,26 +983,93 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px); }
   .grammar-actions { justify-content: flex-end; }
 }
 
-@media (max-width: 420px) {
+/* ------------------------------------------------------------------------
+   NARROW MOBILE (max-width: 480px)
+   Compact, touch-friendly phone layout. Primary focus: Vocabulary,
+   Flashcards, the Quick Recall Quiz and the Add/Edit Word modal. Tablet
+   (max-width: 720px) and desktop (min-width: 860px) rules are defined
+   elsewhere and are intentionally left untouched.
+   ------------------------------------------------------------------------ */
+@media (max-width: 480px) {
+  /* Page rhythm + header: slightly tighter, avatar still prominent */
   .wrap { width: calc(100% - 24px); }
+  .site-header { padding-top: 22px; }
   .profile-avatar { width: 88px; height: 88px; font-size: 29px; }
-  .profile-greeting { margin-top: 14px; font-size: 21px; }
+  .profile-greeting { margin-top: 12px; font-size: 21px; }
   .status-set { font-size: 21px; }
   .sets-grid { grid-template-columns: 1fr 1fr; }
   .set-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .filter-bar select { max-width: 100%; flex: 1 1 45%; }
-  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
-  .fc-direction-field select { flex-basis: auto; }
-  .set-filter-details { flex: 1 1 100%; }
-  .set-filter-panel { width: 100%; position: static; margin-top: 6px; }
-  .grammar-toolbar input[type="search"] { flex-basis: 100%; }
-  .grammar-toolbar .btn { flex: 1 1 100%; }
+  .nav-btn { font-size: 10px; }
+  .mission-task-action { width: 100%; }
+
+  /* Tracker vocabulary summary: actions fill the row, primary Add stays clear */
   .vs-side { align-items: stretch; }
   .vs-actions { width: 100%; margin-left: 0; }
-  .vs-actions .btn { flex: 1 1 120px; }
-  .mission-task-action { width: 100%; }
-  .nav-btn { font-size: 10px; }
-  .modal { padding: 18px; border-radius: var(--r-lg); }
+  .vs-actions .btn { flex: 1 1 140px; }
+
+  /* Filter controls: comfortable 44px touch height */
+  .filter-bar select,
+  .filter-bar input[type="search"],
+  .set-filter-details > summary { min-height: 44px; }
+  /* Let the scope picker fill its wrapper so it can size to half a row */
+  #bvSetFilter .set-filter-details,
+  #fcSetFilter .set-filter-details { width: 100%; min-width: 0; }
+
+  /* Vocabulary filters: [scope | status], then sort and search full-width */
+  #bvSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  #bvStatus { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
+  #bvSort { flex: 1 1 100%; max-width: none; }
+  #bvSearch { flex: 1 1 100%; min-width: 0; }
+
+  /* Flashcard filters: [scope | status], direction full-width, [shuffle | restart] */
+  #fcSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  #fcStatusFilter { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
+  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
+  #fcShuffle,
+  #fcRestart { flex: 1 1 calc(50% - 4px); min-height: 44px; }
+
+  /* Grammar toolbar keeps its existing stacked layout */
+  .grammar-toolbar input[type="search"] { flex-basis: 100%; }
+  .grammar-toolbar .btn { flex: 1 1 100%; }
+
+  /* Vocabulary header actions: primary Add spans the full width */
+  .browse-actions .btn { flex: 1 1 calc(50% - 4px); }
+  #bvAddWord { flex-basis: 100%; }
+
+  /* Vocabulary cards: mastery hint drops to its own line; larger tap targets */
+  .vocab-side { flex-wrap: wrap; gap: 8px 10px; }
+  .vocab-mastery-hint { order: 3; flex-basis: 100%; max-width: none; text-align: left; margin: 0; }
+  .vocab-status { min-height: 40px; }
+  .vocab-actions { gap: 6px; }
+  .vocab-actions .link-btn { min-height: 40px; padding: 8px 12px; }
+
+  /* Flashcard: adaptive height so short words don't leave a large empty card */
+  .fc-card,
+  .fc-complete { padding: 26px 18px; min-height: 150px; }
+  .fc-counter { margin-top: 12px; }
+
+  /* Navigation: Previous / Show Answer / Next as a compact grid. After reveal
+     (#fcGrade visible) it becomes Previous / Learning / Mastered / Next (2x2). */
+  .fc-controls {
+    display: grid;
+    /* Middle track is widened so the "Show answer" label never clips at 320px */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .fc-controls:has(#fcGrade:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .fc-controls:has(#fcGrade:not([hidden])) #fcGrade { display: contents; }
+  .fc-controls > .btn,
+  .fc-grade > .btn { width: 100%; min-height: 44px; padding-left: 6px; padding-right: 6px; }
+
+  /* Completion actions stack full-width */
+  .fc-complete-actions { flex-direction: column; }
+  .fc-complete-actions .btn { width: 100%; }
+
+  /* Add/Edit Word modal: fits the viewport with room for the keyboard */
+  .modal-backdrop { padding: 12px; }
+  .modal { padding: 18px; border-radius: var(--r-lg); max-height: 90dvh; }
+  #wordFormActions .btn { flex: 1 1 140px; }
   .pronunciation-settings-actions { flex-direction: column; }
   .pronunciation-settings-actions .btn { width: 100%; }
 }
