@@ -984,6 +984,84 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
 }
 
 /* ------------------------------------------------------------------------
+   FILTER-ROW ALIGNMENT (Vocabulary + Flashcards)
+   Deliberate per-tier row layouts so every control row fills the exact same
+   left/right boundaries as the search input, the flashcard card, and the
+   surrounding section — no leftover space on the right, no wrapping left to
+   chance. Grammar's filter bar (.grammar-toolbar) is untouched; it keeps its
+   existing stacked layout from the block below.
+   ------------------------------------------------------------------------ */
+@media (max-width: 859px) {
+  /* Neutralize fixed/capped sizing so controls can size to their row instead
+     of hugging old desktop-oriented widths. */
+  .browse .set-filter-details,
+  .flashcards .set-filter-details { min-width: 0; }
+  #bvSetFilter .set-filter-details,
+  #fcSetFilter .set-filter-details { width: 100%; }
+  .browse .filter-bar select,
+  .flashcards .filter-bar select { max-width: none; }
+  .fc-direction-field { min-width: 0; }
+
+  /* Comfortable 44px touch height for every filter control in this range */
+  .browse .filter-bar select,
+  .browse .filter-bar input[type="search"],
+  .browse .set-filter-details > summary,
+  .flashcards .filter-bar select,
+  .flashcards .set-filter-details > summary,
+  #fcShuffle,
+  #fcRestart { min-height: 44px; }
+
+  /* Scope + Status always share one row, split evenly, at every tier below
+     desktop — the row's own width always equals the search input / card width,
+     so an even flex split here always reaches the right edge. */
+  #bvSetFilter, #bvStatus,
+  #fcSetFilter, #fcStatusFilter { flex: 1 1 0; min-width: 0; }
+}
+
+@media (min-width: 481px) and (max-width: 859px) {
+  /* Vocabulary — wide mobile / tablet: Scope, Status and Sort share one row;
+     Search spans the full row underneath. Scope gets a larger share (its
+     "General + N sets" / "N sets selected" summaries run longer than the
+     Status/Sort option text) rather than a strict equal third. */
+  #bvSetFilter { flex: 3 1 0; min-width: 0; }
+  #bvStatus,
+  #bvSort { flex: 2 1 0; min-width: 0; }
+  #bvSearch { flex: 1 1 100%; min-width: 0; }
+}
+
+@media (min-width: 361px) and (max-width: 480px) {
+  /* Vocabulary — narrow mobile: Sort and Search share one row. Sort takes the
+     smaller share (with a readable floor), Search takes the larger share. */
+  #bvSort { flex: 3 1 0; min-width: 120px; }
+  #bvSearch { flex: 7 1 0; min-width: 0; }
+}
+
+@media (max-width: 360px) {
+  /* Vocabulary — very narrow mobile: the combined Sort + Search row above
+     would compress Search too much, so each takes its own full-width row. */
+  #bvSort { flex-basis: 100%; }
+  #bvSearch { flex-basis: 100%; }
+}
+
+@media (max-width: 600px) {
+  /* Flashcards — narrow + medium mobile: Review direction spans its own full
+     row; Shuffle and Restart review share the row beneath it evenly. */
+  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
+  #fcShuffle,
+  #fcRestart { flex: 1 1 0; min-width: 0; }
+}
+
+@media (min-width: 601px) and (max-width: 859px) {
+  /* Flashcards — tablet: direction, Shuffle and Restart review share one row.
+     Shuffle/Restart size to their label (never wrap alone); the direction
+     field absorbs all remaining space so its select gets the largest share
+     and the row still ends flush with the right edge. */
+  .fc-direction-field { flex: 1 1 auto; min-width: 0; }
+  #fcShuffle,
+  #fcRestart { flex: 0 0 auto; }
+}
+
+/* ------------------------------------------------------------------------
    NARROW MOBILE (max-width: 480px)
    Compact, touch-friendly phone layout. Primary focus: Vocabulary,
    Flashcards, the Quick Recall Quiz and the Add/Edit Word modal. Tablet
@@ -1007,26 +1085,12 @@ main { padding: 4px 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px
   .vs-actions { width: 100%; margin-left: 0; }
   .vs-actions .btn { flex: 1 1 140px; }
 
-  /* Filter controls: comfortable 44px touch height */
+  /* Filter controls: comfortable 44px touch height. Vocabulary and Flashcards
+     get deliberate per-tier row layouts in the FILTER-ROW ALIGNMENT section
+     above; this generic rule also keeps Grammar's search input touch-friendly. */
   .filter-bar select,
   .filter-bar input[type="search"],
   .set-filter-details > summary { min-height: 44px; }
-  /* Let the scope picker fill its wrapper so it can size to half a row */
-  #bvSetFilter .set-filter-details,
-  #fcSetFilter .set-filter-details { width: 100%; min-width: 0; }
-
-  /* Vocabulary filters: [scope | status], then sort and search full-width */
-  #bvSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  #bvStatus { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
-  #bvSort { flex: 1 1 100%; max-width: none; }
-  #bvSearch { flex: 1 1 100%; min-width: 0; }
-
-  /* Flashcard filters: [scope | status], direction full-width, [shuffle | restart] */
-  #fcSetFilter { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  #fcStatusFilter { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
-  .fc-direction-field { flex: 1 1 100%; min-width: 0; }
-  #fcShuffle,
-  #fcRestart { flex: 1 1 calc(50% - 4px); min-height: 44px; }
 
   /* Grammar toolbar keeps its existing stacked layout */
   .grammar-toolbar input[type="search"] { flex-basis: 100%; }
